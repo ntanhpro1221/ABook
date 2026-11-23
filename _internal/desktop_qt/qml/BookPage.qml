@@ -144,6 +144,21 @@ Item {
             if (Api.transport) Api.transport.refreshLibrary()
         })
     }
+    // Thả / bỏ tim (POST .../favorite) vào hồ sơ nghe đang hiện. Khoá bấm lặp tới khi có kết quả; tim đổi theo trạng thái máy chủ trả về.
+    readonly property bool favoriteNow: Boolean(fullBook.state && fullBook.state.favorite)
+    property bool hearting: false
+    function setFavorite(favorite) {
+        if (hearting || fullBook.id === undefined) return
+        hearting = true
+        const id = root.book.bookId
+        const active = Records.activeRecord(root.fullBook)
+        Api.call("POST", "/api/listen/books/" + id + "/favorite", active ? {favorite: favorite, record: active.id} : {favorite: favorite}, function(data, error) {
+            root.hearting = false
+            if (error) { if (/^Hồ sơ nghe này/.test(error)) root.loadFull(); return }
+            root.loadFull()
+            if (Api.transport) Api.transport.refreshLibrary()
+        })
+    }
     // Menu "Thêm" (ActionMenu "Việc với sách" của web): các việc với hồ sơ nghe, đã nghe xong, các mục sửa sách.
     Popover {
         id: more
@@ -497,7 +512,7 @@ Item {
                         Accessible.name: S.s_viec_voi_sach_9582a854
                         Row {
                             id: secondary
-                            readonly property var shown: [readButton, findButton, restartButton, moreButton].filter(b => b.visible)
+                            readonly property var shown: [readButton, findButton, restartButton, heartButton, moreButton].filter(b => b.visible)
                             readonly property real used: shown.reduce((sum, b) => sum + b.width, 0)
                             spacing: shown.length > 1 ? Math.max(0, (actions.rowWidth - used) / (shown.length - 1)) : 0
                             ActionButton {
@@ -527,6 +542,16 @@ Item {
                                 Accessible.name: S.s_nghe_lai_tu_dau_e251d632
                                 enabled: bookDetail.started && bookDetail.hasPoint && !bookDetail.finished
                                 onClicked: root.restart()
+                            }
+                            ActionButton {
+                                id: heartButton
+                                objectName: "bookFavorite"
+                                icon: root.favoriteNow ? "heart-filled" : "heart"
+                                label: S.s_heart_favorite
+                                Accessible.name: root.favoriteNow ? S.s_heart_unfavorite : S.s_heart_favorite
+                                active: root.favoriteNow
+                                enabled: root.fullBook.id !== undefined
+                                onClicked: root.setFavorite(!root.favoriteNow)
                             }
                             ActionButton {
                                 id: moreButton

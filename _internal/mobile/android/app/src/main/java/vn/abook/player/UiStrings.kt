@@ -2,6 +2,9 @@
 package vn.abook.player
 
 internal object S {
+    const val s_heart_favorite = "Yêu thích"
+    const val s_heart_unfavorite = "Bỏ yêu thích"
+    const val s_heart_empty = "Chạm hình tim ở trang sách để thêm cuốn vào đây."
     const val s_bookmeta_illustrator = "Hoạ sĩ"
     const val s_bookmeta_alt_titles = "Tên khác"
     const val s_bookmeta_genres = "Thể loại"

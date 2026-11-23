@@ -42,6 +42,7 @@ class FakeNowPlayingModel(
     fun update(state: NowPlayingState) { metadata.value = state }
     fun setPosition(ms: Long) { positionMs.longValue = ms }
     override fun toggle() { actions += "toggle"; metadata.value = state.value.copy(playing = !state.value.playing) }
+    override fun setFavorite(favorite: Boolean) { actions += "favorite:$favorite"; metadata.value = state.value.copy(favorite = favorite) }
     override fun skip(seconds: Int) { actions += "skip:$seconds"; seek(positionMs.longValue + seconds * 1000) }
     override fun seek(milliseconds: Long) {
         actions += "seek:$milliseconds"

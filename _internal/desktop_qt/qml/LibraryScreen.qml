@@ -61,7 +61,8 @@ FocusScope {
     readonly property real resultProgress: resultSlide.phase
     property int resultDirection: 1
     property int appliedFilter: 0
-    function selectedFilterIndex() { return ["all", "listening", "new", "finished"].indexOf(filter) }
+    readonly property var filterOrder: ["all", "listening", "new", "finished", "favorite"]
+    function selectedFilterIndex() { return filterOrder.indexOf(filter) }
     readonly property int filterIndex: selectedFilterIndex()
     function applyResults() {
         const selection = selectionKey()
@@ -146,7 +147,7 @@ FocusScope {
                 Accessible.name: S.s_loc_sach_bebccfba
                 spacing: Theme.s4
                 Repeater {
-                    model: [{value: "all", label: S.s_tat_ca_49c73a31}, {value: "listening", label: S.s_nghe_do_7e529071}, {value: "new", label: S.s_chua_nghe_2fbea4c8}, {value: "finished", label: S.s_xong_a6f4543a}]
+                    model: [{value: "all", label: S.s_tat_ca_49c73a31}, {value: "listening", label: S.s_nghe_do_7e529071}, {value: "new", label: S.s_chua_nghe_2fbea4c8}, {value: "finished", label: S.s_xong_a6f4543a}, {value: "favorite", label: S.s_heart_favorite}]
                     ChoiceChip {
                         required property var modelData
                         objectName: "filter_" + modelData.value
@@ -262,8 +263,8 @@ FocusScope {
             xAxis.enabled: true; yAxis.enabled: false
             onActiveChanged: {
                 if (active || Math.abs(translation.x) < 48) return
-                const filters = ["all", "listening", "new", "finished"]
-                root.filter = filters[Math.max(0, Math.min(3, root.filterIndex + (translation.x < 0 ? 1 : -1)))]
+                const filters = root.filterOrder
+                root.filter = filters[Math.max(0, Math.min(filters.length - 1, root.filterIndex + (translation.x < 0 ? 1 : -1)))]
             }
         }
         ContentSlide {
@@ -500,7 +501,7 @@ FocusScope {
         Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
         icon: "search"
         title: root.query ? S.s_khong_thay_7dda2441 + root.query + "”" : S.s_chua_co_sach_30843cb2
-        text: root.query ? S.s_thu_ten_sach_hoac_tac_gia_khac_65849efa : root.filter === "listening" ? S.s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e : root.filter === "finished" ? S.s_chua_co_cuon_nao_nghe_xong_8d430580 : S.s_cuon_nao_cung_da_duoc_nghe_it_nhat_mot_doa_dfabac48
+        text: root.query ? S.s_thu_ten_sach_hoac_tac_gia_khac_65849efa : root.filter === "listening" ? S.s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e : root.filter === "finished" ? S.s_chua_co_cuon_nao_nghe_xong_8d430580 : root.filter === "favorite" ? S.s_heart_empty : S.s_cuon_nao_cung_da_duoc_nghe_it_nhat_mot_doa_dfabac48
     }
     Component.onCompleted: { root.shownSections = root.sections; const saved = Api.store("abook-library-sort"); if (root.sortOptions.some(o => o.value === saved)) root.sortOrder = saved; list.forceActiveFocus() }
     onVisibleChanged: if (visible) list.forceActiveFocus()

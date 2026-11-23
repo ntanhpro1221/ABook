@@ -60,6 +60,8 @@ class RepoNowPlayingModel(
     private val clockMs: () -> Long = System::currentTimeMillis,
     override val prepare: PrepareState? = null,
     private val night: vn.abook.player.ui.data.NightState? = null,
+    /** Ghi tim của cuốn vào kho (thật: [vn.abook.player.ui.data.BookSource.setFavorite] - ghi xong làm mới Thư viện, [books] mang trạng thái mới về). */
+    private val writeFavorite: suspend (String, Boolean) -> Unit = { _, _ -> },
 ) : NowPlayingModel {
     override val lineEditor = source.lineSource?.let { PlayerLineEditor(it, scope) }
     override val hadNight: Boolean get() = night?.had == true
@@ -72,9 +74,19 @@ class RepoNowPlayingModel(
 
     private val extras = MutableStateFlow(Extras())
     override val state: StateFlow<NowPlayingState> =
-        combine(repo.state, extras) { player, extra ->
-            nowPlayingState(player, extra.voices, extra.place?.bookId == player.bookId && player.bookId.isNotEmpty(), extra.serial)
+        combine(repo.state, extras, books) { player, extra, shelf ->
+            nowPlayingState(player, extra.voices, extra.place?.bookId == player.bookId && player.bookId.isNotEmpty(), extra.serial,
+                favorite = shelf.firstOrNull { it.id == player.bookId }?.state?.favorite == true)
         }.stateIn(scope, SharingStarted.Eagerly, nowPlayingState(repo.state.value, emptyList(), false, 0))
+
+    /** Đang ghi tim: chạm lặp trong lúc ấy bị bỏ (DESIGN "Thao tác phải chờ"), trạng thái đích hiện khi Thư viện mang kết quả thật về. */
+    private var favoriteJob: Job? = null
+
+    override fun setFavorite(favorite: Boolean) {
+        val id = state.value.bookId
+        if (id.isEmpty() || favoriteJob?.isActive == true) return
+        favoriteJob = scope.launch { writeFavorite(id, favorite) }
+    }
 
     private val text = MutableStateFlow(ReadAlongState())
     override val readAlong = text.asStateFlow()
@@ -254,10 +266,11 @@ fun rememberRepoNowPlaying(
     books: StateFlow<List<ListenBook>> = androidx.compose.runtime.remember { MutableStateFlow(emptyList()) },
     prepare: PrepareState? = null,
     night: vn.abook.player.ui.data.NightState? = null,
+    writeFavorite: suspend (String, Boolean) -> Unit = { _, _ -> },
 ): RepoNowPlayingModel {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     // Mức hẹn giờ do lõi giữ (SleepTimer); chỉ đọc khi tấm Hẹn giờ / lời báo cần.
     val options = { SleepOptions((vn.abook.player.SleepTimer.fadeMs / 1000).toInt(), vn.abook.player.SleepTimer.extendMinutes) }
     val last = { vn.abook.player.SleepTimer.last }
-    return androidx.compose.runtime.remember(repo, source, music, voice, books, prepare, night) { RepoNowPlayingModel(repo, scope, source, music, voice, options, last, books, prepare = prepare, night = night) }
+    return androidx.compose.runtime.remember(repo, source, music, voice, books, prepare, night) { RepoNowPlayingModel(repo, scope, source, music, voice, options, last, books, prepare = prepare, night = night, writeFavorite = writeFavorite) }
 }

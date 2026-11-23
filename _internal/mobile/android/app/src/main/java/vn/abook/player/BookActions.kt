@@ -49,6 +49,13 @@ object BookActions {
         return state
     }
 
+    /** Thả / bỏ tim cho cả cuốn ở hồ sơ đang dùng, rồi gửi cho máy đã ghép (lần thả mới hơn thắng). */
+    fun setFavorite(context: Context, id: String, favorite: Boolean): JSONObject {
+        val state = Store.setFavorite(id, favorite)
+        runCatching { StateSync.pushNow(context, id) }
+        return state
+    }
+
     /** Một chương đã nghe xong / chưa nghe, rồi gửi chỗ nghe cho máy đã ghép. */
     fun setChapterDone(context: Context, id: String, chapterId: Int, done: Boolean): JSONObject {
         val state = Store.setChapterDone(id, chapterId, done)

@@ -6,6 +6,7 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
+import vn.abook.player.ui.components.HeartIcon
 import vn.abook.player.ui.components.OneLineFit
 import vn.abook.player.ui.components.ProgressFill
 import androidx.compose.ui.text.style.TextOverflow
@@ -273,6 +274,7 @@ private fun NoMatch(query: String, filter: LibraryFilter) {
                 LibraryFilter.Listening -> S.s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e
                 LibraryFilter.New -> S.s_cuon_nao_cung_da_duoc_nghe_it_nhat_mot_doa_dfabac48
                 LibraryFilter.Finished -> S.s_chua_co_cuon_nao_nghe_xong_8d430580
+                LibraryFilter.Favorite -> S.s_heart_empty
             },
             style = Abook.type.bodySmall,
         )
@@ -344,6 +346,7 @@ private fun BookTile(
         }
         // Sách ở máy khác: dấu máy tính nhỏ đầu dòng phụ như web/Qt (không đè lên bìa); nơi để nằm trong tên đọc màn hình của dấu ấy.
         val remote = series?.hasRemote ?: (lead.remote != null)
+        val favorite = series == null && lead.state.favorite
         val sub = detail
         val name: @Composable () -> Unit = {
             // cắt-có-chủ-ý: tên dưới bìa giữ đúng 2 dòng để mọi ô một hàng cao bằng nhau; tên đầy đủ ở trang sách và trình đọc màn hình.
@@ -351,6 +354,10 @@ private fun BookTile(
         }
         val line: @Composable () -> Unit = {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s4)) {
+                // Đã thả tim: dấu tim nhỏ hổ phách đầu dòng phụ (không đè bìa, không che tên), như web / Qt.
+                SwapContent(favorite, contentKey = { favorite -> favorite }, layout = ContentLayout.Row, inPlace = true) { favorite ->
+                    if (favorite) HeartIcon(true, Abook.colors.accentText, Modifier.semantics { contentDescription = S.s_heart_favorite; if (active()) testTag = "tile_favorite" }, size = 12.dp)
+                }
                 SwapContent(remote, contentKey = { remote -> remote }, layout = ContentLayout.Row, inPlace = true) { remote ->
                     if (remote) RemoteIcon(Abook.colors.text3, Modifier.semantics {
                         contentDescription = if (series != null) S.s_co_sach_tren_may_khac_3b7cdd88 else ListenLogic.remotePlace(lead)

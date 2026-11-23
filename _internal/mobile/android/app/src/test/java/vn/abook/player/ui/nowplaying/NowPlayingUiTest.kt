@@ -264,13 +264,43 @@ class NowPlayingUiTest {
 
     @Test fun secondaryActionsShareOneLabelLineAndEqualColumns() {
         show()
-        val labels = listOf("Tốc độ", "Hẹn giờ", "Chương").map { rule.onNodeWithText(it, useUnmergedTree = true).getUnclippedBoundsInRoot() }
+        val labels = listOf("Tốc độ", "Yêu thích", "Hẹn giờ", "Chương").map { rule.onNodeWithText(it, useUnmergedTree = true).getUnclippedBoundsInRoot() }
         // Nhãn dưới cùng một đường dù ô trên là chữ ("1×") hay icon.
         labels.forEach { assertEquals("đáy nhãn lệch: $labels", labels[0].bottom.value, it.bottom.value, 0.5f) }
-        // Ba cột bằng nhau: khoảng giữa các tâm bằng nhau.
+        // Bốn cột bằng nhau: khoảng giữa các tâm bằng nhau.
         val centers = labels.map { (it.left.value + it.right.value) / 2 }
-        assertEquals("tâm không cách đều: $centers", centers[1] - centers[0], centers[2] - centers[1], 1f)
+        for (i in 1 until centers.lastIndex) assertEquals("tâm không cách đều: $centers", centers[1] - centers[0], centers[i + 1] - centers[i], 1f)
     }
+
+    // ---- thả tim (heart): nút trong hàng nút phụ, không đè bìa / điều khiển (bài học chipfix) ----
+
+    private fun loved() = FakeNowPlayingModel.demoState().copy(favorite = true)
+
+    @Test fun heartTapTogglesAndNamesTheAction() {
+        show()
+        rule.onNodeWithTag("player_favorite").assertContentDescriptionEquals("Yêu thích").performClick()
+        rule.waitForIdle()
+        assertEquals("favorite:true", model.actions.last())
+        rule.onNodeWithTag("player_favorite").assertContentDescriptionEquals("Bỏ yêu thích").performClick()
+        rule.waitForIdle()
+        assertEquals("favorite:false", model.actions.last())
+    }
+
+    @Test fun heartNeverOverlapsTheCoverOrControls() {
+        show(base = loved())
+        val heart = bounds("player_favorite")
+        for (tag in listOf("player_cover", "player_seek", "transport", "player_speed", "player_sleep", "player_chapters")) {
+            val other = bounds(tag)
+            val overlap = heart.left < other.right && other.left < heart.right && heart.top < other.bottom && other.top < heart.bottom
+            assertFalse("tim chồng lên $tag: $heart / $other", overlap)
+        }
+    }
+
+    @Test fun heartOffLight() { show(); shot("heart_off_light") }
+    @Test fun heartOnLight() { show(base = loved()); shot("heart_on_light") }
+    @Test fun heartOffDark() { show(dark = true); shot("heart_off_dark") }
+    @Test fun heartOnDark() { show(dark = true, base = loved()); shot("heart_on_dark") }
+    @Test fun heartOnLargeLight() { show(base = loved(), fontScale = 1.3f); rule.assertNoTextOverflow(); shot("heart_on_font130_light") }
 
     @Test fun readingHeaderKeepsCoverAndTitlesBesideEachOtherAboveTheText() {
         show(reading = true)

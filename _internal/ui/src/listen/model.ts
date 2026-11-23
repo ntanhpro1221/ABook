@@ -65,6 +65,9 @@ export interface ListeningState {
   finished?: boolean;
   /** Lúc tự đánh dấu (chưa) nghe xong - nghe tiếp sau mốc này nghĩa là đang nghe lại. */
   finishedAt?: number;
+  /** Người nghe thả tim cho cuốn (trạng thái người dùng, không ghi vào file sách) và lúc thả - lần thả mới hơn thắng khi đồng bộ. */
+  favorite?: boolean;
+  favoriteAt?: number;
   /** Chỗ đọc dở ở chế độ đọc (câu thứ `index` của chương). */
   reading?: import("./readingPosition").ReadingPosition;
   updatedAt?: number;

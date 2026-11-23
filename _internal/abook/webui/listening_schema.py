@@ -37,7 +37,7 @@ def meta_revisions(row: dict, *keys: str) -> dict:
 def clean_state(raw: Any) -> dict:
     if not isinstance(raw, dict):
         return {"chapters": {}}
-    state = fields(raw, ("updatedAt", "rate", "rateAt", "finishedAt", "voiceAt", "_clock"), ("voice",), ("finished",))
+    state = fields(raw, ("updatedAt", "rate", "rateAt", "finishedAt", "voiceAt", "favoriteAt", "_clock"), ("voice",), ("finished", "favorite"))
     if "_clock" in state and (type(state["_clock"]) is not int or not 0 <= state["_clock"] <= MAX_COUNTER):
         state.pop("_clock")
     if "_epoch" in state and not valid_epoch(state["_epoch"]):
@@ -45,7 +45,7 @@ def clean_state(raw: Any) -> dict:
     if "_fieldRevs" in state:
         rows = state["_fieldRevs"]
         state["_fieldRevs"] = {k: v for k, v in rows.items() if revision({"rev": v})[0]} if isinstance(rows, dict) else {}
-    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
+    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt"), ("favorite", "favoriteAt")):
         # Giá trị + mốc giờ + phiên bản là một bộ: một phần hỏng thì bỏ cả bộ (máy kia gửi lại bản đủ) - trước đây giữ giá trị và phiên
         # bản mà mất mốc, máy kia gộp văng lỗi ở mọi lần đồng bộ (soát a118 lỗi 3).
         # Một luật: trường còn giá trị mà bảng phiên bản đã lọc không có phiên bản cho nó là hỏng - gồm cả khi chính `_fieldRevs` sai kiểu (bị thay bằng {}).

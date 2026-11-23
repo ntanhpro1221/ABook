@@ -29,7 +29,7 @@ Interactive {
         id: content
         anchors.centerIn: parent
         spacing: Theme.s8
-        Icon {
+        StateIcon {
             id: glyph
             Reveal { shown: root.icon !== "" }
             name: root.icon

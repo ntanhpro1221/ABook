@@ -31,9 +31,10 @@ import { useClock } from "./clock";
 import { useListenBook, useListenLibrary, useReadAloudVoices, useSource } from "./source";
 import { feedback, withFeedback } from "@/shared/feedback";
 import { OneLineFit } from "@/shared/OneLineFit";
+import { HeartGlyph } from "./FavoriteButton";
 
-type Filter = "all" | "listening" | "new" | "finished";
-const LIBRARY_FILTER_OPTIONS = [{ value: "all", label: S.s_tat_ca_49c73a31 }, { value: "listening", label: S.s_nghe_do_7e529071 }, { value: "new", label: S.s_chua_nghe_2fbea4c8 }, { value: "finished", label: S.s_xong_a6f4543a }] as const;
+type Filter = "all" | "listening" | "new" | "finished" | "favorite";
+const LIBRARY_FILTER_OPTIONS = [{ value: "all", label: S.s_tat_ca_49c73a31 }, { value: "listening", label: S.s_nghe_do_7e529071 }, { value: "new", label: S.s_chua_nghe_2fbea4c8 }, { value: "finished", label: S.s_xong_a6f4543a }, { value: "favorite", label: S.s_heart_favorite }] as const;
 const LIBRARY_FILTERS: Filter[] = LIBRARY_FILTER_OPTIONS.map(option => option.value);
 
 /** Hành động riêng của nền tảng đi cùng bìa, kể cả khi mở bộ sách. */
@@ -71,6 +72,13 @@ function useShelfState() {
 function tileOf(book: ListenBook, shelf: ReturnType<typeof useShelfState>, badge?: string, twin?: boolean) {
   const current = shelf.playingBook === book.id;
   return <BookTile book={book} badge={badge} twin={twin} current={current} playingHere={current && shelf.playing} speaks={shelf.speaks} />;
+}
+
+/** Cuốn thuộc bộ lọc: "Yêu thích" theo tim người nghe đã thả, các mục khác theo tình trạng nghe (một cuốn chỉ một tình trạng). */
+export function inFilter(book: ListenBook, filter: Filter): boolean {
+  if (filter === "all") return true;
+  if (filter === "favorite") return Boolean(book.state.favorite);
+  return stateOf(book) === filter;
 }
 
 function stateOf(book: ListenBook): Filter {
@@ -245,6 +253,8 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8).
             Hai cuốn cùng tên: nhãn "Dự án" / "Đã nhập" và ngày vào thư viện nối vào cùng dòng để biết cuốn nào là cuốn nào. */}
         <div data-tile-sub="" className="mt-1 flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2">
+          {/* Đã thả tim: dấu tim nhỏ đầu dòng trạng thái (không đè bìa, không che tên). */}
+          <Presence>{book.state.favorite && <span role="img" aria-label={S.s_heart_favorite} data-tile-favorite="" className="inline-grid shrink-0 text-accent-text"><HeartGlyph on className="size-3" /></span>}</Presence>
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? S.s_0_da_tai_ve_may_nay_a4649b44(remotePlace(book)) : remotePlace(book)} className="size-3 shrink-0" />}
           <TickingValue className="min-w-0 truncate">{[progressText(book, speaks, false), ...(twin ? [twinKind(book), book.addedAt ? S.s_them_0_07ca4c38(formatWhen(book.addedAt)) : ""] : [])].filter(Boolean).join(" · ")}</TickingValue>
         </div>
@@ -467,6 +477,7 @@ const EMPTY_TEXT: Record<Filter, string> = {
   listening: S.s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e,
   new: S.s_cuon_nao_cung_da_duoc_nghe_it_nhat_mot_doa_dfabac48,
   finished: S.s_chua_co_cuon_nao_nghe_xong_8d430580,
+  favorite: S.s_heart_empty,
 };
 
 export function LibraryScreen({
@@ -519,7 +530,7 @@ export function LibraryScreen({
       sortBooks(
         (books ?? []).filter(
           // Tên sách, tác giả hoặc giọng kể ("duc tri" tìm ra mọi cuốn Đức Trí đọc - soát UX 29-09).
-          (book) => (filter === "all" || stateOf(book) === filter) && bookMatchesQuery(book, folded),
+          (book) => inFilter(book, filter) && bookMatchesQuery(book, folded),
         ),
         sort,
       ),

@@ -299,6 +299,19 @@ fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Mo
     }
 }
 
+/** Ô tim của hàng nút phụ: cùng khung với [PlayerAction] (ô biểu tượng 28, nhãn dưới); viền khi chưa thả, tô đầy hổ phách khi đã thả. */
+@Composable
+fun FavoriteAction(on: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.widthIn(min = 48.dp).pressable(onClick = onClick).padding(vertical = 8.dp)
+        .semantics { contentDescription = if (on) S.s_heart_unfavorite else S.s_heart_favorite }, horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
+            vn.abook.player.ui.components.HeartIcon(on, if (on) Abook.colors.accentText else Abook.colors.text, size = 24.dp)
+        }
+        Spacer(Modifier.height(4.dp))
+        RollingLabel(S.s_heart_favorite, style = Abook.type.caption)
+    }
+}
+
 /**
  * Biểu tượng của trình phát: hình lucide giống bản web (PlayerViews.tsx: ChevronDown, MoreHorizontal, SkipBack/SkipForward, Moon, ListOrdered,
  * Plus/Minus) trong ô 24 giữa nút 28; riêng lùi / tới 15 giây là hình riêng của web (drawSkip). Đường dịch một lần, không cấp phát khi vẽ.

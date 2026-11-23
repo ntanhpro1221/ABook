@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Thư viện
+
+- Thả tim cho cuốn bạn thích: chạm hình tim ở trang sách hay màn Đang nghe (điện thoại, máy tính, web); sách đã thả tim có dấu tim nhỏ dưới bìa và nằm trong bộ lọc "Yêu thích" của Thư viện. Tim đi theo hồ sơ nghe nên đồng bộ giữa các máy đã ghép như chỗ nghe.
+
 ## [0.4.175] - 2026-11-23
 
 ### Giao diện

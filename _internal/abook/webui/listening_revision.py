@@ -145,21 +145,21 @@ def checked_peer(ours: dict, incoming: dict, notify) -> dict:
         if state.get(key) is not None and not accept(state[key]):
             state.pop(key)
     state["chapters"] = {k: v for k, v in (state.get("chapters") or {}).items() if accept(v)}
-    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
+    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt"), ("favorite", "favoriteAt")):
         if field in state and not accept({"rev": state.get("_fieldRevs", {}).get(field)}):
             state.pop(field)
             state.pop(stamp, None)
     # Raw _clock/_epoch, or orphan revision maps, are never evidence of edits.
     state.pop("_clock", None)
     state.pop("_epoch", None)
-    state["_fieldRevs"] = {key: incoming["_fieldRevs"][key] for key in ("rate", "finished", "voice")
+    state["_fieldRevs"] = {key: incoming["_fieldRevs"][key] for key in ("rate", "finished", "voice", "favorite")
                            if key in state and key in incoming.get("_fieldRevs", {})}
     return state
 
 
 def require_peer_revisions(payload: dict) -> None:
     """Preflight the entire exchange before record deletions or other side effects."""
-    fields = {key: payload[key] for key in ("last", "reading", "chapters", "rate", "finished", "voice", "_fieldRevs") if key in payload}
+    fields = {key: payload[key] for key in ("last", "reading", "chapters", "rate", "finished", "voice", "favorite", "_fieldRevs") if key in payload}
     try:
         checked_peer({}, fields, lambda _text: None)
     except ValueError as error:

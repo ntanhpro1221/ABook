@@ -11,6 +11,7 @@ enum class LibraryFilter(val label: String, val tag: String) {
     Listening(S.s_nghe_do_7e529071, "filter_listening"),
     New(S.s_chua_nghe_2fbea4c8, "filter_new"),
     Finished(S.s_xong_a6f4543a, "filter_finished"),
+    Favorite(S.s_heart_favorite, "filter_favorite"),
 }
 
 /** Cách xếp (librarySort.ts): mặc định "Nghe gần đây". */
@@ -63,6 +64,13 @@ object Library {
         book.progress.finished -> LibraryFilter.Finished
         book.progress.heardSeconds > 0 || book.state.last != null -> LibraryFilter.Listening
         else -> LibraryFilter.New
+    }
+
+    /** Cuốn thuộc bộ lọc: "Yêu thích" theo tim người nghe đã thả, các mục khác theo tình trạng nghe (LibraryScreen.tsx `inFilter`). */
+    fun inFilter(book: ListenBook, filter: LibraryFilter): Boolean = when (filter) {
+        LibraryFilter.All -> true
+        LibraryFilter.Favorite -> book.state.favorite
+        else -> stateOf(book) == filter
     }
 
     /** "Nghe gần đây" của nguồn tự gộp nhiều chỗ: lần nghe cuối mới nhất đứng đầu, cùng mốc thì lần cập nhật cuối, rồi giữ thứ tự nhận vào. */
@@ -145,7 +153,7 @@ object Library {
         val folded = ListenLogic.fold(query.trim())
         val twins = ListenLogic.twinIds(books)
         val shown = sort(
-            books.filter { (filter == LibraryFilter.All || stateOf(it) == filter) && ListenLogic.matches(it, folded) },
+            books.filter { inFilter(it, filter) && ListenLogic.matches(it, folded) },
             sort,
         )
         return LibraryView(tiles(shown, twins), shown.size, books.size)

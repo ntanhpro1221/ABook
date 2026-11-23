@@ -52,6 +52,7 @@ import { isMissing, useCast, useListenBook, useListenLibrary, useListenMutations
 import { latestReading } from "./readingPosition";
 import { moreMenuHasItems } from "./bookMenu";
 import { withFeedback } from "@/shared/feedback";
+import { FavoriteButton } from "./FavoriteButton";
 import { ActionButton } from "./ActionButton";
 import { DotJoin } from "@/shared/DotJoin";
 import { WIDTH_FROM, widthAtLeast } from "@/shared/widthClass.generated";
@@ -1248,13 +1249,14 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
               <OneLineFit className="min-w-0 text-left">{listenFirst && ((listening && player.buffering) || player.preparingBookId === book.id) ? S.s_buffering : listenFirst ? primaryLabel : readLabel}</OneLineFit>
             </Button>
           )}
-          {/* Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}
+          {/* Hàng phụ: luôn cùng các chỗ (Đọc · Tìm · Từ đầu · Yêu thích · Thêm), cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}
           {/* Đầu trái là "Đọc" (24,8 px) hay "Tìm" (22,1 px), đầu phải "⋯" (không nhãn, chừa chỗ nhãn): mỗi đầu một --slot để cả hai sát mép nút chính. */}
           <div role="group" aria-label={S.s_viec_voi_sach_9582a854} data-book-secondary className={cn("slot-row items-start [--slot:1.4rlh]", listenFirst || caughtUp ? "[--slot-start:1.0333rlh]" : "[--slot-start:0.9208rlh]")}>
             {/* Nhãn luôn một chữ "Đọc" (hàng cách đều theo tâm, nhãn đầu mút sát mép - "Đọc tiếp" dài gấp đôi sẽ lòi ra); "tiếp" nói cho trình đọc màn hình. */}
             {(listenFirst || caughtUp) && <ActionButton icon={BookOpen} label={S.s_doc_5709880c} aria-label={readLabel === S.s_doc_5709880c ? undefined : readLabel} onClick={read} />}
             <ActionButton icon={Search} label={S.s_tim_bbe47492} aria-label={S.s_tim_chu_trong_sach_7bc2c2ee} disabled={!chapters.length} onClick={() => setFinding(true)} />
             {!textOnly || point ? <ActionButton icon={RotateCcw} label={S.s_tu_dau_89ef6d78} aria-label={S.s_nghe_lai_tu_dau_e251d632} disabled={!(started && point && !finished)} onClick={restart} /> : null}
+            <FavoriteButton bookId={book.id} on={Boolean(book.state.favorite)} />
             {moreMenu && <ActionMenu title={S.s_viec_voi_sach_9582a854} trigger={<ActionButton icon={MoreHorizontal} label={S.s_them_dd92626f} aria-label={S.s_them_tuy_chon_a0b4bb6e} />}>
                   {/* Một hồ sơ thì không có nút hồ sơ nghe: tạo / chuyển / đổi tên / xoá hồ sơ duy nhất nằm ở đây (soát a105 F9), dùng chung hộp thoại của RecordPicker. */}
                   {source.records && singleRecordActions(book).filter(action => !action.danger).map((action) => (

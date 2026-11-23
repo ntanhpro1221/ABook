@@ -100,6 +100,7 @@ import vn.abook.player.ui.components.DashedCircleIcon
 import vn.abook.player.ui.components.MoreIcon
 import vn.abook.player.ui.components.BookOpenIcon
 import vn.abook.player.ui.components.PlayPauseGlyph
+import vn.abook.player.ui.components.HeartIcon
 import vn.abook.player.ui.components.RestartIcon
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.SearchIcon
@@ -606,6 +607,8 @@ private fun BookButtons(
     val resume = book.resume
     val started = book.progress.heardSeconds > 0 || book.state.last != null
     val first = detail?.chapters?.firstOrNull { it.playable }
+    val scope = rememberCoroutineScope()
+    var hearting by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     val restart = {
         if (first != null) {
             actions.playChapter(book.id, first.id, 0.0)
@@ -649,7 +652,7 @@ private fun BookButtons(
             )
         }
         Spacer(Modifier.height(Dim.s12))
-        // Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự, mọi mục có nhãn (như Qt) - nút chưa dùng được thì nhạt đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe).
+        // Hàng phụ: luôn cùng các chỗ (Đọc · Tìm · Từ đầu · Yêu thích · Thêm), cùng thứ tự, mọi mục có nhãn (như Qt và web) - nút chưa dùng được thì nhạt đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe).
         Row(Modifier.fillMaxWidth().testTag("book_secondary"), horizontalArrangement = Arrangement.SpaceBetween) {
             SecondaryButton(S.s_doc_5709880c, S.s_doc_theo_df342819, enabled = book.canReadAlong, tag = "book_read", edge = -1, onClick = { actions.readAlong(book.id) }) { color ->
                 BookOpenIcon(color)
@@ -666,6 +669,11 @@ private fun BookButtons(
             SecondaryButton(
                 S.s_tu_dau_89ef6d78, S.s_nghe_lai_tu_dau_e251d632, enabled = started && resume != null && !finished && first != null, tag = "book_restart", edge = 0, onClick = restart,
             ) { color -> RestartIcon(color) }
+            val favorite = book.state.favorite
+            SecondaryButton(S.s_heart_favorite, if (favorite) S.s_heart_unfavorite else S.s_heart_favorite, enabled = true, tag = "book_favorite", edge = 0, onClick = {
+                // Chạm lặp khi đang ghi bị bỏ; tim đổi khi Thư viện mang kết quả thật về (ghi xong mới làm mới).
+                if (hearting?.isActive != true) hearting = scope.launch { source.setFavorite(book.id, !favorite) }
+            }) { color -> HeartIcon(favorite, if (favorite) Abook.colors.accentText else color) }
             SecondaryButton(S.s_them_dd92626f, S.s_them_tuy_chon_a0b4bb6e, enabled = true, tag = "book_more", edge = 1, onClick = {
                 sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }, onRecord = { openRecords(it) }, notes = notes) }
             }) { color -> MoreIcon(color) }

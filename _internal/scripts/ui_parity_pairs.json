@@ -149,6 +149,7 @@
         }
       ],
       "web_also": [
+        "listen/FavoriteButton.tsx",
         "listen/labels.ts",
         "listen/sleep.ts",
         "shared/ui.tsx",
@@ -400,6 +401,7 @@
       ],
       "deferred": [],
       "web_also": [
+        "listen/FavoriteButton.tsx",
         "listen/labels.ts",
         "listen/sleep.ts",
         "listen/PlayerViews.tsx",

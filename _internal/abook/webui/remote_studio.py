@@ -65,6 +65,7 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("POST", _LISTEN + r"/progress"),
     ("POST", _LISTEN + r"/chapters/\d+/done"),
     ("POST", _LISTEN + r"/finished"),
+    ("POST", _LISTEN + r"/favorite"),
     ("POST", _LISTEN + r"/rate"),
     ("GET", _LISTEN + r"/records"),
     ("POST", _LISTEN + r"/records"),

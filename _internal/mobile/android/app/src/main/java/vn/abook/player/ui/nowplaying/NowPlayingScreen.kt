@@ -315,9 +315,11 @@ private fun NowPlayingBody(
                     GlyphButton(PlayerText.nextLabel(state.hasNext, state.hasNext || state.moreChapters), "›|", model::next,
                         Modifier.playerReveal(windowProgress), dimmed = !state.hasNext && !state.moreChapters)
                 }
-                // Ba ô bằng nhau: tâm ở giữa mỗi phần bề ngang dù nhãn dài ngắn khác nhau. Cửa sổ mini ở cuối tấm Thêm tuỳ chọn.
+                // Bốn ô bằng nhau (Tốc độ · Yêu thích · Hẹn giờ · Chương, như web): tâm ở giữa mỗi phần bề ngang dù nhãn dài ngắn khác nhau. Tim nằm trong hàng nút
+                // phụ, không nổi trên bìa hay điều khiển. Cửa sổ mini ở cuối tấm Thêm tuỳ chọn.
                 Row(Modifier.fillMaxWidth().playerReveal(windowProgress)) {
                     PlayerAction(S.s_toc_do_16ee0914, PlayerLabels.rate(state.rate), { window.openSheet(PlayerSheet.Speed) }, Modifier.weight(1f).testTag("player_speed"))
+                    FavoriteAction(state.favorite, { model.setFavorite(!state.favorite) }, Modifier.weight(1f).testTag("player_favorite"))
                     SleepAction(state.sleep, model.position, { window.openSheet(PlayerSheet.Sleep) }, Modifier.weight(1f))
                     PlayerAction(S.s_chuong_2d157977, "☷", { window.openSheet(PlayerSheet.Chapters) }, Modifier.weight(1f).testTag("player_chapters"))
                 }
