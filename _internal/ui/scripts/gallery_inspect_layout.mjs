@@ -9,7 +9,12 @@ export function createLayoutHelpers() {
     const value = [...cluster].sort((a, b) => a.value - b.value)[Math.floor((cluster.length - 1) / 2)].value;
     return cluster.find((s) => s.value === value);
   }
-  return { majority };
+  // Mép canh của align-*/justify-content đã tính: Edge 158 trả "flex-start"/"flex-end" thành "flow-start"/"flow-end".
+  function alignEdge(value) {
+    const m = /^(?:(?:flex|flow)-)?(start|end)$/.exec(value ?? "");
+    return m ? m[1] : value;
+  }
+  return { majority, alignEdge };
 }
 
 export function crossFrameRhythm(stories) {
@@ -75,7 +80,7 @@ export function crossFrameTitles(stories) {
 
 // Nhúng vào trang bằng toString; các helper DOM được truyền từ inspector hiện tại.
 export function inspectLayout({ all, texts, css, rect, union, visible, hidden, selector, add, shape, childPath }, h) {
-  const { majority } = h;
+  const { majority, alignEdge } = h;
   const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
   const inkTexts = [], iconCache = new Map(), columns = [], gaps = [], rhythms = [];
   const right = (r) => r.x + r.width;
@@ -173,7 +178,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       const s = css(p);
       const intrinsicControl = p === el && owner(el) === el && el.getBoundingClientRect().width < (el.parentElement?.getBoundingClientRect().width ?? innerWidth) * 0.8;
       if (!intrinsicControl && (s.textAlign === "center" || /flex|grid/.test(s.display) && s.justifyContent === "center")) return false;
-      if (side === "right" && (s.textAlign === "right" || s.justifyContent === "flex-end")) return true;
+      if (side === "right" && (s.textAlign === "right" || alignEdge(s.justifyContent) === "end")) return true;
       const parent = p.parentElement;
       if (side === "right" && parent && p === parent.lastElementChild && parent.children.length > 1) {
         const ps = css(parent);
@@ -771,7 +776,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     const parent = svg.parentElement, ps = parent && css(parent);
     if (!parent || !/flex/.test(ps.display) || ps.flexDirection.startsWith("column")) continue;
     const align = css(svg).alignSelf === "auto" ? ps.alignItems : css(svg).alignSelf;
-    if (!/^(flex-)?start$/.test(align)) continue;
+    if (alignEdge(align) !== "start") continue;
     const ib = visible(svg, rect(svg.getBoundingClientRect()));
     if (!ib || ib.height > 28) continue;
     let next = svg.nextElementSibling;

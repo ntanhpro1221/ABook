@@ -36,6 +36,12 @@ describe("đa số và nhịp giữa frame", () => {
     expect(createLayoutHelpers().majority([8, 8, 12, 12].map((value) => ({ value })), 1)).toBeNull();
     expect(createLayoutHelpers().majority([8, 8, 8, 12].map((value) => ({ value })), 1).value).toBe(8);
   });
+  it("mép canh: flex-start (Chromium cũ) và flow-start (Edge 158) cùng là đầu; self-start và center không", () => {
+    const { alignEdge } = createLayoutHelpers();
+    expect(["flex-start", "flow-start", "start"].map(alignEdge)).toEqual(["start", "start", "start"]);
+    expect(["flex-end", "flow-end", "end"].map(alignEdge)).toEqual(["end", "end", "end"]);
+    expect(["self-start", "center", "normal", undefined].map(alignEdge)).toEqual(["self-start", "center", "normal", undefined]);
+  });
   it("nhận tên và số 10–11", () => {
     expect(normalizeRule("rule10")).toBe("INK EDGE"); expect(normalizeRule("rhythm")).toBe("RHYTHM"); expect(normalizeRule("rule11")).toBe("RHYTHM");
   });
