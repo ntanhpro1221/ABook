@@ -1,0 +1,46 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "OST background-music reference catalog",
+ "description": "Metadata only. Audio is copyrighted, never shipped or streamed by the public app. Checked by tests/test_ost_catalog.py.",
+ "type": "object",
+ "required": ["version", "about", "tracks"],
+ "properties": {
+  "version": {"const": 1},
+  "about": {"type": "string"},
+  "tracks": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object",
+    "required": ["id", "work", "work_original", "type", "title", "composer", "album", "year", "labels", "license", "duration",
+                 "description", "quality_score", "quality_note", "sources_reviewed", "audio_source", "vocals"],
+    "additionalProperties": false,
+    "properties": {
+     "id": {"type": "string", "pattern": "^[a-z0-9_]+-[0-9]+-x?[0-9]+$"},
+     "work": {"type": "string"}, "work_original": {"type": "string"},
+     "type": {"enum": ["anime", "anime film", "visual novel", "game"]},
+     "title": {"type": "string"}, "composer": {"type": "string"}, "album": {"type": "string"},
+     "year": {"type": "integer"}, "disc": {"type": ["integer", "null"]}, "track_no": {"type": ["integer", "null"]},
+     "musicbrainz": {"type": "object", "properties": {"release": {"type": ["string", "null"]}, "recording": {"type": ["string", "null"]}},
+                     "additionalProperties": false},
+     "labels": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"enum": ["peacefulness", "tenderness", "nostalgia", "sadness", "joy",
+                "playful", "power", "wonder", "tension", "fear", "anger", "mystery", "moved"]}},
+     "valence": {"type": ["number", "null"]}, "arousal": {"type": ["number", "null"]}, "tension": {"type": ["number", "null"]},
+     "emotions_model": {"type": ["object", "null"]}, "family_model": {"type": ["string", "null"]},
+     "fits_under_narration": {"type": ["number", "null"]},
+     "vocals": {"type": "boolean"}, "vocals_score": {"type": ["number", "null"]},
+     "excluded_reason": {"type": "string", "description": "Set when the track was reviewed but cannot sit under narration (sung lyrics, wrong length...)."},
+     "description": {"type": "string", "description": "2-4 Vietnamese sentences in our own words: sound, feeling, fitting scenes, why it is liked."},
+     "quality_score": {"type": "number", "minimum": 0, "maximum": 1},
+     "quality_note": {"type": "string"},
+     "sources_reviewed": {"type": "integer", "minimum": 0},
+     "audio_source": {"type": "object", "required": ["url"], "properties": {"url": {"type": "string", "pattern": "^https://youtu[.]be/[A-Za-z0-9_-]+$"},
+                      "channel": {"type": "string"}, "video_title": {"type": "string"}}, "additionalProperties": false},
+     "license": {"enum": ["copyrighted-private"]},
+     "duration": {"type": "number"}, "reference_length": {"type": ["number", "null"]}, "reference_source": {"type": "string"},
+     "lufs": {"type": ["number", "null"]}, "sha256": {"type": ["string", "null"]}, "bytes": {"type": ["integer", "null"]},
+     "analyzer": {"type": ["string", "null"]}
+    }
+   }
+  }
+ }
+}
