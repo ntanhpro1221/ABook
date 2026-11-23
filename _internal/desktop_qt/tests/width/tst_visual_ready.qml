@@ -109,8 +109,8 @@ Item {
         function test_settleWaitStepsAnInstalledClock() {
             qtAnimationClock.begin()
             try {
-                slow.value = slow.value === 0 ? 1 : 0
-                const target = slow.value
+                const target = slow.value === 0 ? 1 : 0 // read before the write: a Behavior keeps the old value readable
+                slow.value = target
                 verify(!VisualReady.settled(slow, qtVisualReady), "must observe the 4 s Behavior")
                 VisualReady.waitSettled(this, slow, qtVisualReady)
                 verify(VisualReady.settled(slow, qtVisualReady))
