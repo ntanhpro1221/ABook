@@ -576,12 +576,12 @@
     "reason": "Reviewed old/new icon_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_30_dark.png": {
-    "sha256": "051e3d9e8319b99739ead1953b35748f8fc85dabc60bac317bc2e1ebaf2c8ffd",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "37a032b467c1c7e56db99386725b2afcc5c5abecacc2908b8dc327debe6f6938",
+    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_30_light.png": {
-    "sha256": "4971e3ac5561eec496858cd192dc01d49497a0c43a2c7d58f3f2d24605542b0f",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "10685ced448d6d240d34941fddccb187e65c36e0040bfcb99403a5f6d83581e7",
+    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_empty_dark.png": {
     "sha256": "b28055b2855d1ce3a2613fa21b46b9fae084f075f993d5a8b0d3aad04662a09e",
@@ -616,8 +616,8 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_sort_menu_light.png": {
-    "sha256": "4a61b87e2b44a54e8ea02cfc3602465318960b145e8520a135b9370b4374e7f0",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "4686b2a7d39488b056d5e04b88ad105472385346a4c1b4d8b89da74f15cc2689",
+    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_dark.png": {
     "sha256": "a251587cbea29c0f789d617fdabf25270033714a13a3e31a145925a1a279928d",
@@ -1156,8 +1156,8 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_follow_light.png": {
-    "sha256": "8e31dcb8a9f9020f5b6383ab9b83c2bddbb7a895459a0f4c5225eb6481976b98",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "27ae1b4d6c71698149bd825c62f52a7fd872fb44fbb3cb76647b1d6ed37ba904",
+    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_light.png": {
     "sha256": "72528243cd65625319756157c648e098ce1b9c7aa3d3d2b677bec3b0543157ed",
@@ -1168,8 +1168,24 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_light.png": {
-    "sha256": "7c1c76fcb88c53ba1b276bfd854d532c35f1429e7a14050ed3d9d60dfbc2a294",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "8ceed241b7290300371756481aefe48a00f003a118a09ab5e7c8dc0511c98acf",
+    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_return_chip_listen_font130_dark.png": {
+    "sha256": "ae980f3b6d080de31805113e3ca467c2e0b5c7f5bb4ccb681a3eafff3b1a50d6",
+    "reason": "Reviewed by rel175 (23-11) alone (new at 130% font) (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_return_chip_listen_font130_light.png": {
+    "sha256": "94bd0dbef0de4045f6c1a947b6c6141e05d4fbac0e0da8d25a5de9b4bd62f040",
+    "reason": "Reviewed by rel175 (23-11) alone (new at 130% font) (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_return_chip_read_font130_dark.png": {
+    "sha256": "7fb9fde19a39d6d05c162a04e8d36bc48fb252da0885479ccde064ae0398b13d",
+    "reason": "Reviewed by rel175 (23-11) alone (new at 130% font) (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_return_chip_read_font130_light.png": {
+    "sha256": "dadb681a10b1d99be857ef181ca6922776cf71b7778e28ec5b15a8ca5b32fa16",
+    "reason": "Reviewed by rel175 (23-11) alone (new at 130% font) (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_dark.png": {
     "sha256": "ef5a982a9cb41571730da3bf14eb0fe4d010cddb8ca200c5fed57199f8b63b1f",
