@@ -3701,6 +3701,9 @@ def test_high_quality_records_an_unresolved_short_name_and_carries_on(monkeypatc
     # through a whole book is worse than the reader saying the Latin letters. But the
     # conclusion of that argument is to say the letters, not to stop - stopping is only right
     # when somebody is standing there to be asked.
+    # An engine that speaks English keeps a non-romaji Western spelling as written (owner 24-11), so the names
+    # reach the transliteration routes only for one that cannot.
+    monkeypatch.setattr("abook.studio_names.STUDIO_ENGINE_SPEAKS_ENGLISH", False)
     analyzer.reconcile_name_pronunciations()
 
     assert any(
