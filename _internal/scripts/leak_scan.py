@@ -30,8 +30,10 @@ import sys
 from pathlib import Path
 
 SHINGLE = 7
-# Book folders in the corpus that hold no book text of their own.
-CORPUS_SKIP = {"claude", "_full", "_dup", "_survey", "_gold", "keys", "releases", "research", "g2pgate", "S"}
+# Book folders in the corpus that hold no book text of their own (music_private: the private music catalog and its
+# report, written by the project from the same labels as the app).
+CORPUS_SKIP = {"claude", "_full", "_dup", "_survey", "_gold", "keys", "releases", "research", "g2pgate", "S",
+               "music_private"}
 VN_MARKS = set("ăâđêôơưàảãáạằẳẵắặầẩẫấậèẻẽéẹềểễếệìỉĩíịòỏõóọồổỗốộờởỡớợùủũúụừửữứựỳỷỹýỵ")
 WORD = re.compile(r"[^\W\d_]+", re.UNICODE)
 BINARY_SUFFIXES = (

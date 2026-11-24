@@ -52,7 +52,8 @@ CORPUS_SUFFIXES = {".txt", ".md"}
 # Top-level Corpus folders that hold no story of their own: agent notes, R8 mapping archives (Kotlin identifiers),
 # research notes and specs, scratch specs and key docs. Story excerpts quoted there come from the story folders,
 # which stay indexed, so skipping these loses no leak while app code stops matching identifiers and specs.
-CORPUS_NON_STORY_DIRS = {"claude", "releases", "research", "s", "keys"}
+# music_private is the private music catalog (track metadata and the project's own report), not a story.
+CORPUS_NON_STORY_DIRS = {"claude", "releases", "research", "s", "keys", "music_private"}
 CORPUS_COLLECTIONS = {"truyen", "ai-dich", "sang-tac", "khac", "merged"}
 CORPUS_TECHNICAL_DIRS = CORPUS_SKIP_DIRS | {
     "android", "docs", "spec", "specs", "mapping", "mappings", "notes", "survey",
