@@ -10,7 +10,7 @@ import type { BookMusicTrack } from "./BookMusic";
 import { percent } from "./TrackSheet";
 
 /** "Nhạc trong sách": bài kho nhạc không có (`local:` đóng gói kèm sách). Cùng cột với TrackRow để danh sách trộn thẳng hàng: ô nghe thử mang
- *  dấu sách mờ (không có gì để nghe thử hay lưu), dòng phụ "Đi kèm sách", cột tải để trống. Chạm mở BundledTrackSheet. */
+ *  dấu sách mờ (không có gì để nghe thử hay lưu), dòng phụ "Đi kèm sách"; không có cột tải - bề rộng ấy dành cho người sáng tác. Chạm mở BundledTrackSheet. */
 export function BundledTrackRow({ track, onOpen }: { track: BookMusicTrack; onOpen: () => void }) {
   return (
     <div className="flex min-h-16 items-center gap-2 border-b border-line py-2 last:border-b-0" data-bundled-track>
@@ -21,7 +21,6 @@ export function BundledTrackRow({ track, onOpen }: { track: BookMusicTrack; onOp
         <span className="block text-sm font-medium [overflow-wrap:anywhere]">{track.title || S.s_bai_nay_d9683a01}</span>
         <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, S.s_bundled_track]} />
       </button>
-      <span aria-hidden className="size-9 shrink-0" />
     </div>
   );
 }

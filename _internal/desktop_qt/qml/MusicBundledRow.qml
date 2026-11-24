@@ -4,8 +4,8 @@ import ABook
 import "TextWrap.js" as TextWrap
 
 // "Nhạc trong sách": bài kho nhạc không có (`local:` đóng gói kèm sách; BundledTrackRow của ui/src/music/BundledTrack.tsx). Cùng cột với
-// MusicTrackRow để danh sách trộn thẳng hàng: ô nghe thử mang dấu sách mờ (không có gì để nghe thử hay lưu), dòng phụ "Đi kèm sách", cột tải để
-// trống. Bấm dòng mở MusicBundledDetail.
+// MusicTrackRow để danh sách trộn thẳng hàng: ô nghe thử mang dấu sách mờ (không có gì để nghe thử hay lưu), dòng phụ "Đi kèm sách"; không có cột
+// tải - bề rộng ấy dành cho người sáng tác. Bấm dòng mở MusicBundledDetail.
 Interactive {
     id: root
     property var track: ({})
@@ -39,7 +39,7 @@ Interactive {
         id: words
         x: mark.x + mark.width + Theme.s12
         y: 1 + Theme.s12
-        width: root.width - x - Theme.buttonHeight - Theme.s12
+        width: root.width - x - Theme.s12
         spacing: 4
         Text {
             width: parent.width

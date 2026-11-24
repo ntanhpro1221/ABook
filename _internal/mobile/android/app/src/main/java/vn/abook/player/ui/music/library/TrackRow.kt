@@ -109,9 +109,9 @@ private fun DownloadControl(track: MusicLibrary.Track, ui: LibraryUi, state: Lib
 }
 
 /**
- * "Nhạc trong sách": a track the catalog does not have (`local:` packaged with the book). Same columns as [TrackRow] so a mixed list stays
- * aligned: the preview slot carries a quiet book mark (nothing to preview or save), the creator line says "Đi kèm sách", the download column
- * stays empty. The row opens the bundled sheet (name, creator, the first scene's mood).
+ * "Nhạc trong sách": a track the catalog does not have (`local:` packaged with the book). The text column starts where [TrackRow]'s does so a mixed
+ * list stays aligned: the preview slot carries a quiet book mark (nothing to preview or save), the creator line says "Đi kèm sách". There is
+ * no download column: its width goes to the creator, which "Đi kèm sách" would otherwise squeeze. The row opens the bundled sheet (name, creator, the first scene's mood).
  */
 @Composable
 fun BundledTrackRow(track: MusicLibrary.Track, onOpen: () -> Unit) {
@@ -142,6 +142,5 @@ fun BundledTrackRow(track: MusicLibrary.Track, onOpen: () -> Unit) {
             }
         }
         ChevronIcon(colors.text3)
-        Spacer(Modifier.width(Dim.s8 + Dim.touch))
     }
 }
