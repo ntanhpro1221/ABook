@@ -108,3 +108,12 @@ def test_superseded_uploads_point_at_a_kept_official_release():
         new = tracks[new_id]
         assert "excluded_reason" not in new and new["audio_source"]["version"] == "official", track["id"]
         assert new["labels"] == track["labels"], track["id"]
+
+
+def test_vote_counts_and_instrumentals_of_sung_songs():
+    tracks = CATALOG["tracks"].values()
+    assert all(isinstance(t["list_votes"], int) and t["list_votes"] >= 0 for t in tracks)
+    assert any(t["list_votes"] >= 2 for t in tracks)  # the consensus count was actually run
+    for t in tracks:
+        if "instrumental_of" in t and "excluded_reason" not in t:
+            assert t["vocals"] is False, t["id"]
