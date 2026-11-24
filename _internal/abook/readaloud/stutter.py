@@ -2,8 +2,8 @@
 (không phân biệt hoa thường). Từ ghép thật không khớp vì phần sau không mở đầu bằng tiền tố: "X-quang", "A-đam", "e-mail", "T-shirt", "B-52". Phần lặp bằng cả chữ
 ("Ha-ha", "Hi-hi") là tiếng cười, không phải nói lắp.
 
-Chữ cái + kính ngữ không bao giờ đứng một mình ("S-san", "Sa-san", "K-kun") là biệt danh viết tắt ("Mình sẽ ra ngoài cùng với S-san" - hoshizora, 4 câu; "giới
-thiệu Sa-san"), không phải nói lắp: không ai lắp vào chữ "san". Tiếng gọi đứng riêng được ("senpai", "sensei", "nii") thì "S-senpai" vẫn là nói lắp.
+Chữ cái + kính ngữ không bao giờ đứng một mình ("S-san", "Sa-san", "K-kun") là biệt danh viết tắt (một truyện gọi nhân vật như vậy ở 4 câu; ví dụ tự viết:
+"Đi với S-san", "chào Sa-san"), không phải nói lắp: không ai lắp vào chữ "san". Tiếng gọi đứng riêng được ("senpai", "sensei", "nii") thì "S-senpai" vẫn là nói lắp.
 
 Chỉ dùng để quyết định cách ĐỌC (luật đọc của VieNeu, và để không gửi chữ lắp đi phiên âm như một tên riêng). Chữ truyện hiển thị không đổi."""
 

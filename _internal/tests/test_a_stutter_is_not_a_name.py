@@ -50,7 +50,7 @@ def test_a_stuttered_name_still_counts_as_that_name() -> None:
 
 
 def test_an_initial_with_an_honorific_is_still_a_name_candidate() -> None:
-    assert _candidates("Mình sẽ ra ngoài cùng với S-san vào ngày mai.", "“S-san là cậu sao?”") == {"S-san"}
+    assert _candidates("Chiều nay tớ hẹn S-san ở thư viện.", "“S-san đến rồi kìa!”") == {"S-san"}
 
 
 @pytest.mark.parametrize("text, said", [
