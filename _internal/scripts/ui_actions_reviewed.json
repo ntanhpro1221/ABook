@@ -15639,25 +15639,25 @@
     "id": "c9ae76fa186712330b06",
     "kind": "pending",
     "path": "desktop_qt/qml/Main.qml",
-    "line": 70,
+    "line": 73,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "33f009c4298ece58d8b7f72e8e14ef5e6e24d516ec31c6f89490ac767b536ec9",
+    "source_sha256": "e3e8563b1e488ec0da9f97fc88ce623734a53fee700f6404af58e10c6987411d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (trayquit): the tray binding and exit path changed; this statement and its guard are unchanged."
   },
   {
     "id": "154fb23af149d009c2b5",
     "kind": "pending",
     "path": "desktop_qt/qml/Main.qml",
-    "line": 373,
+    "line": 376,
     "statement": "if (name === \"abook-update\") Api.call(\"GET\", \"/api/app\", null, function(data, error) { if (!error) Api.info = data })",
     "occurrence": 1,
-    "source_sha256": "33f009c4298ece58d8b7f72e8e14ef5e6e24d516ec31c6f89490ac767b536ec9",
+    "source_sha256": "e3e8563b1e488ec0da9f97fc88ce623734a53fee700f6404af58e10c6987411d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (trayquit): the tray binding and exit path changed; this statement and its guard are unchanged."
   },
   {
     "id": "839fcd74729978555a9e",

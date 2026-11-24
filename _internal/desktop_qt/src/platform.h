@@ -29,6 +29,10 @@ public:
     Q_INVOKABLE void setSetting(const QString &key, const QString &value);
     Q_INVOKABLE void revealFile(const QString &path);
     Q_INVOKABLE QRect workArea(QWindow *window, const QPointF &position) const;
+    /// Lối thoát có chủ ý DUY NHẤT của QML (khay, menu, phím tắt - qua WindowMode.quit sau khi lưu): QCoreApplication::exit,
+    /// không QGuiApplication::quit (nó hỏi từng cửa sổ, và cửa sổ đang ẩn khay hay hộp đang mở có thể từ chối). aboutToQuit vẫn
+    /// phát: Backend::stop dừng host python, Player::shutdown lưu chỗ nghe.
+    Q_INVOKABLE void exitApp();
 
 signals:
     void reduceMotionChanged();

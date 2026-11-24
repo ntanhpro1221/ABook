@@ -24,7 +24,8 @@ Window {
         window: win
         miniHeight: miniPlayer.naturalHeight
         onExpanded: win.openNowPlaying()
-        onExitRequested: Qt.quit()
+        // Platform.exitApp = QCoreApplication::exit: Qt.quit() hỏi các cửa sổ trước, và cửa sổ đang ẩn khay / hộp đang mở có thể từ chối.
+        onExitRequested: Platform.exitApp()
         onNotifyTray: if (win.tray) win.tray.showMessage(S.s_abook_1c37d334, S.s_abook_van_chay_o_khay_c4e8227a)
         onMiniChanged: chrome.setMini(mini)
     }
@@ -34,7 +35,9 @@ Window {
     Loader {
         id: trayLoader
         active: !Bench.hiddenDesktop
-        sourceComponent: DesktopTray { windowMode: windowMode }
+        // `mode`, không `windowMode: windowMode`: trong component lồng, vế phải tìm thuộc tính của chính DesktopTray trước id của
+        // Main, nên khay nhận null và mọi mục menu (Mở, Thoát...) không làm gì (0.4.174, chủ sách 24-11: bấm Thoát mà app vẫn ở khay).
+        sourceComponent: DesktopTray { mode: windowMode }
     }
     MiniPlayer {
         id: miniPlayer

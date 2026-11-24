@@ -164,7 +164,7 @@ void Bench::finish() {
         return;
     write(outPath());
     QFile::remove(outPath() + QStringLiteral(".partial"));
-    QCoreApplication::quit();
+    QCoreApplication::exit(0);   // như Platform::exitApp: không hỏi cửa sổ
 }
 
 // Bản giữa chừng ra tệp .partial: tools/measure.py coi tệp kết quả xuất hiện là app đã xong.

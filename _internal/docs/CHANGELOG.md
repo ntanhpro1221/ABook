@@ -15,6 +15,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Tab "Nhạc" của trang sách liệt kê mọi bài cuốn sách dùng, theo thứ tự nghe - kể cả nhạc riêng người làm sách đóng gói kèm sách (trước đây những cuốn chỉ có nhạc như vậy ghi "Chưa có nhạc" dù vẫn đang phát nhạc). Bài đi kèm sách ghi "Đi kèm sách", không lưu riêng được; chạm để xem tên, người sáng tác và cảm xúc của đoạn nhạc.
 
+### Sửa lỗi
+
+- Máy tính: menu ở khay hệ thống làm việc trở lại - "Thoát ABook" tắt hẳn app (cả máy chủ nền) dù cửa sổ đang hiện, đang ẩn ở khay, thu nhỏ, ở cửa sổ mini hay đang mở hộp thoại; "Mở ABook", bấm icon khay, Phát/Tạm dừng, Lùi/Tới, Chương trước/sau và Cửa sổ mini từ khay cũng chạy (trước đây mọi mục của menu khay không làm gì).
+
 ## [0.4.175] - 2026-11-23
 
 ### Giao diện
