@@ -598,8 +598,8 @@
     "reason": "abook/webui/package_share.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/webui/packages.py": {
-    "sha256": "eff6ea4aa9010c709d7e81cf19bcb855f8c175c34994a163ef91afc912df9f72",
-    "reason": "abook/webui/packages.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
+    "sha256": "3aa59bdc643a892fd64320a20829629a978f3789bf9bf55bfef894a6e70cfc21",
+    "reason": "abook/webui/packages.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/webui/peer_players.py": {
     "sha256": "c3afb3d61c3d72ae12a9bc033e5f67d0290ec174b711dbfe5e3dce2a28011703",
@@ -1011,7 +1011,15 @@
   },
   "_internal/docs/ENGLISH_TO_VIETNAMESE.md": {
     "sha256": "e2318fb8d9c11e62966884df737f1469c8cb0929a6990b7a278310c8b8186379",
-    "reason": "docs/ENGLISH_TO_VIETNAMESE.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "docs/ENGLISH_TO_VIETNAMESE.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
+    "corpus_review": {
+      "classification": "i",
+      "shingles": [
+        "71488d6d025a7c95"
+      ],
+      "file_sha256": "e2318fb8d9c11e62966884df737f1469c8cb0929a6990b7a278310c8b8186379",
+      "reason": "rel176 (24-11): technical note at line 167 about the phoneme table order (whose fault a mismatch is); a stock phrase, one new story, a contextual coincidence; category i."
+    }
   },
   "_internal/docs/GOLD_GUIDE.md": {
     "sha256": "c12f9ee7f8f6289b72fda93807e1a4cc07a6461395f1dcfccce32ce3989eb6a8",
@@ -1276,12 +1284,13 @@
   },
   "_internal/docs/VERSIONS.md": {
     "sha256": "6ffd12dd8bec2157e5988904fa5c9eeda4b4bb1022038abd083c74e9fed22318",
-    "reason": "docs/VERSIONS.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
+    "reason": "docs/VERSIONS.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "6ffd12dd8bec2157e5988904fa5c9eeda4b4bb1022038abd083c74e9fed22318",
-      "reason": "_internal/docs/VERSIONS.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "reason": "_internal/docs/VERSIONS.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two. rel176 (24-11): process-lesson heading at line 1089 (breaking ones own rule); a stock phrase found in new stories, a contextual coincidence; category i.",
       "shingles": [
+        "2161c2315b132903",
         "69971e6b69f7be45",
         "7659c5af92463c54",
         "97eba70e85ec5e1b",
@@ -2818,10 +2827,12 @@
     "corpus_review": {
       "classification": "i",
       "file_sha256": "50e1832d8c24e1d45661b8c1ea37cf9366a9ef7c28c91431393ca8b4a54ea86c",
-      "reason": "_internal/scripts/vieneu_android_fixtures.py: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "reason": "_internal/scripts/vieneu_android_fixtures.py: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two. rel176 (24-11): the authored counting sentence (one to seventeen/eighteen in words) used to test long readings; the counting run also occurs in unrelated stories added to the Corpus on 25-11, a contextual coincidence; category i.",
       "shingles": [
+        "18782b4185bec081",
         "23cae7b6e4fef3c5",
         "322165be87076ff3",
+        "79ec5ae671e3a49b",
         "7f754735ca426ba6",
         "806b8123a439c669",
         "80710c9f6908cbd1",
@@ -3395,12 +3406,14 @@
     "corpus_review": {
       "classification": "i",
       "file_sha256": "0e5c2606f1b493cbd494c75330c2928a6249dbc65d7b112d5e2e46f543606977",
-      "reason": "_internal/tests/fixtures/vieneu/android/text.json: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved.",
+      "reason": "_internal/tests/fixtures/vieneu/android/text.json: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved. rel176 (24-11): the authored counting sentence (one to seventeen/eighteen in words) used to test long readings; the counting run also occurs in unrelated stories added to the Corpus on 25-11, a contextual coincidence (the fixture readings of that sentence); category i.",
       "shingles": [
+        "18782b4185bec081",
         "23cae7b6e4fef3c5",
         "322165be87076ff3",
         "643c288762546612",
         "742943348f9b2fc7",
+        "79ec5ae671e3a49b",
         "806b8123a439c669",
         "80710c9f6908cbd1",
         "8a8488ac471a9a23",
@@ -3746,13 +3759,14 @@
   },
   "_internal/tests/test_address_cues.py": {
     "sha256": "60d65a3fc3e172f4b476d4b8165c1409a72ce6a168763e4e5a5c5a066d0716ff",
-    "reason": "tests/test_address_cues.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "reason": "tests/test_address_cues.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "60d65a3fc3e172f4b476d4b8165c1409a72ce6a168763e4e5a5c5a066d0716ff",
-      "reason": "_internal/tests/test_address_cues.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "reason": "_internal/tests/test_address_cues.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two. rel176 (24-11): authored sample line of the ta/ngươi speaker cue test (come here, I have something to tell you); a stock phrase, a contextual coincidence; category i.",
       "shingles": [
         "aac5b4c73775361f",
+        "b9f9697ba63ccb21",
         "d14bd53aa8d8d7b6"
       ]
     }
@@ -4555,13 +4569,14 @@
   },
   "_internal/tests/test_readaloud_reading_forms.py": {
     "sha256": "9483af6659526c2c5d0d63724a0639de69f96407fd05e6480b7c44a92e74085d",
-    "reason": "tests/test_readaloud_reading_forms.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "reason": "tests/test_readaloud_reading_forms.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "9483af6659526c2c5d0d63724a0639de69f96407fd05e6480b7c44a92e74085d",
-      "reason": "_internal/tests/test_readaloud_reading_forms.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "reason": "_internal/tests/test_readaloud_reading_forms.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two. rel176 (24-11): authored hesitant sample sentence of the supertonic cut test (I know nothing about this); a stock phrase, a contextual coincidence; category i.",
       "shingles": [
         "3fc60f85fb90c457",
+        "e14bd061428db993",
         "ea0219028a4c2372"
       ]
     }
@@ -4603,12 +4618,13 @@
   },
   "_internal/tests/test_readaloud_vieneu.py": {
     "sha256": "f17d08a0fa5a932d12d90cd5c9287cc700115f2fbc09e082a6e0346a30b6524c",
-    "reason": "_internal/tests/test_readaloud_vieneu.py: tnfix173 exact bytes reviewed as authored technical normalization expectations. Existing comments and historical documentation retain their public origin. Corpus matching remains active.",
+    "reason": "_internal/tests/test_readaloud_vieneu.py: tnfix173 exact bytes reviewed as authored technical normalization expectations. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "f17d08a0fa5a932d12d90cd5c9287cc700115f2fbc09e082a6e0346a30b6524c",
-      "reason": "_internal/tests/test_readaloud_vieneu.py: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved.",
+      "reason": "_internal/tests/test_readaloud_vieneu.py: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved. rel176 (24-11): the authored counting sentence (one to seventeen/eighteen in words) used to test long readings; the counting run also occurs in unrelated stories added to the Corpus on 25-11, a contextual coincidence; category i.",
       "shingles": [
+        "79ec5ae671e3a49b",
         "d7c7e36fd5e81b17",
         "ffd7f09fd751c208"
       ]
@@ -4991,12 +5007,13 @@
   },
   "_internal/tests/test_voice_try.py": {
     "sha256": "6b8d765fa9c078cb3678057d90ac33a73032f12a5cb96853e808f08fd5ffeaf3",
-    "reason": "tests/test_voice_try.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "reason": "tests/test_voice_try.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "6b8d765fa9c078cb3678057d90ac33a73032f12a5cb96853e808f08fd5ffeaf3",
-      "reason": "_internal/tests/test_voice_try.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "reason": "_internal/tests/test_voice_try.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two. rel176 (24-11): authored angry sample line of the voice try test (do not touch that box); a stock phrase, one new story, a contextual coincidence; category i.",
       "shingles": [
+        "117b1c901e9f3d0f",
         "7f52f9dc25aa6a56"
       ]
     }
@@ -5263,14 +5280,15 @@
     }
   },
   "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/LocalLiveTest.kt": {
-    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/LocalLiveTest.kt: individually classified contextual coincidences only.",
+    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/LocalLiveTest.kt: individually classified contextual coincidences only. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "rules": [],
     "sha256": "de0c1db8e4684b4d700d6bccfb056d37707023364548081ed60a3a71e602c179",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "de0c1db8e4684b4d700d6bccfb056d37707023364548081ed60a3a71e602c179",
-      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/LocalLiveTest.kt: Number-word table or normalization fixture; Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/LocalLiveTest.kt: Number-word table or normalization fixture; Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two. rel176 (24-11): the authored counting sentence (one to seventeen/eighteen in words) used to test long readings; the counting run also occurs in unrelated stories added to the Corpus on 25-11, a contextual coincidence; category i.",
       "shingles": [
+        "79ec5ae671e3a49b",
         "d7c7e36fd5e81b17",
         "f97757164667c9d2",
         "ffd7f09fd751c208"
@@ -5305,14 +5323,16 @@
     }
   },
   "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/VieneuSpeakerTest.kt": {
-    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/VieneuSpeakerTest.kt: individually classified contextual coincidences only.",
+    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/VieneuSpeakerTest.kt: individually classified contextual coincidences only. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "rules": [],
     "sha256": "4467e215f957d90b7e4d8d54613c1674a60f8665dfa1f1d8fe8bc3c437193f9e",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "4467e215f957d90b7e4d8d54613c1674a60f8665dfa1f1d8fe8bc3c437193f9e",
-      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/VieneuSpeakerTest.kt: Number-word table or normalization fixture; Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/VieneuSpeakerTest.kt: Number-word table or normalization fixture; Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two. rel176 (24-11): the authored counting sentence (one to seventeen/eighteen in words) used to test long readings; the counting run also occurs in unrelated stories added to the Corpus on 25-11, a contextual coincidence; category i.",
       "shingles": [
+        "18782b4185bec081",
+        "79ec5ae671e3a49b",
         "d7c7e36fd5e81b17",
         "eace8aa6859be99c",
         "ffd7f09fd751c208"
@@ -5741,10 +5761,11 @@
   },
   "_internal/music/ost_catalog.json": {
     "sha256": "2f4cb548509054bdd5d5f6c6e17a0bc83883a2937f85ff2b17b08e1b9e9cc306",
-    "reason": "_internal/music/ost_catalog.json: flagged on the 0.4.176 line; flagged strings read in full by rel176 (24-11): catalog descriptions written by the project for each OST piece (mood, instruments, scene use); no lyrics, no review links, no local paths. Authored by the project, no story text.",
+    "reason": "_internal/music/ost_catalog.json: flagged on the 0.4.176 line; flagged strings read in full by rel176 (24-11): catalog descriptions written by the project for each OST piece (mood, instruments, scene use); no lyrics, no review links, no local paths. Authored by the project, no story text. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
       "shingles": [
+        "0d588123bd2d5750",
         "29e22e0fc1e056bb",
         "2ca8c8f3f4667015",
         "37f8d20fa83e3d9d",
@@ -5756,6 +5777,7 @@
         "79353193225e24cc",
         "9d00681a79d0a687",
         "caf4de3e0aac868a",
+        "d4f41c24cf1623d4",
         "da3c30bf7be19270",
         "dd1053404de919ad",
         "e2f2ef25b04ad884",
@@ -5764,7 +5786,7 @@
         "f34b7d2c9f679ce0"
       ],
       "file_sha256": "2f4cb548509054bdd5d5f6c6e17a0bc83883a2937f85ff2b17b08e1b9e9cc306",
-      "reason": "rel176 (24-11): stock mood phrases of the project-written track descriptions (rainbow after the rain, talk by the campfire, walking home after a long day, a simple repeating melody); each of the 17 shingles occurs in one different story, a contextual coincidence; category i."
+      "reason": "rel176 (24-11): stock mood phrases of the project-written track descriptions (rainbow after the rain, talk by the campfire, walking home after a long day, a simple repeating melody); each of the 17 shingles occurs in one different story, a contextual coincidence; category i. rel176 (24-11): stock mood phrases of the project-written track descriptions (rainbow after the rain, talk by the campfire, walking home after a long day, a simple repeating melody); each of the 17 shingles occurs in one different story, a contextual coincidence; 25-11 Corpus growth added two more of the same kind (the description of 滅びへの序章 that renders its title, prelude to destruction, and a scene-use note about what predecessors left behind); category i."
     }
   },
   "_internal/tests/test_a_stutter_is_not_a_name.py": {
