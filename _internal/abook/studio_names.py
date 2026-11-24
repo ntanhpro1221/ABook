@@ -102,9 +102,11 @@ def planned_reading(surface: str, origin: str | None, engine_speaks_english: boo
         if reading is not None:
             spoken.append(reading)
             by_rule = True
-        elif (keeps_english(word, origin, engine_speaks_english)
-              or (direct_english and engine_speaks_english and _direct_word(word, origin))):
+        elif keeps_english(word, origin, engine_speaks_english):
             spoken.append(word)
+            by_english = True
+        elif direct_english and engine_speaks_english and (direct := _direct_reading(word, origin)) is not None:
+            spoken.append(direct)
             by_english = True
         elif is_vietnamese_syllable(word.lower()):
             spoken.append(word)
@@ -115,10 +117,36 @@ def planned_reading(surface: str, origin: str | None, engine_speaks_english: boo
     return " ".join(spoken), RULE_ROMANIZATION_PRONUNCIATION_SOURCE if by_rule else KEEP_ENGLISH_PRONUNCIATION_SOURCE
 
 
-def _direct_word(word: str, origin: str | None) -> bool:
-    from .readaloud.english_policy import keeps_word
+def _direct_reading(word: str, origin: str | None) -> str | None:
+    """Chữ đưa máy đọc cho một chữ Tây (chủ sách 24-11, Brunhild: "cho VieNeu tự đọc"), None khi chữ ấy không chắc là Tây.
 
-    return keeps_word(word, origin)
+    Nguyên chữ khi `english_policy.keeps_word` nhận, hay khi tên có trong CMUdict (âm Anh) mà không mang dấu Hàn và RR Hàn
+    không đọc được nó, hoặc cuốn không gốc Á ("Eden", "Johan"; đo trên translit_bench: thêm 33 tên Tây, 5 tên Á). Tên Tây
+    mang hậu tố gọi Nhật giữ tên, đọc hậu tố ("Kale-san", "Ariel-sama" -> "Ariel-sa-ma"). Còn lại (romaji, RR) đi đường cũ."""
+    from .readaloud.japanese_policy import _head
+
+    if _western(word, origin):
+        return word
+    head, _ = _head(word)
+    if head == word or not _western(head, origin):
+        return None
+    said = readaloud_names.honorific_reading(word, origin)
+    return said if said and said.startswith(head + "-") else None
+
+
+def _western(word: str, origin: str | None) -> bool:
+    from .analysis import _cmudict_entries, _name_candidate_key, is_vietnamese_syllable
+    from .readaloud.english_policy import keeps_word
+    from .romanization import romanized_reading
+
+    if keeps_word(word, origin):
+        return True
+    low = word.casefold()
+    if (is_vietnamese_syllable(low) or low in readaloud_names.JAPANESE_COMMON or "-" in word
+            or any(mark in low for mark in readaloud_names.KO_MARKS) or low in readaloud_names.KOREAN_SURNAMES):
+        return False
+    korean = romanized_reading(word, "ko") is not None and not readaloud_names.western_in_korean(word)
+    return _name_candidate_key(word) in _cmudict_entries() and (origin not in readaloud_names.ORIGINS or not korean)
 
 
 def japanese_pronunciations(pronunciations: list[Any], origin: str | None,
@@ -181,7 +209,14 @@ def lockable(surface: str, spoken_form: str) -> bool:
         return all(valid_spoken_form(said) for said in spoken)
     if len(spoken) < len(words):
         return False
-    return all(said == word or valid_spoken_form(said) for word, said in zip(words, spoken))
+    return all(said == word or valid_spoken_form(said) or _kept_head(word, said) for word, said in zip(words, spoken))
+
+
+def _kept_head(word: str, said: str) -> bool:
+    """Tên Tây giữ nguyên chữ, hậu tố gọi sau gạch đọc thành âm tiết ("Ariel-sama" -> "Ariel-sa-ma")."""
+    parts, groups = word.split("-"), said.split("-")
+    return any(groups[:index] == parts[:index] and valid_spoken_form("-".join(groups[index:]))
+               for index in range(1, min(len(parts), len(groups))))
 
 
 def rule_word_corrections(pronunciations: list[Any]) -> dict[str, str]:

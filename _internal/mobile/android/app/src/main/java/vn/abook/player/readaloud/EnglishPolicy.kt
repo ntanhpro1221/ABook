@@ -188,7 +188,14 @@ object EnglishPolicy {
         if (vietnamese(core) || lower in Names.JAPANESE_COMMON) return false
         if (JapanesePolicy.reading(core, origin) != null || Names.nameReading(core, origin) != null || Names.honorificReading(core, origin) != null) return false
         if (lower.replace("-", "") in EnglishWords.ALL || lower in BuildConfig.DIRECT_ENGLISH_WORDS.split(" ")) return true
-        return Names.ORIGINS.all { Romanization.reading(core, it) == null }
+        return Names.ORIGINS.all { Romanization.reading(core, it) == null } || westernSpelling(core)
+    }
+
+    /** english_policy.western_spelling: chữ Latinh không tách được thành romaji Nhật và không mang dấu Hàn - tên Tây để VieNeu tự đọc (chủ sách 24-11). */
+    fun westernSpelling(core: String): Boolean {
+        val low = core.lowercase(Locale.ROOT)
+        if (Names.KO_MARKS.any { it in low } || low in Names.KOREAN_SURNAMES) return false
+        return !(Romanization.reading(core, "ja") != null && JapanesePolicy.syllables(core) > 0)
     }
 
     fun reading(core: String, origin: String?): Pair<String, String>? {

@@ -235,7 +235,25 @@ def keeps_word(core: str, origin: str | None) -> bool:
         return False
     if core.replace("-", "").lower() in names.english_words() or core.lower() in POLICY["english_words"]:
         return True
-    return all(romanized_reading(core, lang) is None for lang in names.ORIGINS)
+    return all(romanized_reading(core, lang) is None for lang in names.ORIGINS) or western_spelling(core)
+
+
+def western_spelling(core: str) -> bool:
+    """A Latin spelling that cannot be Japanese romaji and carries no Korean mark.
+
+    Owner 24-11 (Brunhild): Western names are left for VieNeu to say as written, never
+    transliterated. Korean RR accepts most Western spellings ("Elma", "Golgora",
+    "Brunhild"-like clusters), so RR alone is no evidence of a Korean name; romaji
+    is stricter. Measured on Corpus/research/tn/translit_bench, capitalised tokens
+    no other rule decided: 385 of 471 Western caught, 18 of 104 Asian taken.
+    """
+    from ..romanization import romanized_reading
+    from .japanese_policy import syllables
+
+    low = core.casefold()
+    if any(mark in low for mark in names.KO_MARKS) or low in names.KOREAN_SURNAMES:
+        return False
+    return not (romanized_reading(core, "ja") and syllables(core))
 
 
 def reading(core: str, origin: str | None) -> tuple[str, str] | None:
