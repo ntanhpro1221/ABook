@@ -52,6 +52,7 @@ ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "readaloud/japanese_lexicon.txt.gz",
     "romanization.py",
     "readaloud/names.py",
+    "readaloud/stutter.py",  # chữ nói lắp không gửi đi phiên âm như tên (analysis._name_candidate_contexts)
     "character_registry.py",
     "models.py",
     "name_snap.py",
@@ -107,6 +108,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "readaloud/japanese_audio.py",
     "readaloud/readings.py",
     "readaloud/shouts.py",
+    "readaloud/stutter.py",
     "readaloud/sound_policy.json",
     "readaloud/studio_tn.py",
     "readaloud/symbols.py",

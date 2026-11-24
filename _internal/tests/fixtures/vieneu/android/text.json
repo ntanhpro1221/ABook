@@ -2618,63 +2618,109 @@
   },
   {
    "sentences": [
-    "tờ… tôi không biết.",
-    "chờ… Chuyện đó...",
-    "ngờ… ngài có chắc.",
-    "[khờ… Không phải thế.",
-    "“tờ… Xu-ki-nô-ki-xen-pai cho tôi quá giang.",
-    "e… em muốn.",
+    "tôi… tôi không biết.",
+    "chuyện… Chuyện đó...",
+    "ngài… ngài có chắc.",
+    "[không… Không phải thế.",
+    "“xu… Xu-ki-nô-ki-xen-pai cho tôi quá giang.",
+    "em… em muốn.",
     "Hà-Hà đến.",
-    "“tờ, tức là sao?"
+    "“tức, tức là sao?"
    ],
-   "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ, ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ. t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn. t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw?"
+   "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ, ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ. sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn. t̪ˈyɜc, t̪ˈyɜc lˌaː2 sˈaːw?"
   },
   {
    "sentences": [
-    "tờ… tôi không biết.",
-    "chờ… Chuyện đó...",
-    "ngờ… ngài có chắc.",
-    "[khờ… Không phải thế.",
-    "“tờ… Xu-ki-nô-ki-xen-pai cho tôi quá giang.",
-    "e… em muốn.",
+    "tôi… tôi không biết.",
+    "chuyện… Chuyện đó...",
+    "ngài… ngài có chắc.",
+    "[không… Không phải thế.",
+    "“xu… Xu-ki-nô-ki-xen-pai cho tôi quá giang.",
+    "em… em muốn.",
     "Hà-Hà đến."
    ],
-   "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ, ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ. t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn."
+   "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ, ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ. sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn."
   },
   {
    "sentences": [
-    "tờ… tôi không biết.",
-    "chờ… Chuyện đó..."
+    "tôi… tôi không biết.",
+    "chuyện… Chuyện đó..."
    ],
-   "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ."
+   "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ."
   },
   {
    "sentences": [
-    "ngờ… ngài có chắc.",
-    "[khờ… Không phải thế."
+    "ngài… ngài có chắc.",
+    "[không… Không phải thế."
    ],
-   "phonemes": "ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ."
+   "phonemes": "ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ."
   },
   {
    "sentences": [
-    "e… em muốn.",
+    "em… em muốn.",
     "Hà-Hà đến."
    ],
-   "phonemes": "ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn."
+   "phonemes": "ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn."
   },
   {
    "sentences": [
-    "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
-    "cờ… Ken-gi, đờ… Điều này."
+    "xu… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
+    "ken… Ken-gi, điều… Điều này."
    ],
-   "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+   "phonemes": "sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈɛn, kˈɛn zˈi, ɗˈiɛ2w. ɗˈiɛ2w nˈa2j."
   },
   {
    "sentences": [
-    "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
-    "cờ… Ken-gi, đờ… Điều này."
+    "xu… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
+    "ken… Ken-gi, điều… Điều này."
    ],
-   "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+   "phonemes": "sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈɛn, kˈɛn zˈi, ɗˈiɛ2w. ɗˈiɛ2w nˈa2j."
+  },
+  {
+   "sentences": [
+    "khoan… khoan… khoan đã!",
+    "khoan… khoan… Khoan.",
+    "Đi với S-san, K-cun.",
+    "X-quang, A-đam, i-meo, T-shirt, B-52."
+   ],
+   "phonemes": "xwˈaːn, xwˈaːn, xwˈaːn ɗˌaː5! xwˈaːn. xwˈaːn, xwˈaːn, ɗˈi vˌəːɜj ˈɛɜt̪ sˈaːn, kˈaː kˈun. ˈiɜc kwˈaːŋ, ˈaː ɗˈaːm, ˈi mˈɛw, t̪ˈe ʃˈɜːt, bˈe nˈam mˈyəj hˈaːj."
+  },
+  {
+   "sentences": [
+    "khoan… khoan… khoan đã!",
+    "khoan… khoan… Khoan.",
+    "Đi với S-san, K-cun.",
+    "X-quang, A-đam, i-meo, T-shirt, B-52."
+   ],
+   "phonemes": "xwˈaːn, xwˈaːn, xwˈaːn ɗˌaː5! xwˈaːn. xwˈaːn, xwˈaːn, ɗˈi vˌəːɜj ˈɛɜt̪ sˈaːn, kˈaː kˈun. ˈiɜc kwˈaːŋ, ˈaː ɗˈaːm, ˈi mˈɛw, t̪ˈe ʃˈɜːt, bˈe nˈam mˈyəj hˈaːj."
+  },
+  {
+   "sentences": [
+    "khoan… khoan… khoan đã!",
+    "khoan… khoan… Khoan."
+   ],
+   "phonemes": "xwˈaːn, xwˈaːn, xwˈaːn ɗˌaː5! xwˈaːn. xwˈaːn, xwˈaːn."
+  },
+  {
+   "sentences": [
+    "hi… Hi-nô-ha-ra!",
+    "khoan… khoan… khoan, S-san."
+   ],
+   "phonemes": "hˈi, hˈi nˈo hˈaː ɹˈaː! xwˈaːn. xwˈaːn, xwˈaːn, ˈɛɜt̪ sˈaːn."
+  },
+  {
+   "sentences": [
+    "hi… Hi-nô-ha-ra!",
+    "khoan… khoan… khoan, S-san."
+   ],
+   "phonemes": "hˈi, hˈi nˈo hˈaː ɹˈaː! xwˈaːn. xwˈaːn, xwˈaːn, ˈɛɜt̪ sˈaːn."
+  },
+  {
+   "sentences": [
+    "hi… Hi-nô-ha-ra!",
+    "khoan… khoan… khoan, S-san."
+   ],
+   "phonemes": "hˈi, hˈi nˈo hˈaː ɹˈaː! xwˈaːn. xwˈaːn, xwˈaːn, ˈɛɜt̪ sˈaːn."
   },
   {
    "sentences": [
@@ -9162,16 +9208,16 @@
      "first": 0,
      "last": 24,
      "pieces": [
-      "tờ… tôi không biết.",
-      "chờ… Chuyện đó...",
-      "ngờ… ngài có chắc.",
-      "[khờ… Không phải thế.",
-      "“tờ… Xu-ki-nô-ki-xen-pai cho tôi quá giang.",
-      "e… em muốn.",
+      "tôi… tôi không biết.",
+      "chuyện… Chuyện đó...",
+      "ngài… ngài có chắc.",
+      "[không… Không phải thế.",
+      "“xu… Xu-ki-nô-ki-xen-pai cho tôi quá giang.",
+      "em… em muốn.",
       "Hà-Hà đến.",
-      "“tờ, tức là sao?"
+      "“tức, tức là sao?"
      ],
-     "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ, ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ. t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn. t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw?"
+     "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ, ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ. sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn. t̪ˈyɜc, t̪ˈyɜc lˌaː2 sˈaːw?"
     }
    ]
   },
@@ -9184,23 +9230,23 @@
      "first": 0,
      "last": 20,
      "pieces": [
-      "tờ… tôi không biết.",
-      "chờ… Chuyện đó...",
-      "ngờ… ngài có chắc.",
-      "[khờ… Không phải thế.",
-      "“tờ… Xu-ki-nô-ki-xen-pai cho tôi quá giang.",
-      "e… em muốn.",
+      "tôi… tôi không biết.",
+      "chuyện… Chuyện đó...",
+      "ngài… ngài có chắc.",
+      "[không… Không phải thế.",
+      "“xu… Xu-ki-nô-ki-xen-pai cho tôi quá giang.",
+      "em… em muốn.",
       "Hà-Hà đến."
      ],
-     "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ, ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ. t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn."
+     "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ, ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ. sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn."
     },
     {
      "first": 21,
      "last": 24,
      "pieces": [
-      "“tờ, tức là sao?"
+      "“tức, tức là sao?"
      ],
-     "phonemes": "t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw?"
+     "phonemes": "t̪ˈyɜc, t̪ˈyɜc lˌaː2 sˈaːw?"
     }
    ]
   },
@@ -9213,44 +9259,44 @@
      "first": 0,
      "last": 4,
      "pieces": [
-      "tờ… tôi không biết.",
-      "chờ… Chuyện đó..."
+      "tôi… tôi không biết.",
+      "chuyện… Chuyện đó..."
      ],
-     "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ."
+     "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ."
     },
     {
      "first": 5,
      "last": 11,
      "pieces": [
-      "ngờ… ngài có chắc.",
-      "[khờ… Không phải thế."
+      "ngài… ngài có chắc.",
+      "[không… Không phải thế."
      ],
-     "phonemes": "ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ."
+     "phonemes": "ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ."
     },
     {
      "first": 12,
      "last": 16,
      "pieces": [
-      "“tờ… Xu-ki-nô-ki-xen-pai cho tôi quá giang."
+      "“xu… Xu-ki-nô-ki-xen-pai cho tôi quá giang."
      ],
-     "phonemes": "t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ."
+     "phonemes": "sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ."
     },
     {
      "first": 17,
      "last": 20,
      "pieces": [
-      "e… em muốn.",
+      "em… em muốn.",
       "Hà-Hà đến."
      ],
-     "phonemes": "ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn."
+     "phonemes": "ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn."
     },
     {
      "first": 21,
      "last": 24,
      "pieces": [
-      "“tờ, tức là sao?"
+      "“tức, tức là sao?"
      ],
-     "phonemes": "t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw?"
+     "phonemes": "t̪ˈyɜc, t̪ˈyɜc lˌaː2 sˈaːw?"
     }
    ]
   },
@@ -9263,10 +9309,10 @@
      "first": 0,
      "last": 5,
      "pieces": [
-      "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
-      "cờ… Ken-gi, đờ… Điều này."
+      "xu… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
+      "ken… Ken-gi, điều… Điều này."
      ],
-     "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+     "phonemes": "sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈɛn, kˈɛn zˈi, ɗˈiɛ2w. ɗˈiɛ2w nˈa2j."
     }
    ],
    "origin": "ja"
@@ -9280,10 +9326,10 @@
      "first": 0,
      "last": 5,
      "pieces": [
-      "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
-      "cờ… Ken-gi, đờ… Điều này."
+      "xu… Xu-ki-nô-ki-xen-pai và a… a-ni-me.",
+      "ken… Ken-gi, điều… Điều này."
      ],
-     "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+     "phonemes": "sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈɛn, kˈɛn zˈi, ɗˈiɛ2w. ɗˈiɛ2w nˈa2j."
     }
    ],
    "origin": "ja"
@@ -9297,17 +9343,136 @@
      "first": 0,
      "last": 2,
      "pieces": [
-      "xờ… Xu-ki-nô-ki-xen-pai và a… a-ni-me."
+      "xu… Xu-ki-nô-ki-xen-pai và a… a-ni-me."
      ],
-     "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ."
+     "phonemes": "sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ."
     },
     {
      "first": 3,
      "last": 5,
      "pieces": [
-      "cờ… Ken-gi, đờ… Điều này."
+      "ken… Ken-gi, điều… Điều này."
      ],
-     "phonemes": "kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j."
+     "phonemes": "kˈɛn, kˈɛn zˈi, ɗˈiɛ2w. ɗˈiɛ2w nˈa2j."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
+   "text": "K-K-khoan đã! Kh-Kh-Khoan. Đi với S-san, K-kun. X-quang, A-đam, e-mail, T-shirt, B-52.",
+   "max": 256,
+   "tokens": 12,
+   "units": [
+    {
+     "first": 0,
+     "last": 11,
+     "pieces": [
+      "khoan… khoan… khoan đã!",
+      "khoan… khoan… Khoan.",
+      "Đi với S-san, K-cun.",
+      "X-quang, A-đam, i-meo, T-shirt, B-52."
+     ],
+     "phonemes": "xwˈaːn, xwˈaːn, xwˈaːn ɗˌaː5! xwˈaːn. xwˈaːn, xwˈaːn, ɗˈi vˌəːɜj ˈɛɜt̪ sˈaːn, kˈaː kˈun. ˈiɜc kwˈaːŋ, ˈaː ɗˈaːm, ˈi mˈɛw, t̪ˈe ʃˈɜːt, bˈe nˈam mˈyəj hˈaːj."
+    }
+   ]
+  },
+  {
+   "text": "K-K-khoan đã! Kh-Kh-Khoan. Đi với S-san, K-kun. X-quang, A-đam, e-mail, T-shirt, B-52.",
+   "max": 140,
+   "tokens": 12,
+   "units": [
+    {
+     "first": 0,
+     "last": 11,
+     "pieces": [
+      "khoan… khoan… khoan đã!",
+      "khoan… khoan… Khoan.",
+      "Đi với S-san, K-cun.",
+      "X-quang, A-đam, i-meo, T-shirt, B-52."
+     ],
+     "phonemes": "xwˈaːn, xwˈaːn, xwˈaːn ɗˌaː5! xwˈaːn. xwˈaːn, xwˈaːn, ɗˈi vˌəːɜj ˈɛɜt̪ sˈaːn, kˈaː kˈun. ˈiɜc kwˈaːŋ, ˈaː ɗˈaːm, ˈi mˈɛw, t̪ˈe ʃˈɜːt, bˈe nˈam mˈyəj hˈaːj."
+    }
+   ]
+  },
+  {
+   "text": "K-K-khoan đã! Kh-Kh-Khoan. Đi với S-san, K-kun. X-quang, A-đam, e-mail, T-shirt, B-52.",
+   "max": 40,
+   "tokens": 12,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "khoan… khoan… khoan đã!",
+      "khoan… khoan… Khoan."
+     ],
+     "phonemes": "xwˈaːn, xwˈaːn, xwˈaːn ɗˌaː5! xwˈaːn. xwˈaːn, xwˈaːn."
+    },
+    {
+     "first": 3,
+     "last": 6,
+     "pieces": [
+      "Đi với S-san, K-cun."
+     ],
+     "phonemes": "ɗˈi vˌəːɜj ˈɛɜt̪ sˈaːn, kˈaː kˈun."
+    },
+    {
+     "first": 7,
+     "last": 11,
+     "pieces": [
+      "X-quang, A-đam, i-meo, T-shirt, B-52."
+     ],
+     "phonemes": "ˈiɜc kwˈaːŋ, ˈaː ɗˈaːm, ˈi mˈɛw, t̪ˈe ʃˈɜːt, bˈe nˈam mˈyəj hˈaːj."
+    }
+   ]
+  },
+  {
+   "text": "H-Hinohara! K-K-khoan, S-san.",
+   "max": 256,
+   "tokens": 3,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "hi… Hi-nô-ha-ra!",
+      "khoan… khoan… khoan, S-san."
+     ],
+     "phonemes": "hˈi, hˈi nˈo hˈaː ɹˈaː! xwˈaːn. xwˈaːn, xwˈaːn, ˈɛɜt̪ sˈaːn."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
+   "text": "H-Hinohara! K-K-khoan, S-san.",
+   "max": 140,
+   "tokens": 3,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "hi… Hi-nô-ha-ra!",
+      "khoan… khoan… khoan, S-san."
+     ],
+     "phonemes": "hˈi, hˈi nˈo hˈaː ɹˈaː! xwˈaːn. xwˈaːn, xwˈaːn, ˈɛɜt̪ sˈaːn."
+    }
+   ],
+   "origin": "ja"
+  },
+  {
+   "text": "H-Hinohara! K-K-khoan, S-san.",
+   "max": 40,
+   "tokens": 3,
+   "units": [
+    {
+     "first": 0,
+     "last": 2,
+     "pieces": [
+      "hi… Hi-nô-ha-ra!",
+      "khoan… khoan… khoan, S-san."
+     ],
+     "phonemes": "hˈi, hˈi nˈo hˈaː ɹˈaː! xwˈaːn. xwˈaːn, xwˈaːn, ˈɛɜt̪ sˈaːn."
     }
    ],
    "origin": "ja"
@@ -10627,6 +10792,11 @@
    "cap": 140
   },
   {
+   "phonemes": "hˈi, hˈi nˈo hˈaː ɹˈaː! xwˈaːn. xwˈaːn, xwˈaːn, ˈɛɜt̪ sˈaːn.",
+   "syllables": 10,
+   "cap": 144
+  },
+  {
    "phonemes": "hˈi2 hˈi2, kˈaː4m ˈəːn kˈə6w.",
    "syllables": 5,
    "cap": 82
@@ -11232,6 +11402,11 @@
    "cap": 142
   },
   {
+   "phonemes": "sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈɛn, kˈɛn zˈi, ɗˈiɛ2w. ɗˈiɛ2w nˈa2j.",
+   "syllables": 18,
+   "cap": 210
+  },
+  {
    "phonemes": "sˈy fˈu6 nˈɔɜj, kˈiɛɜm fˈaːɜp xˌoŋ nˈa2m ˈəː4 t̪ˈaj mˌaː2 nˈa2m ˈəː4 t̪ˈəm.",
    "syllables": 13,
    "cap": 174
@@ -11260,11 +11435,6 @@
    "phonemes": "sˈyɜc xwˈɛ4 tʃˈiə hˈaːj. hˈaːɜt̪ pˈe mˈo6t̪ tʃˈam tʃˈen hˈaːj tʃˈam nˈam mˈyəj vˌaː2 t̪ˈaːɜm tˈaːɜŋ bˈaː.",
    "syllables": 17,
    "cap": 234
-  },
-  {
-   "phonemes": "sˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj vˌaː2 ˈaː. ˈaː nˈi mˈɛ. kˈəː2, kˈɛn zˈi, ɗˈəː2. ɗˈiɛ2w nˈa2j.",
-   "syllables": 18,
-   "cap": 214
   },
   {
    "phonemes": "sˈɛ bwˈiɜt̪ sˈoɜ bˈaː mˈyəj hˈaːj tʃˈa6j t̪ˌy2 bˈeɜn sˈɛ mˈi5 ɗˈi2ɲ.",
@@ -11547,6 +11717,21 @@
    "cap": 132
   },
   {
+   "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ, ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ. sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn.",
+   "syllables": 32,
+   "cap": 416
+  },
+  {
+   "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ, ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ. sˈu, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn. t̪ˈyɜc, t̪ˈyɜc lˌaː2 sˈaːw?",
+   "syllables": 36,
+   "cap": 472
+  },
+  {
+   "phonemes": "t̪ˈoj, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃwˈiɛ6n, tʃwˈiɛ6n ɗˈɔɜ.",
+   "syllables": 7,
+   "cap": 126
+  },
+  {
    "phonemes": "t̪ˈoɜj ɗˈaː bˈaː fˈə2n nˈam ɹˈo2j. hˈaːɜt̪ pˈe nˈam ŋˈi2n t̪ˈaːɜm tʃˈam mˈyə2j bˈaː tʃˈen nˈam ŋˈi2n t̪ˈaːɜm tʃˈam mˈyə2j bˈaː vˌaː2 mˈyə2j lˈam tˈaːɜŋ t̪ˈaːɜm nˈyə5.",
    "syllables": 27,
    "cap": 356
@@ -11575,21 +11760,6 @@
    "phonemes": "t̪ˈə6p mˈo6t̪, xˈəː4j ɗˈə2w.",
    "syllables": 4,
    "cap": 28
-  },
-  {
-   "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ, ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ. t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn.",
-   "syllables": 32,
-   "cap": 418
-  },
-  {
-   "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ, ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ. t̪ˈəː2, sˈu kˈi nˈo kˈi sˈɛn pˈaːj tʃˌɔ t̪ˈoj kwˈaːɜ zˈaːŋ. ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn. t̪ˈəː2, t̪ˈyɜc lˌaː2 sˈaːw?",
-   "syllables": 36,
-   "cap": 474
-  },
-  {
-   "phonemes": "t̪ˈəː2, t̪ˈoj xˌoŋ bˈiɛɜt̪. tʃˈəː2, tʃwˈiɛ6n ɗˈɔɜ.",
-   "syllables": 7,
-   "cap": 124
   },
   {
    "phonemes": "t̪ˈəːɜ xˌoŋ bˈiɛɜt̪, kˈə6w ɗˈaːɜp, ɲˌyŋ t̪ˈəːɜ sˌɛ5 kwˈaj lˈaː6j.",
@@ -11660,6 +11830,16 @@
    "phonemes": "wˈi4 bˈaːn ɲˈən zˈən tˈe-2ɲ fˈoɜ hˈo2 tʃˈiɜ mˈiɲ vˈyə2 bˈaːn hˈe-2ɲ kwˈi ɗˈi6ɲ mˈəːɜj.",
    "syllables": 15,
    "cap": 196
+  },
+  {
+   "phonemes": "xwˈaːn, xwˈaːn, xwˈaːn ɗˌaː5! xwˈaːn. xwˈaːn, xwˈaːn, ɗˈi vˌəːɜj ˈɛɜt̪ sˈaːn, kˈaː kˈun. ˈiɜc kwˈaːŋ, ˈaː ɗˈaːm, ˈi mˈɛw, t̪ˈe ʃˈɜːt, bˈe nˈam mˈyəj hˈaːj.",
+   "syllables": 25,
+   "cap": 334
+  },
+  {
+   "phonemes": "xwˈaːn, xwˈaːn, xwˈaːn ɗˌaː5! xwˈaːn. xwˈaːn, xwˈaːn.",
+   "syllables": 7,
+   "cap": 130
   },
   {
    "phonemes": "xwˌaː4ŋ bˈa4j mˈyəj ɗˌeɜn t̪ˈaːɜm mˈyəj fˈə2n tʃˈam sˈoɜ ŋˈyə2j ɗˌyə6c hˈɔ4j ɗˈo2ŋ ˈiɜ.",
@@ -11762,14 +11942,14 @@
    "cap": 162
   },
   {
+   "phonemes": "ŋˈaː2j, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˌoŋ, xˌoŋ fˌaː4j tˈeɜ.",
+   "syllables": 8,
+   "cap": 126
+  },
+  {
    "phonemes": "ŋˈoj ɲˈaː2 sˈoɜ bˈa4j, ŋˈɔ5 bˈoɜn mˈyəj hˈaːj, fˈoɜ hwˈeɜ.",
    "syllables": 10,
    "cap": 140
-  },
-  {
-   "phonemes": "ŋˈəː2, ŋˈaː2j kˈɔɜ tʃˈaɜc. xˈəː2, xˌoŋ fˌaː4j tˈeɜ.",
-   "syllables": 8,
-   "cap": 126
   },
   {
    "phonemes": "ɐki vˌaː2 ɹˈin lˌaː2 mˈo6t̪ kˈa6p, bˈaː4ŋ ɲˈiɛ6m vˈu6, ɲˈiɛ6m vˈu6 fˈu6 mˈəː4 ɹˈaː, bˈaː ɲˈən bˈoɜn. kˈo ˈəɪɜ xˌoŋ fˌaː4j lˌaː2 tʃˈi6 t̪ˈaː.",
@@ -12212,11 +12392,6 @@
    "cap": 132
   },
   {
-   "phonemes": "ˈɛ, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn.",
-   "syllables": 6,
-   "cap": 92
-  },
-  {
    "phonemes": "ˈɛm ɗˌaː5 ˈan kˈəːm tʃˌyə?",
    "syllables": 5,
    "cap": 76
@@ -12230,6 +12405,11 @@
    "phonemes": "ˈɛm ˈɛm ˈɛm. bˈɔɜt̪, klˈæs, dʒˈɛs, tˈiː ˈæm, dʒˈæz, ˌɛsˈɛs mˈo6t̪ ɐ ˌɛsˈɛs.",
    "syllables": 15,
    "cap": 174
+  },
+  {
+   "phonemes": "ˈɛm, ˈɛm mˈuəɜn, hˈaː2 hˈaː2 ɗˌeɜn.",
+   "syllables": 6,
+   "cap": 94
   },
   {
    "phonemes": "",

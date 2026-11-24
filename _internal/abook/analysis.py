@@ -85,6 +85,7 @@ from .models import (
 )
 from .process_utils import terminate_process_tree
 from . import studio_names
+from .readaloud import stutter as readaloud_stutter
 from .text_processing import (
     ROMAN_NUMERAL_TOKEN_PATTERN,
     is_vocalization_only,
@@ -3702,6 +3703,10 @@ def _name_candidate_contexts(rows: list[Any]) -> list[dict[str, Any]]:
         value = surface.strip()
         if value.casefold().endswith(("'s", "’s")):
             value = value[:-2]
+        # A stutter is the word it stutters on. "X-xin" went off as a name and was locked
+        # as "Ếch xin", "H-Hinohara" as "Ết Hi-nô-ha-ra"; the read-aloud stutter rule could
+        # not win over a locked reading. Only the stuttered word may be a name.
+        value = readaloud_stutter.word(value)
         key = _name_candidate_key(value)
         if (
             len(value) < 2

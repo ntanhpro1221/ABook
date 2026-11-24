@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from . import abbreviations, names, readings as book_readings, shouts, symbols
+from . import abbreviations, names, readings as book_readings, shouts, stutter, symbols
 from .model import Synthesis, Voice, VoiceError
 
 PREFIX = "vieneu"
@@ -570,7 +570,7 @@ def _letter_codes(toks: list[str], out: list[str]) -> None:
 def stutter_sound(frag: str, rest: str) -> str:
     """Tiếng nói lắp của `frag` ở đầu `rest` ("C" trước "chuyện" -> "chờ", "T" trước "tôi" -> "tờ"): phụ âm đầu của chữ sau + "ờ"; nguyên âm đứng riêng ("E" trước "em") thì chính nó. Phụ âm đầu
     ghép (kh, ch, ng...) lấy từ chữ sau khi chữ lắp là phần đầu của nó."""
-    lowered, word = frag.lower(), unicodedata.normalize("NFC", rest).lower()
+    lowered, word = frag.lower(), stutter.word(unicodedata.normalize("NFC", rest)).lower()  # "K-K-khoan": âm của chữ cuối ("khờ… khờ… khoan")
     if unicodedata.normalize("NFD", lowered)[0] in "aeiouy":
         return lowered
     onset = next((o for o in STUTTER_ONSETS if o.startswith(lowered) and word.startswith(o)), lowered)
@@ -639,8 +639,11 @@ def _question_runs(out: list[str]) -> None:
 
 def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_english: bool,
               readings: Mapping[str, str] | None = None, direct_english: bool = False) -> None:
-    """Nói lắp "T-tôi", "C-Chuyện", "Ng-ngài", "E-em", "[Kh- Không": phần lắp đọc bằng âm ("tờ… tôi", "chờ… chuyện", "e… em") thay vì tên chữ cái; phần còn lại của chữ đọc như bình thường
-    (nên "T-Tsukinoki-senpai" vẫn qua luật tên). Chỉ khi phần lắp là phần đầu của chữ sau và không phải một âm tiết đầy đủ ("Hà-Hà")."""
+    """Nói lắp "T-tôi", "C-Chuyện", "Ng-ngài", "E-em", "[Kh- Không": phần lắp đọc bằng âm tiết đầu của chính chữ sau ("tôi… tôi", "chuyện… Chuyện", "em… em",
+    "H-Hinohara" -> "hi… Hi-nô-ha-ra") thay vì tên chữ cái; phần còn lại của chữ đọc như bình thường (nên "T-Tsukinoki-senpai" vẫn qua luật tên). Chỉ khi phần lắp là phần
+    đầu của chữ sau và không phải một âm tiết đầy đủ ("Hà-Hà"); chữ cái + kính ngữ ("S-san") là biệt danh (readaloud/stutter.py).
+    Vì sao lặp âm tiết chứ không lặp phụ âm + "ờ" ("tờ… tôi"): nghe máy 24-11 (VieNeu Turbo, 8 câu x 2 giọng x 2 seed, faster-whisper nghe lại) - lặp âm tiết: chữ gốc
+    nghe lại 32/32, tiếng lắp nghe ra 29/32, câu sau 95,1 %; phụ âm + "ờ": 31/32, 24/32, 93,1 %, và tiếng "chờ", "nhờ", "khờ", "sờ" là từ có nghĩa ("Chờ, chuyện gì…")."""
     for index, token in enumerate(toks):
         match = STUTTER.fullmatch(token)
         alone = match is None
@@ -655,6 +658,8 @@ def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_englis
         before, frag = match.group(1), match.group(2)
         if not unicodedata.normalize("NFC", rest).lower().startswith(frag.lower()):
             continue
+        if names.split_token(rest)[1].casefold() in stutter.BOUND_HONORIFICS:  # "S-san": biệt danh viết tắt, không phải nói lắp (readaloud/stutter.py)
+            continue
         said = _stutter_rest(rest, origin, speaks_english, readings, direct_english)
         # Only a romaji reading of the rest may decide; a word left as written keeps the written rule.
         vowelless = not any(char in "aeiou" for char in unicodedata.normalize("NFD", frag.lower()))
@@ -667,11 +672,21 @@ def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_englis
             if (rest_core.lower() == frag.lower() or not is_vietnamese_syllable(frag)
                     or not is_vietnamese_syllable(rest_core)):
                 continue
-        sound = heard or (frag.lower() if syllable else stutter_sound(frag, rest))
+        sound = _repeated_syllable(said) or heard or (frag.lower() if syllable else stutter_sound(frag, rest))
         if alone:
             out[index] = before + sound + ("" if tail.lstrip(CLOSERS)[:1] in tuple(PUNCT_MARKS) else "…") + tail
         else:
             out[index] = before + sound + "… " + said
+
+
+def _repeated_syllable(said: str) -> str | None:
+    """Âm tiết đầu của cách đọc chữ sau chỗ lắp, để lặp ("khoan đã" -> "khoan", "Hi-nô-ha-ra" -> "hi", "khoan… khoan" -> "khoan"). None khi nó không phải một âm tiết
+    Việt: chữ ngoại viết liền chưa tách được âm tiết ("Hinohara", "Shouta" của cuốn không gốc Nhật) - lặp cả chữ thì dài và lạ, nên giữ phụ âm + "ờ" ("hờ… Hinohara")."""
+    from ..analysis import is_vietnamese_syllable
+
+    first = re.split(r"[-\s…]", said.strip(OPENERS + CLOSERS + PUNCT_MARKS), maxsplit=1)[0].replace("_", "")
+    first = unicodedata.normalize("NFC", first.strip(OPENERS + CLOSERS + PUNCT_MARKS)).lower()
+    return first if first.isalpha() and is_vietnamese_syllable(first) else None
 
 
 def _stutter_rest(rest: str, origin: str | None, speaks_english: bool, readings: Mapping[str, str] | None, direct_english: bool) -> str:

@@ -80,7 +80,7 @@ def test_general_evidence_and_short_homographs():
         assert (reading(word, "ja") is None) == (word not in ("Aya", "Abe"))
     assert reading("Anime", None) is not None
     assert reading("Anime", "ja") is not None
-    assert vieneu.spoken_tokens(["T-Tanaka"], "ja", direct_english=True) == ["tờ… Ta-na-ca"]
+    assert vieneu.spoken_tokens(["T-Tanaka"], "ja", direct_english=True) == ["ta… Ta-na-ca"]
 
 
 def test_checkpoint_uses_component_rows_and_auto_provenance(monkeypatch):

@@ -347,6 +347,9 @@ SOUND_PARAGRAPHS = [
     # TN lượt 3: nói lắp, tiếng cười, thán từ mới, kéo nhiều chỗ, Lv, từ mượn quen, đơn vị tiền, tên có chữ O đầu
     ("T-tôi không biết. C-Chuyện đó... Ng-ngài có chắc. [Kh- Không phải thế. “T-Tsukinoki-senpai cho tôi quá giang. E-em muốn. Hà-Hà đến. “……T-, tức là sao???", None),
     ("T-Tsukinoki-senpai và A-anime. K-Kenji, Đ-Điều này.", "ja"),
+    # nói lắp lặp nhiều lần lấy âm của chữ cuối; chữ cái + kính ngữ là biệt danh, từ ghép / mã không phải nói lắp (readaloud/stutter.py)
+    ("K-K-khoan đã! Kh-Kh-Khoan. Đi với S-san, K-kun. X-quang, A-đam, e-mail, T-shirt, B-52.", None),
+    ("H-Hinohara! K-K-khoan, S-san.", "ja"),
     ("Haha, Hahaha, Hehe, Fufu~, Hihi, Hm, Huh, Hic, Ooh, Urgh. HAHA. Cccchhhhàaaaaaoooo sssssáaaannnngggg BAAAAAMMMMM.", None),
     ("Lv 5, Lv.15] Lvl.1 LV5, Lv ơi, LVL. Level 7, lv 40.", None),
     ("Sofa, anime, Ninja, manga, Samurai (bento) kimono sake miso dango takoyaki okonomiyaki senpai Ara ara, Umu eroge tsukkomi. Video, logic, piano, violin, sandal, vali, robot, gorilla.", None),

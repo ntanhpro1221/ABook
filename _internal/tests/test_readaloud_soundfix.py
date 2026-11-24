@@ -24,7 +24,7 @@ def test_shared_vocal_routes_keep_display_and_unit_ownership(case):
 def test_studio_offsets_and_explicit_readings_survive_note_boundaries():
     text = '_"S-sau[note12]đó tôi đến."_'
     said, offsets = studio_tn(text, 'ja', True, direct_english=True)
-    assert said == '"sờ… sau đó tôi đến."'
+    assert said == '"sau… sau đó tôi đến."'
     assert len(offsets) == len(text) + 1
     assert offsets == sorted(offsets)
     assert offsets[-1] == len(said)
