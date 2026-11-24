@@ -1806,8 +1806,8 @@
     "reason": "scripts/fix_source_quotes.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/flaky_patterns.py": {
-    "sha256": "41a7528c838f3db5b911cebdba4c228ab0beba6a50371cb3dc1389dcc13b65f7",
-    "reason": "scripts/flaky_patterns.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.175: byte pin refreshed after the edits of the 0.4.175 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
+    "sha256": "1ab4d811acc04bad81505c6d2ac0a71c780d4df8093c7564d7f18c520f4ad18b",
+    "reason": "scripts/flaky_patterns.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.175: byte pin refreshed after the edits of the 0.4.175 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/scripts/foreground_watch.py": {
     "sha256": "7b8c792ba85a12cfb1a4d7bd8e907edcaa6128a522b5cd1d847ad426070cc02d",
