@@ -1,6 +1,9 @@
 {
   "_doc": "Single Vietnamese UI copy source. {0}, {1}, ... are ordered value slots. Edit here, then run scripts/gen_ui_strings.py.",
   "strings": {
+    "s_bundled_track": "Đi kèm sách",
+    "s_bundled_track_note": "Bài đi kèm sách, không có trong kho nhạc nên không nghe thử hay lưu riêng được.",
+    "s_bundled_scene_mood": "Đoạn này {0}.",
     "s_heart_favorite": "Yêu thích",
     "s_heart_unfavorite": "Bỏ yêu thích",
     "s_heart_empty": "Chạm hình tim ở trang sách để thêm cuốn vào đây.",

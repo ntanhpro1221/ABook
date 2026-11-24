@@ -107,3 +107,40 @@ private fun DownloadControl(track: MusicLibrary.Track, ui: LibraryUi, state: Lib
         }
     }
 }
+
+/**
+ * "Nhạc trong sách": a track the catalog does not have (`local:` packaged with the book). The text column starts where [TrackRow]'s does so a mixed
+ * list stays aligned: the preview slot carries a quiet book mark (nothing to preview or save), the creator line says "Đi kèm sách". There is
+ * no download column: its width goes to the creator, which "Đi kèm sách" would otherwise squeeze. The row opens the bundled sheet (name, creator, the first scene's mood).
+ */
+@Composable
+fun BundledTrackRow(track: MusicLibrary.Track, onOpen: () -> Unit) {
+    val colors = Abook.colors
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 64.dp).pressable(onClick = onOpen).padding(vertical = Dim.s8).testTag("bundled_${track.link.hashCode()}"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MusicArt(track)
+        Spacer(Modifier.width(Dim.s8))
+        Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) { LucideIcon(LucidePaths.BOOK_AUDIO, colors.text3) }
+        Spacer(Modifier.width(Dim.s8))
+        Column(Modifier.weight(1f)) {
+            // Book text is never cut in a new place (TextCutScanTest): a packaged track's title wraps in full.
+            BasicText(track.title.ifEmpty { S.s_bai_nay_d9683a01 }, style = Abook.type.bodyStrong, modifier = Modifier.testTag("music_row_title"))
+            Spacer(Modifier.height(2.dp))
+            val small = Abook.type.bodySmall.copy(color = colors.text2)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                SwapContent(track, contentKey = { track -> track.creator.isNotEmpty() }, layout = ContentLayout.Row, modifier = Modifier.weight(1f, fill = false)) { track ->
+                    if (track.creator.isNotEmpty()) {
+                        // cắt-có-chủ-ý: only the creator yields space to "Đi kèm sách", as it does to the duration in TrackRow; the sheet shows it in full.
+                        BasicText(track.creator, style = small, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("music_row_creator"))
+                    }
+                }
+                Reveal(track.creator.isNotEmpty()) { BasicText("·", style = small, modifier = Modifier.padding(horizontal = Dim.s8)) }
+                // cắt-có-chủ-ý: short fixed app label kept on the creator line; it never truncates (no ellipsis), the creator yields instead.
+                BasicText(S.s_bundled_track, style = small, maxLines = 1, softWrap = false, modifier = Modifier.testTag("music_row_bundled"))
+            }
+        }
+        ChevronIcon(colors.text3)
+    }
+}

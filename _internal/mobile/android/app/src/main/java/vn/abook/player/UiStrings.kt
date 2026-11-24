@@ -2,6 +2,9 @@
 package vn.abook.player
 
 internal object S {
+    const val s_bundled_track = "Đi kèm sách"
+    const val s_bundled_track_note = "Bài đi kèm sách, không có trong kho nhạc nên không nghe thử hay lưu riêng được."
+    fun s_bundled_scene_mood(p0: Any?): String = "Đoạn này " + p0.toString() + "."
     const val s_heart_favorite = "Yêu thích"
     const val s_heart_unfavorite = "Bỏ yêu thích"
     const val s_heart_empty = "Chạm hình tim ở trang sách để thêm cuốn vào đây."

@@ -81,5 +81,59 @@ Item {
             music.refresh()
             verify(findChild(music, "bookMusicRetry").visible)
         }
+        function bundledRows(music) {
+            return music.contentItem.children.filter(child => child.objectName === "bookMusicRow" && findChild(child, "bookMusicBundledRow").visible)
+        }
+        // bookmusic2: gói chỉ có nhạc `local:` của người làm sách từng ghi "Chưa có nhạc" trong khi sách vẫn phát nhạc.
+        function test_packagedTracksAreListedInListeningOrderWithoutSave() {
+            const float = "local:" + "a".repeat(40), phantom = "local:" + "b".repeat(40)
+            DesktopApi.responses["/api/books/width/music/library"] = {status: 200, data: {tracks: [
+                {link: float, title: "float flower (MONSTER)", creator: "Kuniaki Haishima", scenes: 4, scene: "1:0", bundled: true, saved: false, downloaded: false,
+                 mood: [{id: "sadness", score: 0.8}, {id: "nostalgia", score: 0.6}]},
+                {link: phantom, title: "Phantom", creator: "Yoshihisa Hirano", scenes: 2, scene: "1:136729", bundled: true, saved: false, downloaded: false, mood: []}],
+                missingBytes: 0, unsaved: []}}
+            const value = page()
+            value.tab = value.musicIndex
+            tryVerify(function() { return findChild(value, "bookMusic") !== null })
+            const music = findChild(value, "bookMusic")
+            tryCompare(music, "loading", false)
+            compare(music.count, 2)
+            compare(findChild(music, "bookMusicStatus").text, "")
+            verify(!findChild(music, "bookMusicSaveAll").visible)
+            tryVerify(function() { return bundledRows(music).length === 2 })
+            const first = music.itemAtIndex(0)
+            const row = findChild(first, "bookMusicBundledRow")
+            compare(findChild(row, "musicBundledLabel").text, " · Đi kèm sách")
+            verify(!findChild(first, "musicRowPreview").visible, "không có nút nghe thử")
+            mouseClick(row)
+            const sheet = findChild(music, "musicBundledDetail")
+            tryCompare(sheet, "open", true)
+            compare(sheet.title, "float flower (MONSTER)")
+            compare(sheet.description, "Kuniaki Haishima")
+            tryCompare(findChild(sheet, "musicBundledMood"), "text", "Đoạn này sadness.")
+            sheet.open = false
+            sheet.show(music.tracks[1])
+            compare(sheet.mood.length, 0)
+        }
+        function test_mixedBookKeepsCatalogRowsAligned() {
+            const float = "local:" + "a".repeat(40)
+            DesktopApi.responses["/api/books/width/music/library"] = {status: 200, data: {tracks: [
+                {link: float, title: "float flower (MONSTER)", creator: "Kuniaki Haishima", scenes: 4, scene: "1:0", bundled: true, saved: false, downloaded: false, mood: []},
+                {link: "https://example.invalid/a.mp3", title: "Audit melody", creator: "Kevin MacLeod", scenes: 2, bytes: 1024, saved: false, downloaded: false}],
+                missingBytes: 1024, unsaved: ["https://example.invalid/a.mp3"]}}
+            const value = page()
+            value.tab = value.musicIndex
+            tryVerify(function() { return findChild(value, "bookMusic") !== null })
+            const music = findChild(value, "bookMusic")
+            tryCompare(music, "loading", false)
+            compare(music.count, 2)
+            verify(findChild(music, "bookMusicSaveAll").visible)
+            tryVerify(function() { return music.itemAtIndex(1) !== null })
+            const bundled = findChild(music.itemAtIndex(0), "musicBundledMark")
+            const preview = findChild(music.itemAtIndex(1), "musicRowPreview")
+            verify(findChild(music.itemAtIndex(1), "bookMusicBundledRow").visible === false)
+            compare(bundled.mapToItem(music, 0, 0).x, preview.mapToItem(music, 0, 0).x)
+            compare(bundled.width, preview.width)
+        }
     }
 }

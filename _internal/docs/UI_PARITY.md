@@ -171,7 +171,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6772 chữ (3150 khác nhau), 365 cặp nhãn-icon; native 2348 chữ (1689 khác nhau), 87 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6783 chữ (3153 khác nhau), 365 cặp nhãn-icon; native 2354 chữ (1692 khác nhau), 87 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -591,7 +591,7 @@ Quét: web 6772 chữ (3150 khác nhau), 365 cặp nhãn-icon; native 2348 chữ
 | share-2 | Chia sẻ | Đang đóng file sách |
 | upload | Chọn file, Thêm file, Thêm nhạc của bạn | Đang thêm {}/{} |
 
-Phủ của bộ ghép: icon dùng ở 200 chỗ trong mã native, ghép được với nhãn chữ ở 83; web 528 chỗ, ghép được 317. Phần còn lại là icon không đi cùng nhãn chữ (nút chỉ icon, chỉ báo) hay nhãn dựng từ model (vd tên nhóm Cài đặt), nên KHÔNG có trong bảng.
+Phủ của bộ ghép: icon dùng ở 202 chỗ trong mã native, ghép được với nhãn chữ ở 83; web 530 chỗ, ghép được 317. Phần còn lại là icon không đi cùng nhãn chữ (nút chỉ icon, chỉ báo) hay nhãn dựng từ model (vd tên nhóm Cài đặt), nên KHÔNG có trong bảng.
 Icon native chưa quy về lucide (4): `native:ChevronIcon`, `native:LucideIcon`, `native:OtherPlayerIcon`, `native:PlayerGlyph`.
 Số cặp: web 317, native 83; icon lucide dùng: web 98, native 45.
 
@@ -773,23 +773,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6772 | 0 / 2348 |
-| dấu ba chấm `…` | 19 / 6772 | 0 / 2348 |
-| kết thúc bằng dấu chấm `.` | 1160 / 6772 | 435 / 2348 |
-| kết thúc bằng `!` | 0 / 6772 | 0 / 2348 |
-| kết thúc bằng `:` | 90 / 6772 | 6 / 2348 |
-| dấu thanh kiểu cũ `oà oá uý` | 531 / 6772 | 224 / 2348 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6772 | 0 / 2348 |
-| số thập phân dấu phẩy `1,5` | 2 / 6772 | 0 / 2348 |
-| số thập phân dấu chấm `1.5` | 0 / 6772 | 0 / 2348 |
-| nhân bằng `×` | 0 / 6772 | 0 / 2348 |
-| nhân bằng `x` sau số | 0 / 6772 | 0 / 2348 |
-| ngăn cách `·` | 144 / 6772 | 39 / 2348 |
-| ngăn cách ` - ` | 274 / 6772 | 87 / 2348 |
-| gạch dài `—`/`–` | 17 / 6772 | 2 / 2348 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6772 | 2 / 2348 |
-| dấu `%` dính số | 0 / 6772 | 1 / 2348 |
-| dấu `%` cách số | 0 / 6772 | 0 / 2348 |
+| dấu ba chấm ASCII `...` | 6 / 6783 | 0 / 2354 |
+| dấu ba chấm `…` | 19 / 6783 | 0 / 2354 |
+| kết thúc bằng dấu chấm `.` | 1164 / 6783 | 437 / 2354 |
+| kết thúc bằng `!` | 0 / 6783 | 0 / 2354 |
+| kết thúc bằng `:` | 90 / 6783 | 6 / 2354 |
+| dấu thanh kiểu cũ `oà oá uý` | 533 / 6783 | 225 / 2354 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6783 | 0 / 2354 |
+| số thập phân dấu phẩy `1,5` | 2 / 6783 | 0 / 2354 |
+| số thập phân dấu chấm `1.5` | 0 / 6783 | 0 / 2354 |
+| nhân bằng `×` | 0 / 6783 | 0 / 2354 |
+| nhân bằng `x` sau số | 0 / 6783 | 0 / 2354 |
+| ngăn cách `·` | 144 / 6783 | 39 / 2354 |
+| ngăn cách ` - ` | 274 / 6783 | 87 / 2354 |
+| gạch dài `—`/`–` | 17 / 6783 | 2 / 2354 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6783 | 2 / 2354 |
+| dấu `%` dính số | 0 / 6783 | 1 / 2354 |
+| dấu `%` cách số | 0 / 6783 | 0 / 2354 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 136, native 0); 15 đầu mỗi phía:
 
@@ -845,7 +845,7 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | destructive-confirmation | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | cast-history | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
 | now-playing | 150 | 171 | 0 | 0 | 30 | 4 | 0 |
-| shared-labels | 34 | 1493 | 0 | 0 | 7 | 0 | 0 |
+| shared-labels | 34 | 1496 | 0 | 0 | 7 | 0 | 0 |
 | library-book | 220 | 231 | 0 | 0 | 63 | 10 | 0 |
 | settings | 112 | 136 | 0 | 0 | 21 | 77 | 0 |
 | devices | 145 | 164 | 0 | 0 | 18 | 159 | 0 |
@@ -854,7 +854,7 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | studio | 2253 | 544 | 0 | 0 | 59 | 87 | 0 |
 | export | 80 | 83 | 0 | 0 | 28 | 44 | 0 |
 | music | 31 | 52 | 0 | 0 | 7 | 8 | 0 |
-| music-library | 74 | 76 | 0 | 0 | 6 | 1 | 0 |
+| music-library | 77 | 79 | 0 | 0 | 6 | 1 | 0 |
 
 Thiếu thật ở native - `now-playing`: Đổi luôn trong Studio.
 

@@ -4,9 +4,10 @@ import ABook
 import "MusicLibraryLogic.js" as Logic
 import "SizeFormat.js" as Size
 
-// Phần "Nhạc trong sách" của trang sách (BookMusic.tsx của web): các bài của danh mục cuốn này dùng (gộp trùng, số đoạn mỗi bài, GET
+// Phần "Nhạc trong sách" của trang sách (BookMusic.tsx của web): MỌI bài cuốn này dùng, theo thứ tự nghe (gộp trùng, số đoạn mỗi bài, GET
 // /api/books/<id>/music/library) + "Lưu tất cả (X MB)" - lưu = ghim + tải về, nghe không mạng. Bấm bài mở chi tiết kèm "Vì sao bài này"
-// (cảm xúc máy đọc được ở đoạn đầu tiên dùng bài). The dedicated tab has explicit loading, empty and retry states.
+// (cảm xúc máy đọc được ở đoạn đầu tiên dùng bài); bài đi kèm sách (`bundled`: kho nhạc không có) là MusicBundledRow, mở MusicBundledDetail.
+// The dedicated tab has explicit loading, empty and retry states.
 ListView {
     id: root
     objectName: "bookMusic"
@@ -95,9 +96,19 @@ ListView {
             required property var modelData
             required property int index
             width: root.width
-            height: row.implicitHeight
+            height: modelData.bundled ? bundledRow.implicitHeight : row.implicitHeight
+            MusicBundledRow {
+                id: bundledRow
+                objectName: "bookMusicBundledRow"
+                visible: !!modelData.bundled
+                width: parent.width - scenes.width - Theme.s8
+                track: modelData
+                first: index === 0
+                onClicked: bundledDetail.show(modelData)
+            }
             MusicTrackRow {
                 id: row
+                visible: !modelData.bundled
                 width: parent.width - scenes.width - Theme.s8
                 track: modelData
                 first: index === 0
@@ -116,6 +127,10 @@ ListView {
                 text: S.s_0_doan_c2eb5200(modelData.scenes)
                 color: Theme.text2; font.pixelSize: Theme.sizeCaption
             }
+    }
+    MusicBundledDetail {
+        id: bundledDetail
+        meta: root.meta
     }
     MusicTrackDetail {
         id: detail

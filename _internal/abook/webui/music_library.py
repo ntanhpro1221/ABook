@@ -173,6 +173,25 @@ def book_tracks(scenes: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return list(found.values())
 
 
+def track_names(music: Any) -> dict[str, dict[str, str]]:
+    """{link: {title, creator}} của các bài trong `music.tracks` của book.json (bài đóng gói kèm sách, bài ghim từ "Nhạc của tôi")."""
+    tracks = music.get("tracks") if isinstance(music, dict) and isinstance(music.get("tracks"), dict) else {}
+    out: dict[str, dict[str, str]] = {}
+    for track in tracks.values():
+        if isinstance(track, dict) and isinstance(track.get("link"), str) and track["link"] not in out:
+            out[track["link"]] = {key: track[key] for key in ("title", "creator") if isinstance(track.get(key), str) and track[key]}
+    return out
+
+
+def bundled_row(item: dict[str, Any], name: dict[str, Any], mood: dict[str, float] | None) -> dict[str, Any]:
+    """Dòng "Nhạc trong sách" của bài kho nhạc không có: tên + người sáng tác (`name`), số đoạn, đoạn đầu tiên, cảm xúc cảnh của đoạn ấy
+    (`mood`, 3 cảm xúc mạnh nhất - khối "Vì sao bài này" ở mức có dữ liệu). Không lưu / tải được."""
+    ranked = sorted((mood or {}).items(), key=lambda pair: (-pair[1], pair[0]))[:3]
+    return {"link": item["link"], **{key: name[key] for key in ("title", "creator") if isinstance(name.get(key), str) and name[key]},
+            "scenes": item["scenes"], "scene": item["scene"], "bundled": True, "saved": False, "downloaded": False,
+            "mood": [{"id": key, "score": score} for key, score in ranked]}
+
+
 class SavedTracks:
     """Sổ bài người dùng lưu (saved.json: {"version": 1, "links": [...]}, mới lưu sau cùng)."""
 

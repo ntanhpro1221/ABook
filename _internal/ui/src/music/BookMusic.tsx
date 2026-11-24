@@ -9,6 +9,7 @@ import { Button, InlineError } from "../shared/ui";
 import { api } from "../studio/api";
 import { useDownloads, useLibraryMeta, useSaveTracks, type LibraryTrack } from "./library";
 import { PreviewBar, TrackRow } from "./MusicScreen";
+import { BundledTrackRow, BundledTrackSheet } from "./BundledTrack";
 import { useLibraryPreview } from "./preview";
 import { TrackSheet } from "./TrackSheet";
 import { Windowed } from "../shared/Windowed";
@@ -18,6 +19,10 @@ export interface BookMusicTrack extends LibraryTrack {
   scenes: number;
   /** Khoá đoạn đầu tiên dùng bài (mở "Vì sao bài này"). */
   scene: string | null;
+  /** Bài kho nhạc không có (`local:` đóng gói kèm sách): tên theo book.json, không nghe thử / lưu, mở BundledTrackSheet. */
+  bundled?: boolean;
+  /** Bài đi kèm sách: ba cảm xúc mạnh nhất của đoạn đầu tiên dùng bài (rỗng = ẩn "Vì sao bài này"). */
+  mood?: { id: string; score: number }[];
 }
 
 export function useBookMusicTracks(bookId: string) {
@@ -27,8 +32,9 @@ export function useBookMusicTracks(bookId: string) {
   });
 }
 
-/** Phần "Nhạc trong sách" của trang sách: các bài cuốn này dùng (gộp trùng, đếm số đoạn) + "Lưu tất cả (X MB)". Chạm bài mở chi tiết
- *  kèm "Vì sao bài này" (cảm xúc máy đọc được ở đoạn đầu tiên dùng bài). Mounted only in the dedicated Music tab. */
+/** Phần "Nhạc trong sách" của trang sách: MỌI bài cuốn này dùng, theo thứ tự nghe (gộp trùng, đếm số đoạn) + "Lưu tất cả (X MB)". Chạm bài
+ *  mở chi tiết kèm "Vì sao bài này" (cảm xúc máy đọc được ở đoạn đầu tiên dùng bài); bài đi kèm sách (kho nhạc không có) mở sheet riêng ở mức
+ *  có dữ liệu. Mounted only in the dedicated Music tab. */
 export function BookMusic({ bookId }: { bookId: string }) {
   const { data, isPending, isError, refetch } = useBookMusicTracks(bookId);
   const { data: downloads } = useDownloads();
@@ -36,6 +42,7 @@ export function BookMusic({ bookId }: { bookId: string }) {
   const { save } = useSaveTracks();
   const preview = useLibraryPreview();
   const [open, setOpen] = useState<BookMusicTrack | null>(null);
+  const [bundled, setBundled] = useState<BookMusicTrack | null>(null);
   const tracks = data?.tracks ?? [];
   const unsaved = data?.unsaved ?? [];
   return (
@@ -54,7 +61,8 @@ export function BookMusic({ bookId }: { bookId: string }) {
           <Windowed items={tracks} estimate={80} memory={`book-music.${bookId}`} row={(track) => (
             <div role="listitem" key={track.link} className="flex items-center gap-2">
               <div className="min-w-0 flex-1">
-                <TrackRow track={track} preview={preview} downloads={downloads} online styles={meta?.styles} onOpen={() => setOpen(track)} as="div" nested />
+                {track.bundled ? <BundledTrackRow track={track} onOpen={() => setBundled(track)} />
+                  : <TrackRow track={track} preview={preview} downloads={downloads} online styles={meta?.styles} onOpen={() => setOpen(track)} as="div" nested />}
               </div>
               <span className="shrink-0 text-xs text-fg-2">{S.s_0_doan_c2eb5200(track.scenes)}</span>
             </div>
@@ -67,6 +75,7 @@ export function BookMusic({ bookId }: { bookId: string }) {
           preview={preview}
           context={open?.scene ? { book: bookId, scene: open.scene } : null}
         />
+        <BundledTrackSheet track={bundled} onClose={() => setBundled(null)} />
       </section>
     </MotionPresence>
   );

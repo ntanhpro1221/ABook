@@ -178,18 +178,29 @@ object MusicLibrary {
         return out
     }
 
-    /** "Nhạc trong sách": các bài một cuốn dùng (gộp trùng theo lần đầu), số đoạn mỗi bài, khoá đoạn đầu tiên. `scenes`: (khoá đoạn, link). */
-    data class BookTrack(val link: String, val scenes: Int, val scene: String?)
+    /**
+     * "Nhạc trong sách": các bài một cuốn dùng (gộp trùng theo lần đầu = thứ tự nghe), số đoạn mỗi bài, khoá đoạn đầu tiên. `scenes`: (khoá đoạn, link).
+     * `title`/`creator`: tên của bài trong book.json (`music.tracks`, hay bài "Nhạc của tôi" ghim vào đoạn) - dòng của bài không có trong kho nhạc
+     * (`local:` đóng gói kèm sách) vẽ bằng chúng.
+     */
+    data class BookTrack(val link: String, val scenes: Int, val scene: String?, val title: String = "", val creator: String = "")
 
-    fun bookTracks(scenes: List<Pair<String?, String>>): List<BookTrack> {
+    /** Tên + người sáng tác của một bài theo book.json. */
+    data class TrackName(val title: String, val creator: String)
+
+    fun bookTracks(scenes: List<Pair<String?, String>>, names: Map<String, TrackName> = emptyMap()): List<BookTrack> {
         val found = LinkedHashMap<String, BookTrack>()
         for ((key, link) in scenes) {
             if (link.isEmpty()) continue
             val held = found[link]
-            found[link] = held?.copy(scenes = held.scenes + 1) ?: BookTrack(link, 1, key)
+            found[link] = held?.copy(scenes = held.scenes + 1)
+                ?: names[link].let { name -> BookTrack(link, 1, key, name?.title.orEmpty(), name?.creator.orEmpty()) }
         }
         return found.values.toList()
     }
+
+    /** Bài cần kho nhạc trực tuyến (link https của danh mục); bài `local:` đi kèm sách thì không. */
+    fun inCatalog(link: String): Boolean = link.startsWith("https://")
 
     private fun text(info: JSONObject, key: String): String = if (info.isNull(key)) "" else (info.opt(key) as? String).orEmpty()
 
