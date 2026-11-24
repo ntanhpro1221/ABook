@@ -43,7 +43,7 @@ export function BundledTrackSheet({ track, onClose }: { track: BookMusicTrack | 
             <ul className="mt-3 space-y-2">
               {mood.map((item) => (
                 <li key={item.id} className="grid grid-cols-[minmax(6.5rem,9rem)_1fr_minmax(2.75rem,auto)] items-center gap-3 text-sm">
-                  <span className="min-w-0 truncate text-fg-2">{labelOf(meta?.emotions, item.id)}</span>
+                  <span className="min-w-0 text-fg-2 [overflow-wrap:anywhere]">{labelOf(meta?.emotions, item.id)}</span>
                   <Progress size="sm" tone="muted" label={`${labelOf(meta?.emotions, item.id)}: ${S.s_doan_nay_82d01522}`} value={item.score} />
                   <span className="whitespace-nowrap text-right text-fg-2">{S.s_percent(percent(item.score))}</span>
                 </li>

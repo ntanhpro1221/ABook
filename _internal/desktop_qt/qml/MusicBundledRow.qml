@@ -59,7 +59,7 @@ Interactive {
             Text {
                 id: bundled
                 objectName: "musicBundledLabel"
-                text: (root.track.creator ? " · " : "") + S.s_bundled_track
+                text: (root.track.creator ? "\u00a0·\u00a0" : "") + S.s_bundled_track
                 color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
             }
         }
