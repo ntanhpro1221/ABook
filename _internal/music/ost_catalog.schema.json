@@ -12,7 +12,7 @@
    "additionalProperties": {
     "type": "object",
     "required": ["id", "work", "work_original", "type", "title", "composer", "album", "year", "labels", "license", "duration",
-                 "description", "quality_score", "quality_note", "sources_reviewed", "audio_source", "vocals"],
+                 "description", "quality_score", "quality_note", "sources_reviewed", "audio_source", "vocals", "list_votes"],
     "additionalProperties": false,
     "properties": {
      "id": {"type": "string", "pattern": "^[a-z0-9_]+-[0-9]+-[xr]?[0-9]+$", "description": "<work>-<disc>-<track>; x = no track number, r = replacement of an earlier upload by the official release"},
@@ -34,6 +34,8 @@
      "quality_score": {"type": "number", "minimum": 0, "maximum": 1},
      "quality_note": {"type": "string"},
      "sources_reviewed": {"type": "integer", "minimum": 0},
+     "list_votes": {"type": "integer", "minimum": 0, "description": "How many independent external lists (rankings, polls, forum threads, playlists) name this track; 0 = none of the lists gathered so far. The list URLs stay in the private catalog."},
+     "instrumental_of": {"type": "string", "description": "Set on the official instrumental / off-vocal release of a sung song: the title of the sung original, which itself is recorded with vocals=true and kept out of narration."},
      "audio_source": {"type": "object", "properties": {"url": {"type": "string", "pattern": "^https://youtu[.]be/[A-Za-z0-9_-]+$"},
                       "channel": {"type": "string"}, "video_title": {"type": "string"},
                       "version": {"enum": ["official", "reupload", "cover", "processed", "unverified"],
