@@ -78,7 +78,8 @@ def test_vietnamese_dictionary_intersection_is_protected():
 def test_full_and_short_names_have_identical_components():
     for surface in ("Michael", "Michael Godswill", "Ferrell", "Ferrell Bartholomew"):
         assert planned_reading(surface, None, direct_english=True) == (surface, "keep_english")
-    assert planned_reading("Tanaka", None, direct_english=True) is None
+    # "Tanaka" is in CMUdict: its old route was English phonemes ("Ta-na-ca"); owner 24-11 lets VieNeu say it as written.
+    assert planned_reading("Haruto", None, direct_english=True) is None
     assert planned_reading("Tanaka", "ja", direct_english=True) == ("Ta-na-ca", "rule_romanization")
     assert planned_reading("Haruto", "ja", direct_english=True) == planned_reading("Haruto", "ja")
 

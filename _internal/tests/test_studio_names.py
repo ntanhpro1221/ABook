@@ -118,8 +118,8 @@ def test_a_japanese_book_reads_its_names_by_rule_and_asks_the_model_only_for_the
 
 
 def test_the_model_prompt_carries_the_origin_and_owner_readings(monkeypatch) -> None:
-    db = _book(JAPANESE, "Xenlor-kun bước vào.")
-    analyzer, _sent = _analyzer(db, monkeypatch, {"Xenlor-kun": "Xen-lo-cun"})
+    db = _book(JAPANESE, "Eupalo bước vào.", "Xenlor-kun bước vào.")
+    analyzer, sent = _analyzer(db, monkeypatch, {"Eupalo": "Ơ-pa-lô"})
     prompts: list[str] = []
     respond = analyzer._stream_json_response
     monkeypatch.setattr(analyzer, "_stream_json_response", lambda request, **kw: prompts.append(request["prompt"]) or respond(request, **kw))
@@ -127,6 +127,32 @@ def test_the_model_prompt_carries_the_origin_and_owner_readings(monkeypatch) -> 
     analyzer.reconcile_name_pronunciations()
 
     assert "gốc Nhật" in prompts[0] and "Haruto-kun→Ha-ru-tô-cun" in prompts[0]
+    assert sent == [["Eupalo"]], "a romaji-shaped name outside the dictionary in a Japanese book is still the model's"
+    assert _stored(db)["Xenlor-kun"] == ("Xenlor-cun", KEEP_ENGLISH_PRONUNCIATION_SOURCE), "a Western name keeps its spelling, the honorific is read"
+
+
+@pytest.mark.parametrize(("surface", "origin", "said"), [
+    ("Brunhild", None, "Brunhild"), ("Eden", None, "Eden"), ("Johan Sachs", None, "Johan Sachs"), ("Tupone", None, "Tupone"),
+    ("Golgora", "ja", "Golgora"), ("Elma", None, "Elma"), ("Ariel-sama", "ja", "Ariel-sa-ma"),
+])
+def test_owner_24_11_western_names_go_to_vieneu_as_written(surface, origin, said) -> None:
+    """Chủ sách 24-11 (Brunhild "Bơ-run-hin"): tên Tây chữ Latinh để VieNeu tự đọc, không Việt hoá."""
+    assert studio_names.planned_reading(surface, origin, True, direct_english=True) == (said, KEEP_ENGLISH_PRONUNCIATION_SOURCE)
+    assert studio_names.lockable(surface, said)
+
+
+@pytest.mark.parametrize(("surface", "origin"), [
+    ("Haruto", None), ("Hiiragi", None), ("Dengeki", None), ("Bunko", None), ("Seojun", None), ("Cheong", None),
+    ("Sangun-nim", None), ("Eden", "ko"), ("Pandora", "ja"),
+])
+def test_romaji_and_korean_spellings_are_not_taken_for_western(surface, origin) -> None:
+    planned = studio_names.planned_reading(surface, origin, True, direct_english=True)
+    assert planned is None or planned[1] != KEEP_ENGLISH_PRONUNCIATION_SOURCE
+
+
+def test_a_kept_head_must_be_the_written_name() -> None:
+    assert studio_names.lockable("Xenlor-kun", "Xenlor-cun")
+    assert not studio_names.lockable("Xenlor-kun", "Xenlorr-cun")
 
 
 def test_a_korean_book_reads_its_names_by_rule(monkeypatch) -> None:

@@ -27,7 +27,7 @@ object Names {
     const val JA_MARKED_SYLLABLES = 3
     /** Như trên cho Hàn: tên CHỈ RR đọc được mà có cặp chữ đặc trưng Hàn ([KO_MARKS]). */
     const val KO_MARKED = 5
-    private val KO_MARKS = listOf("eo", "eu", "ung", "ong", "hyun")
+    internal val KO_MARKS = listOf("eo", "eu", "ung", "ong", "hyun")
     /** Số lần hậu tố gọi Nhật nối gạch / hậu tố và tiếng gọi chỉ Hàn có trong phần mẫu. */
     const val JA_TERMS = 80
     const val KO_TERMS = 8

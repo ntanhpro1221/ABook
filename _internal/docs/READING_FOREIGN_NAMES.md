@@ -189,6 +189,13 @@ phương Tây có âm ti (Hepburn không có ti; fi đọc phi theo bảng).
 nhận được; viết Việt hoá "Rô-dơ", "Mai-cơ" lại bị nghe thành "Roger", "Michael". Phần dưới đây (Việt hoá qua âm vị) chỉ dành cho máy
 đọc CHỈ nói được âm tiết tiếng Việt.
 
+**Chủ sách 24-11 (nghe Brunhild: "Bơ-run-hin", "Dích-phờ-rít"): "cho VieNeu tự đọc".** Tên / từ Tây chữ Latinh (Anh, Đức, Pháp,
+Bắc Âu, Latinh, tên fantasy kiểu Tây) đưa máy đọc NGUYÊN CHỮ, cả khi không có trong từ điển. Phân biệt với romaji / RR bằng
+`english_policy.western_spelling` (không tách được thành romaji Nhật, không có dấu Hàn `KO_MARKS` / họ Hàn) và ở Studio thêm CMUdict
+(`studio_names._direct_reading`: có âm Anh, không dấu Hàn, RR không đọc được hoặc cuốn không gốc Á). Đo trên `translit_bench` (tên viết
+hoa mà luật cũ không quyết): đúng là Tây .946, bắt được .811 tên Tây. Tên Tây + hậu tố Nhật giữ tên, đọc hậu tố ("Ariel-sa-ma").
+Còn lại (dáng romaji ngoài từ điển như "Yohan", "Balmung" vì "ung") đi đường cũ. Luật Nhật / Hàn của cuốn có gốc vẫn chạy trước.
+
 **Phán quyết của chủ sách (04-10) cho dạng Việt hoá** — đứng trên các nguồn viết bên dưới, cố định:
 game → gêm (viết ghêm), level → le-vờ / le-vồ, maple → máp-pồ, Michael → mai-cồ, Kate → kết (04-10 chiều đổi từ ca-tê).
 - Chủ sách xác nhận dạng sách báo Ê-đi-xơn và Oa-xinh-tơn (lần 9 sửa: s → x như mọi s khác) là ĐÚNG: schwa + phụ âm cuối hợp lệ (n, m, ng) giữ phụ âm cuối, thanh ngang
