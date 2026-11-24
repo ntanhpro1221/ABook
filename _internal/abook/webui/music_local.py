@@ -43,6 +43,16 @@ AUTO_VALUES = ("on", "off")  # công tắc `auto` của một bài; vắng = m�
 # `speex` có sẵn của FFmpeg), nhưng Media Foundation + Web Media Extensions của bản Windows và MediaCodec của điện thoại thì không -
 # điện thoại vốn đã từ chối lúc nhập (MediaMetadataRetriever không đọc được), máy tính từ chối cùng lý do để hai bên nhận y nhau.
 UNPLAYABLE_CODECS = ("speex",)
+# Kho riêng của người làm sách (sách làm cho chính mình nghe, nhạc không phát hành được): biến môi trường này trỏ "Nhạc của tôi" của phiên app
+# tới một thư mục kho dựng sẵn cùng hình (`library.json` + `files/`) thay cho kho của máy. Vắng / rỗng = kho của máy như thường; bản phát
+# hành không bao giờ đặt nó.
+PRIVATE_LIBRARY_ENV = "ABOOK_PRIVATE_MUSIC_DIR"
+
+
+def library_root(default: Path) -> Path:
+    """Thư mục kho "Nhạc của tôi" của phiên này: `PRIVATE_LIBRARY_ENV` nếu có đặt, không thì `default`."""
+    chosen = os.environ.get(PRIVATE_LIBRARY_ENV, "").strip()
+    return Path(chosen) if chosen else Path(default)
 
 
 class MusicImportError(Exception):

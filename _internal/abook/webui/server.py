@@ -446,7 +446,8 @@ class App:
         self.remote_config = remote_config.RemoteConfig(preferences.path.with_name("remote"))
         self.music_dir = preferences.path.with_name("music")
         # "Nhạc của tôi" (music_local.py): nhạc người dùng tự nhập, của riêng máy này; file bài sách mang theo nằm trong files/.
-        self.my_music = music_local.LocalMusic(self.music_dir / "mine", self.music_dir / "files")
+        # ABOOK_PRIVATE_MUSIC_DIR (music_local.library_root) trỏ kho này tới một kho riêng dựng sẵn - chỉ cho sách làm cho riêng mình, mặc định tắt.
+        self.my_music = music_local.LocalMusic(music_local.library_root(self.music_dir / "mine"), self.music_dir / "files")
         # Bộ đệm bài nhạc (music_dir/files) có trần: bài sách mang theo ghi vào sổ riêng, không bao giờ bị dọn (music_cache.py).
         self.music_cache = music_cache.MusicCache(self.music_dir / "files", self.music_dir / "files_owned.json")
         # Mô-đun "Phân tích nhạc" (music_module.py): ffmpeg + thư viện + model, người dùng bấm mới tải (không bao giờ tự tải). Thư viện đã tải
