@@ -98,9 +98,9 @@ it("trang sách: đúng một nút chính - 'Nghe' khi chưa nghe, 'Nghe tiếp 
   await book();
   expect(primaries()).toHaveLength(1);
   expect(primaries()[0].textContent).toBe("Nghe tiếp · Chương 3");
-  // Hàng phụ cùng một kiểu: Đọc · Tìm · Từ đầu · Thêm - mọi mục có nhãn, như Qt và điện thoại (soát thiết kế 10-11 việc 3).
+  // Hàng phụ cùng một kiểu: Đọc · Tìm · Từ đầu · Yêu thích · Thêm - mọi mục có nhãn, như Qt và điện thoại (soát thiết kế 10-11 việc 3).
   const secondary = host.querySelector("[data-book-secondary]")!;
-  expect([...secondary.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["Đọc", "Tìm", "Từ đầu", "Thêm"]);
+  expect([...secondary.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["Đọc", "Tìm", "Từ đầu", "Yêu thích", "Thêm"]);
 });
 
 it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác nằm trong '…'", async () => {
@@ -112,7 +112,7 @@ it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác n�
   expect(transport.querySelector<HTMLButtonElement>("[data-player-toggle]")!.className).toContain("size-[72px]");
   const secondary = screen.querySelector("[data-player-secondary]")!;
   const labels = [...secondary.querySelectorAll("button")].map((button) => button.textContent);
-  expect(labels).toEqual(["1,15×Tốc độ", "Hẹn giờ", "Chương"]);
+  expect(labels).toEqual(["1,15×Tốc độ", "Yêu thích", "Hẹn giờ", "Chương"]);
   // Màn chính không còn âm lượng, quay lại chỗ vừa nghe, nhạc / giọng: chỉ thấy trong "…".
   expect(named("Quay lại chỗ vừa nghe", screen)).toBeNull();
   expect(screen.textContent).not.toContain("Âm lượng");
@@ -130,7 +130,7 @@ it("trình phát máy tính: 'Chương' và 'Đọc theo' chỉ là tab của b�
   await render(<NowPlaying />);
   const screen = host.querySelector<HTMLElement>("section[role=main]")!;
   const secondary = screen.querySelector("[data-player-secondary]")!;
-  expect([...secondary.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["1,15×Tốc độ", "Hẹn giờ"]);
+  expect([...secondary.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["1,15×Tốc độ", "Yêu thích", "Hẹn giờ"]);
   for (const label of ["Chương", "Đọc theo"]) {
     const twins = [...screen.querySelectorAll("button")].filter((button) => button.textContent === label);
     expect(twins.map((button) => button.getAttribute("role"))).toEqual(["tab"]);

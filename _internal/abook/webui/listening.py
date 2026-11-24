@@ -16,6 +16,7 @@ sơ gắn với đúng một sách, mỗi sách có một hồ sơ đang dùng. 
         "rate": 1.25,
         "voice": "edge:vi-VN-NamMinhNeural", "voiceAt": ...,   # giọng Nghe ngay riêng của cuốn (rỗng = giọng mặc định của máy)
         "finished": false,
+        "favorite": true, "favoriteAt": ...,   # người nghe thả tim cho cuốn (trạng thái người dùng, không ghi vào .abook)
         "night": {"id": "...", "startedAt": ..., "endedAt": ..., "events": [...], "timeline": [...]},
         "updatedAt": ...
 
@@ -643,6 +644,16 @@ class Listening:
             self._save()
             return json.loads(json.dumps(entry))
 
+    def set_favorite(self, book: str, favorite: bool, record: str | None = None) -> dict[str, Any]:
+        """Thả / bỏ tim cho cuốn vào hồ sơ màn đang hiện. Mang mốc giờ + phiên bản như `finished`: lần thả mới hơn thắng khi đồng bộ."""
+        with self._changing():
+            entry = self._named(book, record)
+            entry["favorite"] = bool(favorite)
+            entry["favoriteAt"] = entry["updatedAt"] = time.time()
+            entry.setdefault("_fieldRevs", {})["favorite"] = advance(entry, self._node())
+            self._save()
+            return json.loads(json.dumps(entry))
+
     def set_rate(self, book: str, rate: float, record: str | None = None) -> None:
         with self._changing():
             entry = self._named(book, record)
@@ -1111,7 +1122,7 @@ def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]
         mine = result["chapters"].get(key)
         if newer(record, mine):
             result["chapters"][key] = record
-    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
+    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt"), ("favorite", "favoriteAt")):
         their_stamp = {"at": theirs.get(stamp, 0), "rev": theirs.get("_fieldRevs", {}).get(field)}
         my_stamp = {"at": result.get(stamp, 0), "rev": result.get("_fieldRevs", {}).get(field)}
         if field in theirs and newer(their_stamp, my_stamp):

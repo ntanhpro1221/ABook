@@ -28,6 +28,8 @@ class ListenState(
     val finished: Boolean = false,
     val finishedAt: Double? = null,
     val finishedRev: Rev? = null,
+    /** Người nghe đã thả tim cho cuốn (yêu thích). */
+    val favorite: Boolean = false,
     val updatedAt: Double? = null,
 ) {
 

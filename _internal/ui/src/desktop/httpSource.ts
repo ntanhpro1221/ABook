@@ -256,6 +256,8 @@ export const httpSource: ListenSource = {
     api<ListeningState>(`/api/listen/books/${bookId}/chapters/${chapterId}/done`, { method: "POST", body: { done, record } }),
   setFinished: (bookId, finished, record) =>
     api<ListeningState>(`/api/listen/books/${bookId}/finished`, { method: "POST", body: { finished, record } }),
+  setFavorite: (bookId, favorite, record) =>
+    api<ListeningState>(`/api/listen/books/${bookId}/favorite`, { method: "POST", body: { favorite, record } }),
   setVoice: async (bookId, voice, record) => {
     await api(`/api/listen/books/${bookId}/voice`, { method: "POST", body: { voice, record } });
   },

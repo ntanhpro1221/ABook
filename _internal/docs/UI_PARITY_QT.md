@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6271 chữ (2882 khác nhau), 354 cặp nhãn-icon; Qt 3735 chữ (2733 khác nhau), 296 cặp nhãn-icon (icon dùng ở 419 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6282 chữ (2885 khác nhau), 354 cặp nhãn-icon; Qt 3746 chữ (2736 khác nhau), 298 cặp nhãn-icon (icon dùng ở 422 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -60,8 +60,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio xuất và áp dụng | Đang thêm chữ sáng… {} | Đang thêm chữ sáng… {}% | 1.00 | `qt/ExportLogic.js:259` ~ `studio/WordTimings.tsx:43` | Same catalog key as web (s_dang_them_chu_sang_0); the Qt reader renders the slotted call as {} without the catalog's percent sign. |
 | Studio xuất và áp dụng | Đã xuất | Xuất “{}” | 0.73 | `qt/ExportLogic.js:112` ~ `studio/ExportBook.tsx:395` | Different states: Qt completed-export confirmation, matched web text is an export-dialog heading. |
 | Thanh phát | Nghe bằng giọng đọc. | Nghe bằng giọng đọc.{} | 1.00 | `qt/PlayerLabels.js:18` ~ `listen/labels.ts:149` | Same sentence; web appends an optional platform-specific pointer/editing hint. |
-| Trang sách | Lần nghe | Lần nghe {} | 1.00 | `qt/RecordLogic.js:10` ~ `listen/BookScreen.tsx:746` | Same listening-record name prefix; Qt renders the record number separately. |
-| Trang sách | Hồ sơ nghe: {} | Đã nghe {} | 0.59 | `qt/RecordChip.qml:14` ~ `listen/BookScreen.tsx:1222` | Different data: Qt accessibility name for a listening profile, the matched web label is listening progress. |
+| Trang sách | Lần nghe | Lần nghe {} | 1.00 | `qt/RecordLogic.js:10` ~ `listen/BookScreen.tsx:747` | Same listening-record name prefix; Qt renders the record number separately. |
+| Trang sách | Hồ sơ nghe: {} | Đã nghe {} | 0.59 | `qt/RecordChip.qml:14` ~ `listen/BookScreen.tsx:1223` | Different data: Qt accessibility name for a listening profile, the matched web label is listening progress. |
 
 ## b. Cùng nhãn khác icon, cùng icon khác nhãn
 
@@ -72,7 +72,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Bắt đầu | headphones | wand-sparkles | `qt/NewProjectScreen.qml:199` ~ `desktop/AudiobookDialog.tsx:216` | Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones). |
 | Chi tiết | info | chevron-right | `qt/MyMusicDetails.qml:29` (+1) ~ `studio/ProjectScreen.tsx:759` | Different controls: Qt rotates a disclosure chevron to expand the music details; the matched web item opens project information. |
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:14` (+1) ~ `listen/LineWishes.tsx:224` (+2) | Different navigation depth: the web chevron returns one step inside a sentence editor; the Qt arrow returns to the previous screen. |
-| Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:98` ~ `listen/BookScreen.tsx:191` (+3) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
+| Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:101` ~ `listen/BookScreen.tsx:192` (+3) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
 
 **Cùng icon, khác nhãn** (66 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
 
@@ -84,15 +84,15 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thêm sách | file-text | Đang đọc | Đang đọc / Chọn file sách | `qt/AddBook.qml:558` |
 | Cài đặt | download | Cập nhật ABook | Cài Studio, Cài tiếp, Có ABook {} | `qt/AdvancedUpdate.qml:96` |
 | Cài đặt | download | Đang tải bản mới | Cài Studio, Cài tiếp, Có ABook {} | `qt/AdvancedUpdate.qml:96` |
-| Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:98` |
-| Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:98` |
-| Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:98` |
+| Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:101` |
+| Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:101` |
+| Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:101` |
 | Trang sách | chevron-up | Thu gọn | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:75` |
 | Trang sách | chevron-down | Xem thêm | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:75` |
-| Trang sách | check-check | Chưa nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:174` |
-| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:174` |
-| Trang sách | circle-dashed | Chưa nghe | Chưa nghe / Đã nghe xong, Tạm dừng {} | `qt/BookPage.qml:305` |
-| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:305` |
+| Trang sách | check-check | Chưa nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:189` |
+| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:189` |
+| Trang sách | circle-dashed | Chưa nghe | Chưa nghe / Đã nghe xong, Tạm dừng {} | `qt/BookPage.qml:320` |
+| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:320` |
 | Trang sách | git-merge | Gộp | Gộp vào người khác | `qt/CastMerge.qml:163` |
 | Đang nghe | play | Nghe từ đầu chương | Dừng / Nghe thử, Nghe {} | `qt/ChapterList.qml:45` |
 | Đang nghe | book-open | Đọc chương này | Trang sách | `qt/ChapterList.qml:46` |
@@ -107,8 +107,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thêm sách | book-plus | Thả để thêm sách | Thêm vào thư viện | `qt/ImportDrop.qml:51` |
 | Thư viện | play | Nghe tiếp | Đọc {} | `qt/LibraryContinue.qml:46` |
 | Thư viện | pause | Tạm dừng | Đọc {} | `qt/LibraryContinue.qml:46` |
-| Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:192` |
-| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:501` |
+| Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:193` |
+| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:502` |
 | Nhạc | download | Tải tiếp | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackDetail.qml:107` |
 | Nhạc | download | Tải về | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackDetail.qml:107` |
 | Nhạc | download | Dừng tải | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackRow.qml:107` |
@@ -119,8 +119,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio tạo sách | layers | Chọn {} tập | Chia thành nhiều phần, Chia thành {} phần / Chia thành mấy phần? | `qt/NewDrop.qml:212` |
 | Studio tạo sách | scissors | Tách thành {} chương | Tách thành chương | `qt/NewHints.qml:96` |
 | Studio tạo sách | wand-sparkles | Bắt đầu | Bắt đầu / Tạo sách | `qt/NewProjectScreen.qml:199` |
-| Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:484` |
-| Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:484` |
+| Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:506` |
+| Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:506` |
 | Cài đặt | bluetooth | Dùng Bluetooth | Dùng Bluetooth cho {} | `qt/OtherComputersBluetooth.qml:23` |
 | Cài đặt | refresh-cw | Làm mới | Hỏi lại, Hỏi lại thư viện | `qt/PhoneDiagnostics.qml:68` |
 | Cài đặt | save | Lưu nhật ký | Gửi nhật ký | `qt/PhoneDiagnostics.qml:69` |
@@ -145,7 +145,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio việc duyệt | user-plus | Đặt tên | Người kể khác, Đặt tên / Người khác | `qt/WorkSpeaker.qml:216` |
 | Studio việc duyệt | search | Xem {} câu | Tìm người khác, Xem câu | `qt/WorkSpeaker.qml:237` |
 
-Số cặp: web máy tính 311, Qt 259. Nhãn Qt có icon (200): `Ai nghĩ câu này`, `Ai nói câu này`, `Bài nhạc`, `Bấm để cập nhật`, `Bấm để đổi tên chương`, `Bật tiếng`, `Bắt đầu`, `Bỏ chương này`, `Bỏ cách đọc {}`, `Bỏ cách đọc “{}”`, `Bỏ ghép`, `Bỏ qua tất cả`, `Bỏ qua việc này`, `Bỏ ảnh bìa`, `Chi tiết`, `Chia thành nhiều phần`, `Chưa có bản thu`, `Chưa có cuốn nào nghe xong.`, `Chưa khởi động được: {}`, `Chưa nghe`, `Chưa nghe xong`, `Chương`, `Chương sau`, `Chương sau chưa có audio`, `Chương trước`, `Chẩn đoán`, `Chọn`, `Chọn file`, `Chọn file sách`, `Chọn lại nhạc`, `Chọn người`, `Chọn thư mục`, `Chọn thư mục TXT`, `Chọn từng file`, `Chọn {} tập`, `Chọn ảnh`, `Chọn ảnh bìa`, `Cài Studio`, `Cài đặt`, `Cách đọc câu`, `Có ABook`, `Cần thu lại`, `Cập nhật ABook`, `Cửa sổ mini`, `Duyệt {} câu`, `Dùng Bluetooth`, `Dùng {} cách đọc chung`, `Dừng`, `Dừng nghe`, `Dừng nghe liền`, `Dừng tải`, `Dự án mới`, `Ghim trên cùng`, `Ghép thiết bị mới`, `Giảm`, `Giọng {} đang không dùng được.`, `Giọng đọc`, `Giữ {} thẻ`, `Gộp`, `Gộp vào người khác`, `Gộp vào phần trước`, `Gỡ Studio`, `Gợi ý đọc`, `Gửi nhật ký`, `Hoàn tác`, `Huỷ tải`, `Hẹn giờ`, `Hết chương`, `Hỏi lại thư viện`, `Khôi phục tất cả`, `Khôi phục việc này`, `Không có mạng -`, `Khởi động lại`, `Kiểm tra`, `Làm mới`, `Lưu`, `Lưu nhật ký`, `Lưu thay đổi`, `Lưu thành`, `Lưu thành mẫu`, `Lưu tất cả ({})`, `Mở cuốn đó`, `Mở file sách`, `Mở Kịch bản`, `Mở rộng`, `Mở Studio`, `Mở tab Nhạc nền`, `Mở thư mục`, `Mở thư mục nhật ký`, `Mở trình phát`, `Nghe liền {} câu`, `Nghe lại`, `Nghe ngay {}`, `Nghe thử`, `Nghe tiếp`, `Nghe từ đầu chương`, `Nghe {}`, `Người khác`, `Người kể khác`, `Nhạc`, `Nhạc nền`, `Nên dùng`, `Phát`, `Phát trên`, `Phím tắt`, `Phần`, `Quay lại`, `Quyết định riêng`, `Studio`, `Sửa cách đọc từ`, `Sửa cách đọc {}`, `Sửa sách`, `Sửa thông tin`, `Thu gọn`, `Thu lại`, `Thu lại câu này`, `Thu lại {} câu`, `Thu nhỏ`, `Thêm`, `Thêm bản riêng`, `Thêm cách đọc`, `Thêm file`, `Thêm nhạc của bạn`, `Thêm sách`, `Thêm tuỳ chọn`, `Thêm tuỳ chọn Studio`, `Thêm tuỳ chọn: {}`, `Thêm vào thư viện`, `Thư viện`, `Thả để thêm sách`, `Thử lại`, `Trang sách`, `Tách thành {} chương`, `Tìm`, `Tìm bìa`, `Tìm bìa trên mạng`, `Tìm người khác`, `Tìm sách`, `Tăng`, `Tạm dừng`, `Tạm dừng {}`, `Tạo sách nói`, `Tạo trên {}`, `Tạo âm sắc`, `Tải cả danh sách ({})`, `Tải thêm (3,2 GB)`, `Tải tiếp`, `Tải về`, `Tắt tiếng`, `Tới câu đang nghe`, `Tự tìm`, `Vẫn cài`, `Vẫn thêm bản mới`, `Về chỗ vừa nghe`, `Về Cài đặt`, `Về màn trước`, `Về Studio`, `Về Thư viện`, `Xem thêm`, `Xem tất cả`, `Xem {} câu`, `Xoá`, `Xoá bản tải`, `Xoá khoá`, `Xoá ô tìm`, `Xác nhận gỡ`, `Xếp theo`, `Áp dụng trước`, `Áp dụng tất cả`, `Áp dụng việc này`, `Âm thanh`, `Đang chọn lại`, `Đang gỡ`, `Đang mở`, `Đang thêm {}/{}`, `Đang tải bản mới`, `Đang đệm`, `Đang đọc`, `Đang đọc không khí`, `Đang đổi`, `Đây là chương cuối`, `Đã nghe xong`, `Đóng`, `Đóng lời báo`, `Đóng trình phát`, `Đóng ô tìm`, `Đặt tên`, `Đặt ảnh bìa`, `Đọc chương này`, `Đọc lại ngữ cảnh`, `Đọc {}`, `Đổi bài`, `Đổi bìa`, `Đổi giọng người kể`, `Đổi giọng {}`, `Đổi giới tính`, `Đổi tên`, `Đổi tên chương`, `Đổi ảnh bìa`, `Ổn`.
+Số cặp: web máy tính 311, Qt 260. Nhãn Qt có icon (201): `Ai nghĩ câu này`, `Ai nói câu này`, `Bài nhạc`, `Bấm để cập nhật`, `Bấm để đổi tên chương`, `Bật tiếng`, `Bắt đầu`, `Bỏ chương này`, `Bỏ cách đọc {}`, `Bỏ cách đọc “{}”`, `Bỏ ghép`, `Bỏ qua tất cả`, `Bỏ qua việc này`, `Bỏ ảnh bìa`, `Chi tiết`, `Chia thành nhiều phần`, `Chưa có bản thu`, `Chưa có cuốn nào nghe xong.`, `Chưa khởi động được: {}`, `Chưa nghe`, `Chưa nghe xong`, `Chương`, `Chương sau`, `Chương sau chưa có audio`, `Chương trước`, `Chẩn đoán`, `Chọn`, `Chọn file`, `Chọn file sách`, `Chọn lại nhạc`, `Chọn người`, `Chọn thư mục`, `Chọn thư mục TXT`, `Chọn từng file`, `Chọn {} tập`, `Chọn ảnh`, `Chọn ảnh bìa`, `Cài Studio`, `Cài đặt`, `Cách đọc câu`, `Có ABook`, `Cần thu lại`, `Cập nhật ABook`, `Cửa sổ mini`, `Duyệt {} câu`, `Dùng Bluetooth`, `Dùng {} cách đọc chung`, `Dừng`, `Dừng nghe`, `Dừng nghe liền`, `Dừng tải`, `Dự án mới`, `Ghim trên cùng`, `Ghép thiết bị mới`, `Giảm`, `Giọng {} đang không dùng được.`, `Giọng đọc`, `Giữ {} thẻ`, `Gộp`, `Gộp vào người khác`, `Gộp vào phần trước`, `Gỡ Studio`, `Gợi ý đọc`, `Gửi nhật ký`, `Hoàn tác`, `Huỷ tải`, `Hẹn giờ`, `Hết chương`, `Hỏi lại thư viện`, `Khôi phục tất cả`, `Khôi phục việc này`, `Không có mạng -`, `Khởi động lại`, `Kiểm tra`, `Làm mới`, `Lưu`, `Lưu nhật ký`, `Lưu thay đổi`, `Lưu thành`, `Lưu thành mẫu`, `Lưu tất cả ({})`, `Mở cuốn đó`, `Mở file sách`, `Mở Kịch bản`, `Mở rộng`, `Mở Studio`, `Mở tab Nhạc nền`, `Mở thư mục`, `Mở thư mục nhật ký`, `Mở trình phát`, `Nghe liền {} câu`, `Nghe lại`, `Nghe ngay {}`, `Nghe thử`, `Nghe tiếp`, `Nghe từ đầu chương`, `Nghe {}`, `Người khác`, `Người kể khác`, `Nhạc`, `Nhạc nền`, `Nên dùng`, `Phát`, `Phát trên`, `Phím tắt`, `Phần`, `Quay lại`, `Quyết định riêng`, `Studio`, `Sửa cách đọc từ`, `Sửa cách đọc {}`, `Sửa sách`, `Sửa thông tin`, `Thu gọn`, `Thu lại`, `Thu lại câu này`, `Thu lại {} câu`, `Thu nhỏ`, `Thêm`, `Thêm bản riêng`, `Thêm cách đọc`, `Thêm file`, `Thêm nhạc của bạn`, `Thêm sách`, `Thêm tuỳ chọn`, `Thêm tuỳ chọn Studio`, `Thêm tuỳ chọn: {}`, `Thêm vào thư viện`, `Thư viện`, `Thả để thêm sách`, `Thử lại`, `Trang sách`, `Tách thành {} chương`, `Tìm`, `Tìm bìa`, `Tìm bìa trên mạng`, `Tìm người khác`, `Tìm sách`, `Tăng`, `Tạm dừng`, `Tạm dừng {}`, `Tạo sách nói`, `Tạo trên {}`, `Tạo âm sắc`, `Tải cả danh sách ({})`, `Tải thêm (3,2 GB)`, `Tải tiếp`, `Tải về`, `Tắt tiếng`, `Tới câu đang nghe`, `Tự tìm`, `Vẫn cài`, `Vẫn thêm bản mới`, `Về chỗ vừa nghe`, `Về Cài đặt`, `Về màn trước`, `Về Studio`, `Về Thư viện`, `Xem thêm`, `Xem tất cả`, `Xem {} câu`, `Xoá`, `Xoá bản tải`, `Xoá khoá`, `Xoá ô tìm`, `Xác nhận gỡ`, `Xếp theo`, `Yêu thích`, `Áp dụng trước`, `Áp dụng tất cả`, `Áp dụng việc này`, `Âm thanh`, `Đang chọn lại`, `Đang gỡ`, `Đang mở`, `Đang thêm {}/{}`, `Đang tải bản mới`, `Đang đệm`, `Đang đọc`, `Đang đọc không khí`, `Đang đổi`, `Đây là chương cuối`, `Đã nghe xong`, `Đóng`, `Đóng lời báo`, `Đóng trình phát`, `Đóng ô tìm`, `Đặt tên`, `Đặt ảnh bìa`, `Đọc chương này`, `Đọc lại ngữ cảnh`, `Đọc {}`, `Đổi bài`, `Đổi bìa`, `Đổi giọng người kể`, `Đổi giọng {}`, `Đổi giới tính`, `Đổi tên`, `Đổi tên chương`, `Đổi ảnh bìa`, `Ổn`.
 
 ## c. Nhãn chỉ có một bên, theo màn
 
@@ -173,28 +173,28 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thư viện
 
-- chỉ Qt (11): Dự án* (`qt/BookCell.qml:34`); Đã nhập* (`qt/BookCell.qml:34`); Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:398`); Chưa mở được ABook (`qt/LibraryScreen.qml:447`); Chưa tải được thư viện (`qt/LibraryScreen.qml:447`); Thử lại* (`qt/LibraryScreen.qml:465`); Không thấy “{}”* (`qt/LibraryScreen.qml:502`)
-- chỉ web (7): Đang tạm dừng {} (`336`); Đang làm {} (`337`); Đang tạm dừng{} (`341`); Chưa có chương nghe được{} (`343`); Đang làm · {} (`343`); Thư viện chưa có sách nào. (`466`); Chữ bìa trên hoạ tiết sóng (`87`)
+- chỉ Qt (11): Dự án* (`qt/BookCell.qml:34`); Đã nhập* (`qt/BookCell.qml:34`); Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:399`); Chưa mở được ABook (`qt/LibraryScreen.qml:448`); Chưa tải được thư viện (`qt/LibraryScreen.qml:448`); Thử lại* (`qt/LibraryScreen.qml:466`); Không thấy “{}”* (`qt/LibraryScreen.qml:503`)
+- chỉ web (7): Đang tạm dừng {} (`346`); Đang làm {} (`347`); Đang tạm dừng{} (`351`); Chưa có chương nghe được{} (`353`); Đang làm · {} (`353`); Thư viện chưa có sách nào. (`476`); Chữ bìa trên hoạ tiết sóng (`87`)
 
 ### Thanh phát
 
 - chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:127`); Chỉnh* (`qt/PlayerBar.qml:157`); Âm thanh* (`qt/PlayerBar.qml:157`); Hẹn giờ* (`qt/PlayerBar.qml:158`); Giọng đọc* (`qt/PlayerBar.qml:161`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:49`); Tua nhạc (`qt/SeekBar.qml:29`)
-- chỉ web (8): Shift+← (`286`); Sắp tắt · (`1286`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
+- chỉ web (8): Shift+← (`287`); Sắp tắt · (`1287`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Đang nghe
 
-- chỉ Qt (17): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đã nghe* (`qt/ChapterRow.qml:79`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:130`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:247`); Giọng {}* (`qt/NowPlaying.qml:310`); Thử lại* (`qt/NowPlaying.qml:370`); Nhạc nền* (`qt/NowPlaying.qml:518`); Chỉnh* (`qt/NowPlaying.qml:663`); Âm thanh* (`qt/NowPlaying.qml:663`); Cửa sổ mini (`qt/NowPlaying.qml:672`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:58`); Đóng* (`qt/ReadingSuggestions.qml:81`)
-- chỉ web (16): Shift+← (`286`); Đã chọn tốc độ đọc {} (`521`); Phím (`524`); Đã chọn giọng {} (`788`); Hẹn giờ đã tắt tiếng lúc (`983`); Tiếng nhỏ dần (`1003`); Hẹn giờ ngủ trên {} (`1083`); Về chế độ nghe (`2167`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); Hẹn giờ ngủ: còn {} giây (`134`); ...
+- chỉ Qt (17): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đã nghe* (`qt/ChapterRow.qml:79`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:130`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:258`); Giọng {}* (`qt/NowPlaying.qml:321`); Thử lại* (`qt/NowPlaying.qml:381`); Nhạc nền* (`qt/NowPlaying.qml:540`); Chỉnh* (`qt/NowPlaying.qml:685`); Âm thanh* (`qt/NowPlaying.qml:685`); Cửa sổ mini (`qt/NowPlaying.qml:694`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:58`); Đóng* (`qt/ReadingSuggestions.qml:81`)
+- chỉ web (16): Shift+← (`287`); Đã chọn tốc độ đọc {} (`522`); Phím (`525`); Đã chọn giọng {} (`789`); Hẹn giờ đã tắt tiếng lúc (`984`); Tiếng nhỏ dần (`1004`); Hẹn giờ ngủ trên {} (`1084`); Về chế độ nghe (`2168`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); Hẹn giờ ngủ: còn {} giây (`134`); ...
 
 ### Đọc theo
 
 - chỉ Qt (2): Đang tải kịch bản* (`qt/PlayerLineEditor.qml:119`); Đang mở văn bản chương (`qt/ReadAlongView.qml:482`)
-- chỉ web (9): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Cách đọc “{}”: “{}” (`398`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Đang tải chữ (`1772`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
+- chỉ web (9): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Cách đọc “{}”: “{}” (`398`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Đang tải chữ (`1773`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
 
 ### Trang sách
 
 - chỉ Qt (56): Giới tính của {}* (`qt/CastGender.qml:17`); Hiện đang là nhân vật {}.* (`qt/CastGender.qml:18`); Chưa đổi được giới tính* (`qt/CastGender.qml:26`); Giới tính* (`qt/CastGender.qml:48`); Nữ* (`qt/CastGender.qml:50`); Ghi lại* (`qt/CastGender.qml:83`); Thôi* (`qt/CastGender.qml:83`); Đang tải nhân vật (`qt/CastList.qml:100`); Gộp nhân vật* (`qt/CastMerge.qml:18`); Chưa gộp được* (`qt/CastMerge.qml:29`); Đã ghi:* (`qt/CastMerge.qml:29`); Tìm người trong truyện* (`qt/CastMerge.qml:51`); Gộp vào ai* (`qt/CastMerge.qml:68`); Không có ai khớp “{}”. (`qt/CastMerge.qml:137`); Gộp* (`qt/CastMerge.qml:159`); Chưa hoàn tác được* (`qt/CastModal.qml:24`); Hoàn tác* (`qt/CastModal.qml:24`); Đã hoàn tác* (`qt/CastModal.qml:24`); Đã hoàn tác. {} (`qt/CastModal.qml:24`); Bỏ gộp {} vào {} (`qt/CastPerson.qml:120`); Đổi tên {}* (`qt/CastRename.qml:14`); Chưa đổi được tên* (`qt/CastRename.qml:26`); Đã trở về tên gốc: {}* (`qt/CastRename.qml:26`); Đã đổi tên thành {}* (`qt/CastRename.qml:26`); Tên mới của {}* (`qt/CastRename.qml:48`); Tên gốc:* (`qt/CastRename.qml:58`); Về tên gốc* (`qt/CastRename.qml:64`); Chưa bỏ gộp được* (`qt/CastUnmerge.qml:14`); Đã bỏ gộp {}* (`qt/CastUnmerge.qml:14`); Giọng (`qt/CastVoice.qml:70`); Chưa bỏ được lựa chọn* (`qt/CastVoice.qml:89`); Đã bỏ lựa chọn {}* (`qt/CastVoice.qml:89`); Đang tải giọng đọc* (`qt/CastVoice.qml:117`); Chờ áp dụng: đổi sang* (`qt/CastVoice.qml:152`); Giữ* (`qt/CastVoice.qml:159`); Giữ như cũ* (`qt/CastVoice.qml:199`); Lọc giọng theo giới* (`qt/CastVoice.qml:206`); Tất cả* (`qt/CastVoice.qml:208`); Đang dùng* (`qt/CastVoice.qml:330`); Máy gợi ý* (`qt/CastVoice.qml:344`); Giữ giọng này* (`qt/CastVoice.qml:367`); Tìm hiểu thêm* (`qt/CastVoice.qml:388`); Thử lại* (`qt/Clip.qml:20`); Mạng chậm, thử nghe lại. (`qt/Clip.qml:71`); Chưa nghe thử được lúc này.* (`qt/Clip.qml:87`); Đang tải lịch sử (`qt/HistoryList.qml:62`); Chủ Nhật (`qt/HistoryLogic.js:10`); Thứ Ba (`qt/HistoryLogic.js:10`); Thứ Bảy (`qt/HistoryLogic.js:10`); Thứ Hai (`qt/HistoryLogic.js:10`); Thứ Năm (`qt/HistoryLogic.js:10`); Thứ Sáu (`qt/HistoryLogic.js:10`); Thứ Tư (`qt/HistoryLogic.js:10`); Hồ sơ nghe: {} (`qt/RecordChip.qml:14`); Lần nghe (`qt/RecordLogic.js:10`); Hồ sơ mới “ (`qt/RecordLogic.js:104`)
-- chỉ web (13): Đã làm sẵn (`216`); Tách {} khỏi {} (`476`); Chờ áp dụng: giọng (`558`); Nghe tiếp từ (`723`); Lần nghe {} (`746`); Chia sẻ (`1294`); Đã nghe {} {} · {} (`37`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
+- chỉ web (13): Đã làm sẵn (`217`); Tách {} khỏi {} (`477`); Chờ áp dụng: giọng (`559`); Nghe tiếp từ (`724`); Lần nghe {} (`747`); Chia sẻ (`1296`); Đã nghe {} {} · {} (`37`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Cài đặt
 
@@ -287,9 +287,9 @@ Chú thích Qt ghi phím tắt sau nhãn; web ghép bằng `withShortcut(nhãn, 
 
 | nhãn | Qt | web | nơi |
 |---|---|---|---|
-| Thu nhỏ | `Esc` | (không ghi) | `qt/NowPlaying.qml:261` |
-| Chương trước | `Shift+←` | (không ghi) | `qt/NowPlaying.qml:443` |
-| Chương sau | `Shift+→` | (không ghi) | `qt/NowPlaying.qml:454` |
+| Thu nhỏ | `Esc` | (không ghi) | `qt/NowPlaying.qml:272` |
+| Chương trước | `Shift+←` | (không ghi) | `qt/NowPlaying.qml:454` |
+| Chương sau | `Shift+→` | (không ghi) | `qt/NowPlaying.qml:465` |
 | Phát | `Space` | (không ghi) | `qt/PlayButton.qml:14` |
 | Tạm dừng | `Space` | (không ghi) | `qt/PlayButton.qml:14` |
 | {} | `Esc` | (không ghi) | `qt/ScreenHeader.qml:26` |

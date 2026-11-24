@@ -241,7 +241,8 @@ class NativeActivity : ComponentActivity() {
                     }
                     AppShell(
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = bookSource, deletions = library.deletions, companion = if (demo) null else app.companion,
-                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music, env.voice, bookList, env.prepare, env.night),
+                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music, env.voice, bookList, env.prepare, env.night,
+                            writeFavorite = { id, on -> bookSource.setFavorite(id, on) }),
                         imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
                         pip = pip, studio = if (demo) null else app.studio,
                     )

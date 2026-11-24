@@ -967,7 +967,7 @@ object Store {
                 if (ListeningRevision.newer(record, chapters.optJSONObject(key))) chapters.put(key, record)
             }
         }
-        for ((field, at) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
+        for ((field, at) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt", "favorite" to "favoriteAt")) {
             val theirStamp = JSONObject().put("at", stamp(theirs, at)).put("rev", theirs.optJSONObject("_fieldRevs")?.opt(field))
             val myStamp = JSONObject().put("at", stamp(result, at)).put("rev", result.optJSONObject("_fieldRevs")?.opt(field))
             if (theirs.has(field) && ListeningRevision.newer(theirStamp, myStamp)) {
@@ -1126,6 +1126,18 @@ object Store {
         val state = recordState(target)
         state.put("finished", finished).put("finishedAt", now()).put("updatedAt", now())
         fieldRevision(state, "finished")
+        writeAtomic(recordFile(target), state.toString())
+        return state
+    }
+
+    /** Thả / bỏ tim (yêu thích) cho cuốn ở hồ sơ đang dùng: giá trị + mốc giờ + phiên bản như `finished` - lần thả mới hơn thắng khi đồng bộ
+     *  (Python `Listening.set_favorite`). Trạng thái người nghe, không vào file sách. */
+    @Synchronized
+    fun setFavorite(id: String, favorite: Boolean, recordId: String? = null): JSONObject {
+        val target = named(id, recordId)
+        val state = recordState(target)
+        state.put("favorite", favorite).put("favoriteAt", now()).put("updatedAt", now())
+        fieldRevision(state, "favorite")
         writeAtomic(recordFile(target), state.toString())
         return state
     }

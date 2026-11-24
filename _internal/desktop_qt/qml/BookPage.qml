@@ -144,6 +144,21 @@ Item {
             if (Api.transport) Api.transport.refreshLibrary()
         })
     }
+    // Thả / bỏ tim (POST .../favorite) vào hồ sơ nghe đang hiện. Khoá bấm lặp tới khi có kết quả; tim đổi theo trạng thái máy chủ trả về.
+    readonly property bool favoriteNow: Boolean(fullBook.state && fullBook.state.favorite)
+    property bool hearting: false
+    function setFavorite(favorite) {
+        if (hearting || fullBook.id === undefined) return
+        hearting = true
+        const id = root.book.bookId
+        const active = Records.activeRecord(root.fullBook)
+        Api.call("POST", "/api/listen/books/" + id + "/favorite", active ? {favorite: favorite, record: active.id} : {favorite: favorite}, function(data, error) {
+            root.hearting = false
+            if (error) { if (/^Hồ sơ nghe này/.test(error)) root.loadFull(); return }
+            root.loadFull()
+            if (Api.transport) Api.transport.refreshLibrary()
+        })
+    }
     // Menu "Thêm" (ActionMenu "Việc với sách" của web): các việc với hồ sơ nghe, đã nghe xong, các mục sửa sách.
     Popover {
         id: more
@@ -463,15 +478,21 @@ Item {
                     objectName: "bookActions"
                     Reveal { shown: bookDetail.status === "ready" || (bookDetail.status === "failed" && root.loaded) }
                     width: parent.width
-                    columns: !root.expanded && width >= 2 * rowWidth + Theme.s16 ? 2 : 1
+                    columns: split ? 2 : 1
                     rowSpacing: Theme.s12
                     columnSpacing: Theme.s16
                     verticalItemAlignment: Grid.AlignVCenter
-                    readonly property real rowWidth: Math.min(width, Math.max(256, primaryButton.implicitWidth))
+                    // Một cột: nút chính và hàng phụ cùng bề rộng (ít nhất 256, không hẹp hơn chữ nút chính, đủ cho mọi nút phụ ở bề rộng
+                    // tự nhiên - năm nút có tim không tràn); hai đầu hàng phụ thẳng hai mép nút chính.
+                    // Hai cột (bố cục vừa): hàng phụ rộng theo các nút của nó, nút chính lấy phần còn lại (ít nhất 240, chữ dài thì xuống dòng).
+                    readonly property real secondaryWidth: Math.max(256, secondary.used)
+                    readonly property real primaryWidth: width - secondaryWidth - Theme.s16
+                    readonly property bool split: !root.expanded && primaryWidth >= 240
+                    readonly property real rowWidth: Math.min(width, Math.max(256, primaryButton.implicitWidth, secondaryWidth))
                     Text {
                         objectName: "bookCaughtUp"
                         Reveal { shown: bookDetail.caughtUp }
-                        width: actions.columns === 1 ? parent.width : Math.max(0, parent.width - actions.rowWidth - actions.columnSpacing)
+                        width: actions.split ? Math.max(0, parent.width - actions.secondaryWidth - actions.columnSpacing) : parent.width
                         text: S.s_da_nghe_het_phan_da_co_chuong_moi_se_hien_4b18ca13
                         color: Theme.text2
                         wrapMode: Text.Wrap
@@ -483,7 +504,7 @@ Item {
                         Reveal { shown: !bookDetail.caughtUp }
                         size: "lg"
                         wrap: true
-                        width: actions.rowWidth          // web: cột w-fit min-w-[16rem], nút giãn bằng cột
+                        width: actions.split ? actions.primaryWidth : actions.rowWidth          // web: cột w-fit min-w-[16rem], nút giãn bằng cột
                         text: bookDetail.hasPoint ? bookDetail.primaryText : BookText.readLabel(root.fullBook, root.listening)
                         icon: bookDetail.hasPoint ? bookDetail.primaryIcon : "book-open"
                         onActivated: root.primary()
@@ -491,15 +512,15 @@ Item {
                     // Hàng phụ "Việc với sách": luôn cùng chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất; hai đầu thẳng hai mép nút chính.
                     Item {
                         objectName: "bookSecondary"
-                        width: actions.rowWidth
+                        width: actions.split ? actions.secondaryWidth : actions.rowWidth
                         height: secondary.height
                         Accessible.role: Accessible.Grouping
                         Accessible.name: S.s_viec_voi_sach_9582a854
                         Row {
                             id: secondary
-                            readonly property var shown: [readButton, findButton, restartButton, moreButton].filter(b => b.visible)
+                            readonly property var shown: [readButton, findButton, restartButton, heartButton, moreButton].filter(b => b.visible)
                             readonly property real used: shown.reduce((sum, b) => sum + b.width, 0)
-                            spacing: shown.length > 1 ? Math.max(0, (actions.rowWidth - used) / (shown.length - 1)) : 0
+                            spacing: shown.length > 1 ? Math.max(0, (parent.width - used) / (shown.length - 1)) : 0
                             ActionButton {
                                 id: readButton
                                 objectName: "bookRead"
@@ -527,6 +548,16 @@ Item {
                                 Accessible.name: S.s_nghe_lai_tu_dau_e251d632
                                 enabled: bookDetail.started && bookDetail.hasPoint && !bookDetail.finished
                                 onClicked: root.restart()
+                            }
+                            ActionButton {
+                                id: heartButton
+                                objectName: "bookFavorite"
+                                icon: root.favoriteNow ? "heart-filled" : "heart"
+                                label: S.s_heart_favorite
+                                Accessible.name: root.favoriteNow ? S.s_heart_unfavorite : S.s_heart_favorite
+                                active: root.favoriteNow
+                                enabled: root.fullBook.id !== undefined
+                                onClicked: root.setFavorite(!root.favoriteNow)
                             }
                             ActionButton {
                                 id: moreButton

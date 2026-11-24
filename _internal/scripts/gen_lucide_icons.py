@@ -73,6 +73,7 @@ ICONS = sorted({
     "globe",
     "hand",
     "headphones",
+    "heart",
     "history",
     "image-plus",
     "info",

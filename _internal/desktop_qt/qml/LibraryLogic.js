@@ -8,8 +8,14 @@ function state(book) {
     const p = progress(book)
     return p.finished ? "finished" : (p.heardSeconds > 0 || (book.state && book.state.last) ? "listening" : "new")
 }
+// Cuốn thuộc bộ lọc: "favorite" theo tim người nghe đã thả (state.favorite), các mục khác theo tình trạng nghe (web inFilter).
+function inFilter(book, filter) {
+    if (filter === "all") return true
+    if (filter === "favorite") return Boolean(book.state && book.state.favorite)
+    return state(book) === filter
+}
 function matches(book, filter, query) {
-    return (filter === "all" || state(book) === filter) && fold([book.title, book.author, book.narrator].join(" ")).indexOf(fold(query.trim())) >= 0
+    return inFilter(book, filter) && fold([book.title, book.author, book.narrator].join(" ")).indexOf(fold(query.trim())) >= 0
 }
 function compare(a, b) {
     // QML's JS localeCompare has no numeric option. Compare digit runs first.

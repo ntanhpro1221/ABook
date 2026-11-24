@@ -36,6 +36,9 @@ Interactive {
     readonly property string subLine: [root.statusText].concat(root.twin
             ? [root.twinKind, root.book && root.book.addedAt ? S.s_them_0_07ca4c38(StudioLogic.formatWhen(root.book.addedAt)) : ""] : [])
         .filter(part => part !== "").join("\u00a0·\u00a0")
+    // Người nghe đã thả tim cho cuốn: dấu tim hổ phách đầu dòng phụ (như web / điện thoại).
+    readonly property bool favorite: Boolean(root.book && root.book.state && root.book.state.favorite)
+    readonly property real leadMarks: (root.favorite ? 18 : 0) + (root.source !== "" ? 18 : 0)
     readonly property real textBlock: 12 + root.titleHeight + authorText.height + 4 + subtitleText.height
 
     activeFocusOnTab: false
@@ -147,7 +150,7 @@ Interactive {
     OneLineFit {
         id: subtitleText
         objectName: "bookCellSubtitle"
-        x: root.source !== "" ? 18 : 0
+        x: root.leadMarks
         y: authorText.y + authorText.height + 4
         room: root.coverWidth - x
         text: TextWrap.keepDots(root.subLine)
@@ -159,9 +162,16 @@ Interactive {
         verticalAlignment: Text.AlignVCenter
         Text { id: slot; visible: false; text: subtitleText.text; font.family: subtitleText.font.family; font.pixelSize: Theme.sizeCaption }
     }
+    Icon {
+        objectName: "bookCellFavorite"
+        x: 0; y: subtitleText.y + 2; size: 12; name: "heart-filled"; color: Theme.accentText
+        Reveal { shown: root.favorite }
+        Accessible.role: Accessible.Graphic
+        Accessible.name: S.s_heart_favorite
+    }
     // Same laptop mark as web, leading the one subtitle line.
     Icon {
-        x: 0; y: subtitleText.y + 2; size: 12; name: "laptop"; color: Theme.text3
+        x: root.favorite ? 18 : 0; y: subtitleText.y + 2; size: 12; name: "laptop"; color: Theme.text3
         Reveal { shown: root.source !== "" }
         Accessible.name: root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source
     }

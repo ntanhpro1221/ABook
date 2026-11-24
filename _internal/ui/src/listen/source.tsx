@@ -94,6 +94,8 @@ export interface ListenSource {
   /** `record` (cả bốn việc dưới đây): hồ sơ nghe của màn đã bấm - ghi đúng nó dù hồ sơ đang dùng vừa đổi; đã xoá / chuyển sách thì bị từ chối (listen/recordWrites.ts). */
   setChapterDone(bookId: string, chapterId: number, done: boolean, record?: string): Promise<ListeningState>;
   setFinished(bookId: string, finished: boolean, record?: string): Promise<ListeningState>;
+  /** Thả / bỏ tim cho cuốn (yêu thích) vào hồ sơ nghe của màn đã bấm; đồng bộ sang máy kia như `finished`. */
+  setFavorite(bookId: string, favorite: boolean, record?: string): Promise<ListeningState>;
   /** `record`: hồ sơ nghe của phiên phát (chốt lúc mở phiên) - ghi đúng nó dù hồ sơ đang dùng đã đổi; máy chủ từ chối rõ nếu nó đã xoá / chuyển sách. */
   setRate(bookId: string, rate: number, record?: string): Promise<void>;
   /** Giọng Nghe ngay riêng của cuốn vào hồ sơ nghe - đi sang máy kia như tốc độ (soát a68 lỗi 8). */

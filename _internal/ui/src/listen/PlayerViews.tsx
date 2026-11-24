@@ -90,6 +90,7 @@ import { askOnlineConsent, onlineConsentGiven, pickVoiceWithConsent, spokenVoice
 import { PlaylistOptionLabel, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
+import { FavoriteButton } from "./FavoriteButton";
 import { ACTION_BUTTON, ACTION_GLYPH, ACTION_LABEL, ActionButton, actionTone } from "./ActionButton";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { besideParentMenu, keepFocus, MENU_ROW, MenuSlot, type BesideParent } from "./menuSlot";
@@ -2200,10 +2201,11 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
       <div data-toast-avoid className="mt-3 flex justify-center">
         <Transport large />
       </div>
-      {/* Một hàng nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút (S.s_toc_do_16ee0914 41,8 px, S.s_chuong_2d157977 46,2 px,
+      {/* Một hàng nút phụ có nhãn (Tốc độ · Yêu thích · Hẹn giờ · Chương); mọi việc khác ở "…" trên thanh đầu. Tim nằm giữa hàng: không đè bìa, không đổi hai đầu mút. Hai đầu = bề rộng nhãn đầu mút (S.s_toc_do_16ee0914 41,8 px, S.s_chuong_2d157977 46,2 px,
           S.s_hen_gio_39d9ca26 44,6 px ở rlh 24 px) để chữ chạm đúng mép cột. Máy tính: S.s_chuong_2d157977 và S.s_doc_theo_df342819 đã là hai tab của bảng bên phải - không lặp ở cột này. */}
       <div role="group" aria-label={S.s_dieu_khien_phu_bf325663} data-player-secondary data-toast-avoid className={cn("slot-row mt-5 items-start [--slot-start:1.742rlh] [--slot:1.9rlh]", mobile ? "[--slot-end:1.925rlh]" : "[--slot-end:1.859rlh]")}>
         <SpeedMenu look="action" />
+        <PlayerFavorite bookId={track.bookId} />
         <SleepMenu look="action" />
         {<Presence>{mobile && <ActionButton icon={ListOrdered} label={S.s_chuong_2d157977} aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />}</Presence>}
       </div>
@@ -2212,6 +2214,12 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
     </aside>
   );
 });
+
+/** Tim của cuốn đang nghe: đọc trạng thái từ bộ đệm cuốn (không hỏi lại theo chu kỳ - trang sách / thư viện làm mới bộ đệm này). */
+function PlayerFavorite({ bookId }: { bookId: string }) {
+  const { data: book } = useListenBook(bookId, false);
+  return <FavoriteButton bookId={bookId} on={Boolean(book?.state.favorite)} />;
+}
 
 let warmedUp = false;
 /** Lần mở đầu tiên của màn Đang nghe trả giá S.s_copy_4affb6449897 (biên dịch JS của ~120 thành phần, bộ nhớ đệm chữ / bố cục): đo 150-180 ms ở 6x chậm, còn

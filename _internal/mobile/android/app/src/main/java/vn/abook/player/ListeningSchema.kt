@@ -18,7 +18,7 @@ internal object ListeningSchema {
     private fun revised(row: JSONObject) = !row.has("rev") || ListeningRevision.revision(row).first != 0L
 
     fun state(raw: JSONObject): JSONObject {
-        val state = fields(raw, listOf("updatedAt", "rate", "rateAt", "finishedAt", "voiceAt", "_clock"), listOf("voice"), listOf("finished"))
+        val state = fields(raw, listOf("updatedAt", "rate", "rateAt", "finishedAt", "voiceAt", "favoriteAt", "_clock"), listOf("voice"), listOf("finished", "favorite"))
         if (state.has("_clock") && !ListeningRevision.validNumber(state.opt("_clock"))) state.remove("_clock")
         if (state.has("_epoch") && !ListeningRevision.validEpoch(state.opt("_epoch"))) state.remove("_epoch")
         if (state.has("_fieldRevs")) {
@@ -28,7 +28,7 @@ internal object ListeningSchema {
             } }
             state.put("_fieldRevs", clean)
         }
-        for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
+        for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt", "favorite" to "favoriteAt")) {
             // Value + stamp + revision are one unit (Python clean_state): a broken part drops all three and the other device resends
             // it - keeping the value and revision without the stamp broke every merge on the peer (a118 bug 3).
             // One rule: a field that still has a value but no revision in the filtered table is broken - also when `_fieldRevs` itself had the wrong type (replaced by {}).

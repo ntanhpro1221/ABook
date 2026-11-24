@@ -6779,6 +6779,16 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self._send_json(HTTPStatus.OK, state)
 
+    def post_favorite(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._listenable(value)
+        body = self._body()
+        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
+        try:
+            state = self.app.listening.set_favorite(value, bool(body.get("favorite", True)), _held_record(body))
+        except RecordGone as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        self._send_json(HTTPStatus.OK, state)
+
     def post_rate(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
         body = self._body()
@@ -7737,6 +7747,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(LISTEN + r"/progress/session"), Handler.post_progress_session),
     ("POST", re.compile(LISTEN + r"/chapters/(\d+)/done"), Handler.post_chapter_done),
     ("POST", re.compile(LISTEN + r"/finished"), Handler.post_finished),
+    ("POST", re.compile(LISTEN + r"/favorite"), Handler.post_favorite),
     ("POST", re.compile(LISTEN + r"/rate"), Handler.post_rate),
     ("POST", re.compile(LISTEN + r"/voice"), Handler.post_listen_voice),
     ("GET", re.compile(LISTEN + r"/records"), Handler.get_records),

@@ -5,6 +5,7 @@ import "LucidePaths.js" as Lucide
 // Biểu tượng lucide - ĐÚNG gói mà bản web và điện thoại dùng (DESIGN.md luật 8: cùng một việc, cùng một icon). Nét SVG trên lưới 24 do
 // scripts/gen_lucide_icons.py sinh vào LucidePaths.js; vẽ bằng Shape (CurveRenderer: cong sắc ở mọi tỉ lệ màn hình), nét 2 đơn vị lưới co theo cỡ
 // như lucide-react. `name` là tên file lucide (kebab-case: "arrow-left"). `solid` = tô đặc không viền (Play / Pause như bản web).
+// "<tên>-filled" (vd "heart-filled"): cùng nét của <tên>, tô đầy bên trong bằng cùng màu - như web `fill="currentColor"` và điện thoại `fill`.
 Item {
     id: root
     property string name: ""
@@ -15,10 +16,11 @@ Item {
     width: size
     height: size
 
-    readonly property string key: name.toUpperCase().split("-").join("_")
+    readonly property bool filled: name.endsWith("-filled")
+    readonly property string key: (filled ? name.slice(0, -7) : name).toUpperCase().split("-").join("_")
     readonly property string path: name === "" ? "" : (Lucide[key] || "")
-    // Phần tô thêm của icon có chấm đặc (palette); icon không có thì rỗng
-    readonly property string fillPath: name === "" ? "" : (Lucide[key + "_FILL"] || "")
+    // Phần tô thêm của icon có chấm đặc (palette); icon tô đầy thì chính nét ấy; icon không có thì rỗng
+    readonly property string fillPath: name === "" ? "" : filled ? path : (Lucide[key + "_FILL"] || "")
 
     // Empty and hidden state slots do not need vector geometry. Keep the item itself for layout and fades.
     Loader {

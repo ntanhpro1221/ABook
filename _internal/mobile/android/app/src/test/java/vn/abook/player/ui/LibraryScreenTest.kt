@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
@@ -25,6 +26,7 @@ import vn.abook.player.ui.snapshot.captureRoboImage
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.RoborazziTaskType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -169,6 +171,53 @@ class LibraryScreenTest {
         assertEquals("Track must not escape the bottom-right corner", background, bitmap.getPixel(cover.right.toInt() - 2, y))
         assertTrue("Track must remain visible inside the cover", background != bitmap.getPixel((cover.left + cover.width * 0.75f).toInt(), y))
         bitmap.recycle()
+    }
+
+    // ---- thả tim (heart): dấu tim nhỏ đầu dòng phụ của ô, kệ "Yêu thích" ----
+
+    private val loved = ListenBook("f1", "Số đỏ", "Vũ Trọng Phụng", duration = 3600.0, chaptersTotal = 5, chaptersAvailable = 5,
+        state = ListenState(favorite = true))
+
+    private fun hearts(books: List<ListenBook>, dark: Boolean, name: String) {
+        show(books, dark)
+        rule.waitForIdle()
+        val heart = rule.onNodeWithTag("tile_favorite", useUnmergedTree = true).assertContentDescriptionEquals("Yêu thích").fetchSemanticsNode().boundsInRoot
+        // Dấu tim không đè bìa, không che tên sách (máy dò chồng lấn).
+        for (tag in listOf("library_cover", "tile_title")) {
+            for (node in rule.onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes()) {
+                assertFalse("tim chồng lên $tag", heart.overlaps(node.boundsInRoot))
+            }
+        }
+        shot(name)
+    }
+
+    @Test fun heartMarkLight() = hearts(listOf(loved, fresh), dark = false, name = "library_heart_light")
+    @Test fun heartMarkDark() = hearts(listOf(loved, fresh), dark = true, name = "library_heart_dark")
+
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun heartMarkAtLargeFontScale() {
+        hearts(listOf(loved, fresh), dark = false, name = "library_heart_font130_light")
+        rule.assertNoTextOverflow()
+    }
+
+    @Test
+    fun favoriteShelfKeepsOnlyHeartedBooks() {
+        show(listOf(loved, fresh))
+        rule.onNodeWithTag(LibraryFilter.Favorite.tag).performClick()
+        rule.waitForIdle()
+        assertEquals(LibraryFilter.Favorite, ui.shown)
+        assertEquals(1, rule.onAllNodesWithTag("book_cell").fetchSemanticsNodes().size)
+        shot("library_filter_favorite_light")
+    }
+
+    @Test
+    fun emptyFavoriteShelfExplainsHowToFillIt() {
+        show(listOf(fresh))
+        rule.onNodeWithTag(LibraryFilter.Favorite.tag).performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Chạm hình tim ở trang sách để thêm cuốn vào đây.").assertIsDisplayed()
+        shot("library_filter_favorite_empty_light")
     }
 
     // ---- ảnh chụp ----

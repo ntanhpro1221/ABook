@@ -62,6 +62,8 @@ data class NowPlayingState(
     val moreChapters: Boolean = false,
     /** Vừa phát hết chương cuối và chưa nghe lại gì: Đang nghe nói "Đã nghe hết ..." và mời nghe tiếp. */
     val ended: Boolean = false,
+    /** Người nghe đã thả tim cho cuốn đang nghe (yêu thích). */
+    val favorite: Boolean = false,
 ) {
     /** Có chương sau bấm được ngay (trong hàng chương đang nạp). */
     val hasNext: Boolean get() = PlayerText.hasNext(chapters, chapterId)
@@ -95,6 +97,8 @@ interface NowPlayingModel {
     /** "Làm trước" các chương tới (khối ở tấm "Giọng đọc"); null = không có (bản thử). */
     val prepare: PrepareState? get() = null
     fun toggle()
+    /** Thả / bỏ tim cho cuốn đang nghe; mặc định không làm gì (bản thử không có kho). */
+    fun setFavorite(favorite: Boolean) {}
     fun skip(seconds: Int)
     fun seek(milliseconds: Long)
     fun jump(chapterId: Int)
@@ -171,7 +175,7 @@ object PlayerLabels {
  * The repo's immutable snapshot -> what the window draws. Pure and run once per snapshot (never per clock tick); `voices` and the "return to place" chip are the
  * window's own extras. Rate comes through as is: the core reports the decimal the listener picked, so the sheet's choice compares equal.
  */
-fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvailable: Boolean, returnSerial: Int): NowPlayingState =
+fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvailable: Boolean, returnSerial: Int, favorite: Boolean = false): NowPlayingState =
     NowPlayingState(
         bookId = player.bookId, bookTitle = player.bookTitle, chapterId = player.chapterId, chapterTitle = player.chapterTitle,
         cover = player.cover, playing = player.playing, durationMs = player.durationMs.coerceAtLeast(0), rate = player.rate,
@@ -183,5 +187,5 @@ fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvaila
         music = player.music, returnAvailable = returnAvailable, returnSerial = returnSerial,
         voices = voices.filter { !it.online }, voiceId = player.voiceId, voiceName = voices.firstOrNull { it.id == player.voiceId }?.name.orEmpty(),
         buffering = player.buffering || player.preparingBookId != null, speaking = player.chapters.firstOrNull { it.id == player.chapterId }?.textPath.orEmpty().isNotEmpty(),
-        whole = player.whole, moreChapters = player.moreChapters, ended = player.ended,
+        whole = player.whole, moreChapters = player.moreChapters, ended = player.ended, favorite = favorite,
     )

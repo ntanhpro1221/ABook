@@ -129,6 +129,8 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
 
     override suspend fun setFinished(id: String, finished: Boolean) = write { BookActions.setFinished(context, id, finished) }
 
+    override suspend fun setFavorite(id: String, favorite: Boolean) = write { BookActions.setFavorite(context, id, favorite) }
+
     override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) = write { BookActions.setChapterDone(context, id, chapterId, done) }
 
     override suspend fun delete(id: String): String? = removeFromPhone(id)

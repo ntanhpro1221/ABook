@@ -31,6 +31,7 @@ object BookJson {
             finished = json.optBoolean("finished"),
             finishedAt = number(json, "finishedAt"),
             finishedRev = rev(json.optJSONObject("_fieldRevs")?.optJSONObject("finished")),
+            favorite = json.optBoolean("favorite"),
             updatedAt = number(json, "updatedAt"),
         )
     }

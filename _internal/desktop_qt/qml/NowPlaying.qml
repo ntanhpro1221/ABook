@@ -24,6 +24,17 @@ Item {
         return rows
     }
     readonly property var currentBook: libraryBooks.find(b => b.bookId === Player.bookId) || ({})
+    readonly property bool favoriteNow: Boolean(currentBook.state && currentBook.state.favorite)
+    property bool hearting: false
+    // Thả / bỏ tim cho cuốn đang nghe (hồ sơ đang dùng); khoá bấm lặp tới khi có kết quả, tim đổi khi Thư viện mang trạng thái mới về.
+    function setFavorite(favorite) {
+        if (hearting || Player.bookId === "") return
+        hearting = true
+        Api.call("POST", "/api/listen/books/" + Player.bookId + "/favorite", {favorite: favorite}, function(data, error) {
+            root.hearting = false
+            if (!error && Api.transport) Api.transport.refreshLibrary()
+        })
+    }
     readonly property var nextVolume: {
         const groups = LibraryLogic.sections(libraryBooks)
         const group = groups.find(g => g.books.some(b => b.bookId === Player.bookId))
@@ -477,6 +488,17 @@ Item {
                             active: Player.rate !== 1
                             tip: S.s_toc_do_doc_3657e59d
                             onClicked: speed.toggle()
+                        }
+                        ControlChip {
+                            id: favoriteChip
+                            objectName: "nowFavorite"
+                            icon: root.favoriteNow ? "heart-filled" : "heart"
+                            text: S.s_heart_favorite
+                            active: root.favoriteNow
+                            tip: root.favoriteNow ? S.s_heart_unfavorite : S.s_heart_favorite
+                            Accessible.name: root.favoriteNow ? S.s_heart_unfavorite : S.s_heart_favorite
+                            enabled: Player.bookId !== ""
+                            onClicked: root.setFavorite(!root.favoriteNow)
                         }
                         ControlChip {
                             id: sleepChip

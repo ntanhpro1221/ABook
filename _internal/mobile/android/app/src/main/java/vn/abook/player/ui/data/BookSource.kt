@@ -18,6 +18,9 @@ interface BookSource {
 
     suspend fun setFinished(id: String, finished: Boolean)
 
+    /** Thả / bỏ tim (yêu thích); mặc định không làm gì (bản thử, ảnh chụp). */
+    suspend fun setFavorite(id: String, favorite: Boolean) = Unit
+
     suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean)
 
     /** Xoá khỏi máy: null = đã nhận (native chờ hết cửa sổ Hoàn tác mới xoá đĩa), khác null = câu lỗi. */

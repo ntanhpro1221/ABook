@@ -27,7 +27,7 @@ Interactive {
         opacity: root.enabled && root.hovered ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     }
-    Icon {
+    StateIcon {
         x: (root.width - 20) / 2
         y: 6 + 2
         name: root.icon

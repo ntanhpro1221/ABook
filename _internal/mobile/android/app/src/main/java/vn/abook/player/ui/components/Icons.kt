@@ -46,11 +46,12 @@ internal fun DrawScope.drawLucide(data: String, color: Color, unit: Float = size
 
 @Composable
 fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp, fill: String? = null) {
-    StateIcon(data) { snapshot ->
+    // Khoá gồm cả phần tô: icon đổi từ viền sang tô đầy (tim đã thả) cũng mờ chéo tại chỗ như đổi hình.
+    StateIcon(data to fill) { (snapshot, filled) ->
     Box(
         modifier.size(size).visualIcon().drawWithCache {
             val path = lucidePath(snapshot)
-            val dots = fill?.let(::lucidePath)
+            val dots = filled?.let(::lucidePath)
             val unit = this.size.width / 24f
             onDrawBehind {
                 scale(unit, unit, Offset.Zero) {
@@ -78,6 +79,10 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 
 /** "Thêm" (menu "…"). */
 @Composable fun MoreIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.ELLIPSIS, color, modifier, size)
+
+/** Tim yêu thích (web: Heart): viền khi chưa thả, tô đầy khi đã thả. Đổi bằng StateIcon chung (mờ chéo + co 0,8 → 1 tại chỗ, DESIGN 5.2). */
+@Composable fun HeartIcon(on: Boolean, color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) =
+    LucideIcon(LucidePaths.HEART, color, modifier, size, fill = if (on) LucidePaths.HEART else null)
 
 /** "Từ đầu" (web: RotateCcw). */
 @Composable fun RestartIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.ROTATE_CCW, color, modifier, size)

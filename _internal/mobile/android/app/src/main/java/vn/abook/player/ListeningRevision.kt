@@ -132,7 +132,7 @@ internal object ListeningRevision {
         } }
         state.put("chapters", chapters)
         val fields = JSONObject()
-        for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) if (state.has(field)) {
+        for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt", "favorite" to "favoriteAt")) if (state.has(field)) {
             val rev = state.optJSONObject("_fieldRevs")?.opt(field)
             if (accept(JSONObject().put("rev", rev))) fields.put(field, rev) else { state.remove(field); state.remove(stamp) }
         }

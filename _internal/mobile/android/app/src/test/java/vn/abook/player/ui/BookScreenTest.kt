@@ -20,6 +20,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsSelected
@@ -76,6 +77,7 @@ class BookScreenTest {
         override suspend fun detail(id: String) = detail
         override suspend fun passages(id: String, chapter: ChapterLine) = texts[chapter.id]
         override suspend fun setFinished(id: String, finished: Boolean) { calls += "finished $finished" }
+        override suspend fun setFavorite(id: String, favorite: Boolean) { calls += "favorite $favorite" }
         override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) { calls += "done $chapterId $done" }
         override suspend fun delete(id: String): String? { calls += "delete $id"; return null }
         override suspend fun share(id: String): Intent? = null
@@ -202,6 +204,40 @@ class BookScreenTest {
             .assertTextContains("Các quyển").assertHeightIsAtLeast(48.dp).performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("volume_1").assertIsDisplayed()
+    }
+
+    // ---- thả tim (heart) ----
+
+    private fun loved() = listening().put("favorite", true).put("favoriteAt", 1_760_000_100.0)
+        .put("_fieldRevs", JSONObject().put("favorite", JSONObject().put("counter", 3).put("node", "n")))
+
+    @Test
+    fun heartTapAsksTheStoreAndSaysWhatItWillDo() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_favorite").assertContentDescriptionEquals("Yêu thích").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("favorite true"), source.calls)
+    }
+
+    @Test
+    fun heartedBookOffersToTakeTheHeartBack() {
+        show(detail(loved()))
+        rule.onNodeWithTag("book_favorite").assertContentDescriptionEquals("Bỏ yêu thích").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("favorite false"), source.calls)
+    }
+
+    @Test fun heartOffLight() { show(detail(listening())); shot("book_heart_off_light") }
+    @Test fun heartOnLight() { show(detail(loved())); shot("book_heart_on_light") }
+    @Test fun heartOffDark() { show(detail(listening()), dark = true); shot("book_heart_off_dark") }
+    @Test fun heartOnDark() { show(detail(loved()), dark = true); shot("book_heart_on_dark") }
+
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun heartOnAtLargeFontScale() {
+        show(detail(loved()))
+        rule.assertNoTextOverflow()
+        shot("book_heart_on_light_130")
     }
 
     // ---- ảnh chụp ----
@@ -614,9 +650,9 @@ class BookScreenTest {
     fun primaryIsOneFixedLineAtLargeFontScale() = assertPrimaryIsOneFixedLine()
 
     @Test
-    fun secondaryRowHasFourLabelledActions() {
+    fun secondaryRowHasFiveLabelledActions() {
         show(detail(listening()))
-        for (label in listOf("Đọc", "Tìm", "Từ đầu", "Thêm")) {
+        for (label in listOf("Đọc", "Tìm", "Từ đầu", "Yêu thích", "Thêm")) {
             rule.onNode(hasText(label) and hasAnyAncestor(hasTestTag("book_secondary")), useUnmergedTree = true).assertIsDisplayed()
         }
     }
