@@ -70,3 +70,47 @@ def test_all_chapters_can_be_retaken_and_repacking_old_audio_does_not_make_it_ne
     repacked = bookfile.repack(other, tmp_path / "repacked-old.abook")
     assert packages.import_file(repacked, tmp_path / "library", [], prints) == (folder, "older")
     assert (folder / "chapters/1.mp3").read_bytes() == b"new"
+
+
+def _manifest_text(title):
+    return json.dumps({"title": title, "package": {"files": {}}})
+
+
+def test_manifest_cache_sees_a_same_size_replace_within_one_file_clock_tick(tmp_path):
+    # Gate 2 of 0.4.176: the retake's book.json had the old one's size and mtime, so the cached old manifest came back
+    # and the old file's import answered "existing" instead of "older". An atomic replace gives the file a new id.
+    import os, time
+    folder = tmp_path / "book"
+    folder.mkdir()
+    file = folder / packages.MANIFEST
+    settled = time.time_ns() - 10 * 10**9
+    file.write_text(_manifest_text("A"), encoding="utf-8")
+    os.utime(file, ns=(settled, settled))
+    assert packages.manifest(folder)["title"] == "A"
+    staged = folder / "book.json.part"
+    staged.write_text(_manifest_text("B"), encoding="utf-8")
+    os.utime(staged, ns=(settled, settled))
+    os.replace(staged, file)
+    assert packages.manifest(folder)["title"] == "B"
+    assert packages.edited_manifest(folder)["title"] == "B"
+
+
+def test_manifest_written_just_now_is_read_again(tmp_path):
+    # Within the settle window a rewrite in place can keep mtime and size: such a file is never served from the cache.
+    import os
+    folder = tmp_path / "book"
+    folder.mkdir()
+    file = folder / packages.MANIFEST
+    file.write_text(_manifest_text("A"), encoding="utf-8")
+    stamp = file.stat().st_mtime_ns
+    assert packages.manifest(folder)["title"] == "A"
+    assert packages.edited_manifest(folder)["title"] == "A"
+    with file.open("r+", encoding="utf-8") as handle:
+        handle.write(_manifest_text("B"))
+    os.utime(file, ns=(stamp, stamp))
+    assert packages.manifest(folder)["title"] == "B"
+    assert packages.edited_manifest(folder)["title"] == "B"
+
+
+def test_package_caches_settle_like_audio_revisions():
+    assert packages._SETTLE_NS == audio_revision._SETTLE_NS

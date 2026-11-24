@@ -33,27 +33,39 @@ MANIFEST = "book.json"  # = bookfile.MANIFEST (bookfile nhập library, library 
 IMPORTED_FOLDER = "Sách đã nhập"
 PROJECT_MARKER = "project.json"  # = projectfile.MANIFEST: có trong thư mục một cuốn nhập từ file `.abookproj` (xưởng đang chờ hay đi theo)
 
-_CACHE: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}
+_CACHE: dict[str, tuple[tuple[int, int, int], dict[str, Any]]] = {}
+# Same rule as audio_revision._SETTLE_NS: the file clock is coarse, so two writes of the same size close together can share an
+# mtime ("racily clean", as in git). Gate 2 of 0.4.176: a retake's book.json (same size as the old one, replaced within one tick)
+# came back as the cached old manifest and the import answered "existing" instead of "older".
+_SETTLE_NS = 3_000_000_000
+
+
+def _cache_stamp(stat: Any) -> tuple[int, int, int] | None:
+    """Stamp a write cache can trust: mtime, size and file id (an atomic replace changes the id); None while the file is
+    still within the settle window of its last write, so the caller reads it again instead of caching."""
+    if time.time_ns() - stat.st_mtime_ns <= _SETTLE_NS:
+        return None
+    return (stat.st_mtime_ns, stat.st_size, stat.st_ino)
 
 
 def manifest(path: Path) -> dict[str, Any]:
     """`book.json` của một cuốn đã nhập, đệm theo lần ghi - thư viện hỏi lại mỗi vài giây."""
     file = Path(path) / MANIFEST
-    stat = file.stat()
-    stamp = (stat.st_mtime_ns, stat.st_size)
+    stamp = _cache_stamp(file.stat())
     cached = _CACHE.get(str(file))
-    if cached and cached[0] == stamp:
+    if stamp is not None and cached and cached[0] == stamp:
         return cached[1]
     data = json.loads(file.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("book.json không phải một đối tượng")
     book_volumes.flatten(data)
-    _CACHE[str(file)] = (stamp, data)
+    if stamp is not None:
+        _CACHE[str(file)] = (stamp, data)
     return data
 
 
 _EDITED: dict[str, tuple[Any, dict[str, Any]]] = {}
-_WORKSHOP: dict[str, tuple[tuple[int, int], str | None]] = {}
+_WORKSHOP: dict[str, tuple[tuple[int, int, int], str | None]] = {}
 
 
 def workshop_state(path: Path) -> str | None:
@@ -65,16 +77,17 @@ def workshop_state(path: Path) -> str | None:
         stat = file.stat()
     except OSError:
         return None
-    stamp = (stat.st_mtime_ns, stat.st_size)
+    stamp = _cache_stamp(stat)
     cached = _WORKSHOP.get(str(file))
-    if cached and cached[0] == stamp:
+    if stamp is not None and cached and cached[0] == stamp:
         return cached[1]
     try:
         value = json.loads(file.read_text(encoding="utf-8")).get("workshop")
     except (OSError, ValueError, AttributeError):
         value = None
     state = value if value in ("present", "pending") else None
-    _WORKSHOP[str(file)] = (stamp, state)
+    if stamp is not None:
+        _WORKSHOP[str(file)] = (stamp, state)
     return state
 
 
@@ -94,15 +107,19 @@ def edited_manifest(path: Path) -> dict[str, Any]:
     """`book.json` như NGƯỜI NGHE thấy: lớp sách (`manifest`) cộng lớp sửa của họ (`book_edits`: tên sách, tên chương, bìa,
     nhạc). Đệm theo lần ghi của cả hai file. Chỗ nào cần lớp sách nguyên (mã băm, danh sách file, sách của máy khác) dùng `manifest`."""
     base = manifest(path)
-    info = (Path(path) / MANIFEST).stat()
-    stamp = ((info.st_mtime_ns, info.st_size), book_edits.stamp(path))
+    edits = book_edits.stamp(path)
+    now = time.time_ns()
+    racy = any(mtime and now - mtime <= _SETTLE_NS for mtime in edits[::2])
+    base_stamp = _cache_stamp((Path(path) / MANIFEST).stat())
+    stamp = None if racy or base_stamp is None else (base_stamp, edits)
     cached = _EDITED.get(str(path))
-    if cached and cached[0] == stamp:
+    if stamp is not None and cached and cached[0] == stamp:
         return cached[1]
     result = book_edits.apply_manifest(base, book_edits.load(path))
     from .listen_view import metadata_version
     result = {**result, "metaVersion": metadata_version(result)}
-    _EDITED[str(path)] = (stamp, result)
+    if stamp is not None:
+        _EDITED[str(path)] = (stamp, result)
     return result
 
 
