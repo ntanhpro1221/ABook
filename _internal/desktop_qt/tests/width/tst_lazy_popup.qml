@@ -32,18 +32,18 @@ Item {
             popup.show()
             const owner = popup.item
             verify(owner !== null && owner.open)
-            tryCompare(owner, "shown", 1)
+            tryVerify(() => owner.shown === 1)
             owner.preserved = 7
             popup.close()
             compare(popup.item, owner)
-            tryCompare(owner, "shown", 0)
+            tryVerify(() => owner.shown === 0)
             compare(popup.open, false)
             popup.toggle()
             compare(popup.item, owner)
             compare(owner.preserved, 7)
             compare(popup.open, true)
             popup.close()
-            tryCompare(owner, "shown", 0)
+            tryVerify(() => owner.shown === 0)
         }
     }
 }

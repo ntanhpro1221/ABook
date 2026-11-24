@@ -55,7 +55,7 @@ Item {
             verify(content !== null)
             tryCompare(content.bar, "appear", 1)
             content.now.show()
-            tryCompare(content.now, "p", 1)
+            tryVerify(() => content.now.p === 1)
             return content
         }
         function tap(item) {

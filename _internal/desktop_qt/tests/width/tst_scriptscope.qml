@@ -44,7 +44,7 @@ Item {
             fakeStore.revision = "fixture-v1"; fakeStore.requests = []
             host.currentScope = modal
             mouseClick(entry, entry.width / 2, entry.height / 2)
-            tryCompare(modal, "shown", 1)
+            tryVerify(() => modal.shown === 1)
             compare(applied.length, 0); compare(fakeStore.requests.length, 0)
             const person = findChild(modal, "scopePerson_OTHER")
             verify(person)

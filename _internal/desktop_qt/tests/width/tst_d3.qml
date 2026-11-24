@@ -302,14 +302,14 @@ Item {
                 const more = one(rowOf(page, number), "chapterMore")
                 more.clicked()
                 const menu = one(page, "chapterMenu")
-                tryCompare(menu, "shown", 1)
+                tryVerify(() => menu.shown === 1)
                 const panel = menu.children[menu.children.length - 1]
                 const a = more.mapToItem(menu, 0, 0)
                 verify(panel.y + panel.height <= a.y + 0.5 || panel.y >= a.y + more.height - 0.5,
                        "menu trên / dưới nút “…”, không đè lên nó (" + panel.y + "," + panel.height + " vs " + a.y + ")")
                 fuzzyCompare(panel.height, 4 * Theme.buttonHeight + 2 * menu.pad, 0.5)
                 menu.close()
-                tryCompare(menu, "shown", 0)
+                tryVerify(() => menu.shown === 0)
             }
         }
         function test_chapterMenuPlaysFromStart() {

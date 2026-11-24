@@ -117,11 +117,11 @@ TestCase {
         verify(shortcuts.item.open)
         const dialog = shortcuts.item
         dialog.close()
-        tryCompare(dialog, "shown", 0)
+        tryVerify(() => dialog.shown === 0)
         shortcuts.show()
         compare(shortcuts.item, dialog)
         dialog.close()
-        tryCompare(dialog, "shown", 0)
+        tryVerify(() => dialog.shown === 0)
         let answer = "pending"
         consent.ask({id: "local", online: false}, function(voice) { answer = voice.id })
         compare(answer, "local", "first-use action forwards its callback synchronously")

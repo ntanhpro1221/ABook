@@ -28,7 +28,7 @@ Item {
         }
         function open() {
             const now = createTemporaryObject(nowComponent, host, {width: 1000, height: 900})
-            now.show(); tryCompare(now, "open", true); tryCompare(now, "p", 1); ready()
+            now.show(); tryCompare(now, "open", true); tryVerify(() => now.p === 1); ready()
             return now
         }
 

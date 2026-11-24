@@ -107,6 +107,20 @@ VisualReady.waitSettled(this, value, qtVisualReady)
     assert [(line, rule) for line, rule, _ in other_patterns(cpp, ".cpp")] == [(1, "qt-literal-timeout")]
 
 
+def test_qt_animation_ends_are_waited_for_exactly():
+    # 0.4.176 build: tryCompare(page, "p", 1) passed at p = 0.999994 (QML compares numbers within 1e-5); the click that
+    # followed was swallowed when the NowPlaying animation ended (WidthTests NowPlayingGeometry, 2-5 of 40 runs).
+    body = '''page.show(); tryCompare(page, "p", 1)
+tryCompare(sheet, "shown", 0); tryCompare(control, "progress", 1.0)
+tryVerify(() => page.p === 1)
+tryCompare(list, "count", 1)
+tryCompare(page, "p", 0.5)
+// tryCompare(page, "p", 1)
+'''
+    assert [(line, rule) for line, rule, _ in other_patterns(body, ".qml")] == [
+        (1, "qt-fuzzy-settle"), (2, "qt-fuzzy-settle"), (2, "qt-fuzzy-settle")]
+
+
 def test_qt_helper_libraries_are_scanned_as_qml_helpers():
     from scripts.flaky_patterns import suffix_of
     assert suffix_of("desktop_qt/tests/width/VisualReady.js", ".js") == ".qtjs"

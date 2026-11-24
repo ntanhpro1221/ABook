@@ -21,7 +21,7 @@ Item {
                 Theme.mode=mode
                 const panel=createTemporaryObject(factory,host,{anchorItem:anchor})
                 verify(panel)
-                panel.show(); tryCompare(panel,"shown",1)
+                panel.show(); tryVerify(() => panel.shown === 1)
                 verify(Nav.layers.length>0)
                 VisualReady.render(this,host.Window.window,host,qtVisualReady)
                 const path=Qt.resolvedUrl("../../build/d2shots/audiofx_"+mode+".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/,"$1").replace(/^file:\/\//,"")

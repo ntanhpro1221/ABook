@@ -215,7 +215,7 @@ Item {
         function test_nowPlaying(data) {
             const page = make(nowFactory, data, {height: data.h - 40})
             page.show()
-            tryCompare(page, "p", 1)
+            tryVerify(() => page.p === 1)
             const region = findChild(page, "nowReadAlongRegion")
             const read = findChild(page, "nowReadAlong")
             const beside = page.width >= Theme.widthLarge

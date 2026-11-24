@@ -827,7 +827,7 @@ Item {
             verify(removed.transform[0].y < 0)
             qtAnimationClock.end()
             tab.setFilter("all")
-            tryCompare(removed, "reveal", 1)
+            tryVerify(() => removed.reveal === 1)
             compare(rowOf(page, "d1"), retained, "delegate theo stableId không bị dựng lại")
             tab.setWho("HEIDI")
             ready(page, 1)
@@ -838,7 +838,7 @@ Item {
             verify(removed.transform[0].y > 0)
             qtAnimationClock.end()
             ready(page, 6)
-            tryCompare(removed, "reveal", 1)
+            tryVerify(() => removed.reveal === 1)
         }
         function test_motionReducedUsesOpacityWithoutTranslation() {
             serve()
@@ -850,9 +850,9 @@ Item {
             verify(qtAnimationClock.advanceUntil(function() { return removed.reveal > 0 && removed.reveal < 1 }, 5000))
             compare(removed.transform[0].y, 0)
             qtAnimationClock.end()
-            tryCompare(removed, "reveal", 0)
+            tryVerify(() => removed.reveal === 0)
             tabOf(page).setFilter("all")
-            tryCompare(removed, "reveal", 1)
+            tryVerify(() => removed.reveal === 1)
             compare(removed.transform[0].y, 0)
         }
         function test_motionSpeakerAssignmentExitsOnlyChangedRow() {
@@ -872,7 +872,7 @@ Item {
             compare(retained.parent.reveal, 1)
             verify(!removed.enabled)
             qtAnimationClock.end()
-            tryCompare(removed, "reveal", 0)
+            tryVerify(() => removed.reveal === 0)
             server.chapters[1].lines[1].wish = {value: "HEIDI", label: "Heidi", state: "pending"}
             DesktopApi.delayed = false
             DesktopApi.finish()
@@ -894,8 +894,8 @@ Item {
             tryCompare(Api, "notice", title)
             tryVerify(function() { return Api.elsewhereNotice !== null })
             const success = one(stack, "successToast"), warning = one(stack, "elsewhereToast")
-            tryCompare(success, "t", 1)
-            tryCompare(warning, "t", 1)
+            tryVerify(() => success.t === 1)
+            tryVerify(() => warning.t === 1)
             compare(success.title, title)
             compare(warning.title, "Chỗ này vừa được sửa ở máy hay cửa sổ khác")
             compare(warning.description, "Trước đó đang là " + was + " - lần ghi của bạn đã thay nó.")

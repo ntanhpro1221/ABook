@@ -2,6 +2,7 @@ import QtQuick
 import QtTest
 import ABook
 import "LayoutAudit.js" as Audit
+import "VisualReady.js" as VisualReady
 
 Item {
     id: host
@@ -65,9 +66,9 @@ Item {
             compare(startP, 0)
             sameBox(first, mini, "opening frame = mini in window", 2)
             tryVerify(function() { return page.p > 0 })
-            tryCompare(page, "p", 1)
+            tryVerify(() => page.p === 1)
             sameBox(Audit.box(findChild(page, "nowMorphPanel"), host), Audit.box(page, host), "fully open", 2)
-            page.close(); tryCompare(page, "p", 0)
+            page.close(); tryVerify(() => page.p === 0)
         }
         function test_sheetsKeepContent_data() {
             const rows = []
@@ -77,20 +78,22 @@ Item {
         }
         function test_sheetsKeepContent(data) {
             const content = makeScene(data), page = content.now
-            page.show(); tryCompare(page, "p", 1)
+            // p === 1 is not "ready for input": chip reflow (Flow move), wideT and the shared-part Reveal can still be
+            // running, and a click whose press and release straddle their end is swallowed (0.4.176 build, 1 of 60 runs).
+            page.show(); VisualReady.waitSettled(this, page, qtVisualReady, "now playing must finish opening", () => page.p === 1)
             const cover = findChild(page, "nowCover"), controls = findChild(page, "nowControls")
             verify(cover !== null && controls !== null)
             const beforeCover = Audit.box(cover, host), beforeControls = Audit.box(controls, host)
             const sheet = findChild(page, "now" + data.sheet + "Sheet")
             mouseClick(findChild(page, "now" + data.sheet))
-            tryCompare(sheet, "open", true); tryCompare(sheet, "shown", 1)
+            tryCompare(sheet, "open", true); tryVerify(() => sheet.shown === 1)
             sameBox(Audit.box(cover, host), beforeCover, "cover under sheet")
             sameBox(Audit.box(controls, host), beforeControls, "controls under sheet")
-            Nav.back(); tryCompare(sheet, "open", false); tryCompare(sheet, "shown", 0)
+            Nav.back(); tryCompare(sheet, "open", false); tryVerify(() => sheet.shown === 0)
             compare(page.open, true)
             sameBox(Audit.box(cover, host), beforeCover, "cover after Back")
             sameBox(Audit.box(controls, host), beforeControls, "controls after Back")
-            page.close(); tryCompare(page, "p", 0)
+            page.close(); tryVerify(() => page.p === 0)
         }
         function test_sharedPartsFollowTheirOwnPaths_data() { return sizes() }
         function test_sharedPartsFollowTheirOwnPaths(data) {
@@ -115,20 +118,20 @@ Item {
             fuzzyCompare(play.width * play.scale, playFrom.w + (56 - playFrom.w) * g, 0.01)
             compare(content.bar.sharedShown, false)
             qtAnimationClock.end()
-            tryCompare(page, "p", 1)
+            tryVerify(() => page.p === 1)
             page.close()
             // The mini's temporary -12 px exit transform must not change the
             // return endpoint; otherwise the last frame jumps back down.
             fuzzyCompare(page.playFrom.y, playFrom.y, 0.01)
             fuzzyCompare(page.sharedFrames[0].from.y, chapterFrom.y, 0.01)
-            tryCompare(page, "p", 0)
+            tryVerify(() => page.p === 0)
             compare(content.bar.sharedShown, true)
         }
         // Tên chương màn Đang nghe xuống dòng trong ô cao sẵn HAI dòng (DESIGN 5.5): tên một hay hai dòng thì bìa, thanh tua, nút phát đứng yên.
         function test_chapterTitleWrapsInATwoLineBox_data() { return sizes() }
         function test_chapterTitleWrapsInATwoLineBox(data) {
             const content = makeScene(data), page = content.now
-            page.show(); tryCompare(page, "p", 1)
+            page.show(); tryVerify(() => page.p === 1)
             const chapter = findChild(page, "nowChapterTitle")
             compare(chapter.wrapMode, Text.Wrap)
             compare(chapter.lineCount, 1)
@@ -151,12 +154,12 @@ Item {
             verify(chapter.lineCount > 2)
             compare(chapter.height, chapter.implicitHeight)
             compare(chapter.truncated, false)
-            page.close(); tryCompare(page, "p", 0)
+            page.close(); tryVerify(() => page.p === 0)
         }
         function test_playPauseKeepsPlayerGeometry_data() { return sizes() }
         function test_playPauseKeepsPlayerGeometry(data) {
             const content = makeScene(data), page = content.now
-            page.show(); tryCompare(page, "p", 1)
+            page.show(); tryVerify(() => page.p === 1)
             const names = ["nowCover", "nowControls", "nowChapterTitle", "nowPlay"]
             const items = names.map(name => findChild(page, name))
             const boxes = items.map(item => Audit.box(item, host))
@@ -166,7 +169,7 @@ Item {
                 Player.pause(); compare(Player.playing, false)
                 for (let k = 0; k < items.length; ++k) sameBox(Audit.box(items[k], host), boxes[k], names[k] + " paused")
             }
-            page.close(); tryCompare(page, "p", 0)
+            page.close(); tryVerify(() => page.p === 0)
         }
         function test_continueButtonReservesBothLabels() {
             const row = createTemporaryObject(continueFactory, host)
@@ -183,7 +186,7 @@ Item {
         }
         function test_readingHintHasItsOwnHeaderSpace() {
             const content = makeScene({width: 1200, height: 900}), page = content.now
-            page.show(); tryCompare(page, "p", 1)
+            page.show(); tryVerify(() => page.p === 1)
             tryCompare(ReadAlong, "status", "ready")
             const reader = findChild(page, "nowReadAlong")
             const hint = findChild(reader, "readerHint"), list = findChild(reader, "readAlongParagraphs")
@@ -191,14 +194,14 @@ Item {
             verify(list.y >= hint.y + hint.height + Theme.s8, "Reading text must not scroll under its fixed hint")
             Player.resume(); Player.pause()
             verify(list.y >= hint.y + hint.height + Theme.s8)
-            page.close(); tryCompare(page, "p", 0)
+            page.close(); tryVerify(() => page.p === 0)
         }
         function test_readModeKeepsChapterAndTransport_data() { return sizes() }
         function test_readModeKeepsChapterAndTransport(data) {
             const content = makeScene(data), page = content.now
-            page.show(); tryCompare(page, "p", 1)
+            page.show(); tryVerify(() => page.p === 1)
             const chapter = findChild(page, "nowChapterTitle"), titles = chapter.parent
-            page.page = 1; tryCompare(page, "pageT", 1)
+            page.page = 1; tryVerify(() => page.pageT === 1)
             compare(chapter.opacity, 1)
             compare(titles.opacity, 1)
             verify(chapter.visible)
@@ -207,9 +210,9 @@ Item {
                 const text = findChild(page, "nowReadAlongRegion")
                 verify(text.y >= titles.mapToItem(page, 0, 0).y + titles.height + Theme.s8)
             }
-            page.page = 0; tryCompare(page, "pageT", 0)
+            page.page = 0; tryVerify(() => page.pageT === 0)
             compare(titles.opacity, 1)
-            page.close(); tryCompare(page, "p", 0)
+            page.close(); tryVerify(() => page.p === 0)
         }
     }
 }

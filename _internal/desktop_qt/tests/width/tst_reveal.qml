@@ -51,7 +51,7 @@ Item {
             compare(row.opacity, 0)
             row.allowed = false
             row.expanded = true
-            tryCompare(control, "progress", 1)
+            tryVerify(() => control.progress === 1)
             verify(row.visible)
             verify(!row.enabled, "restore the caller's enabled binding")
             compare(row.opacity, 0.5, "the caller's own opacity returns once fully shown")
@@ -69,7 +69,7 @@ Item {
             row.expanded = true
             verify(control.progress >= middle && control.progress < 1, "reverse the current fade")
             qtAnimationClock.end()
-            tryCompare(control, "progress", 1)
+            tryVerify(() => control.progress === 1)
             verify(row.visible && row.enabled)
         }
         function test_leaves_the_visual_tree() {
@@ -81,7 +81,7 @@ Item {
             row.expanded = false
             tryCompare(row, "visible", false)
             row.expanded = true
-            tryCompare(control, "progress", 1)
+            tryVerify(() => control.progress === 1)
             verify(row.visible && row.enabled)
         }
         function test_disabled_parent_does_not_stick() {

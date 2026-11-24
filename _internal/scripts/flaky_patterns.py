@@ -21,7 +21,7 @@ WALLCLOCK_DEFERRED = {
     "mobile/android/app/src/test/java/vn/abook/player/TlsRouteResolverTest.kt",
     "mobile/android/app/src/test/java/vn/abook/player/net/FastConnectTest.kt",
 }
-WALLCLOCK_RULES = {"elapsed-bound", "fixed-deadline", "raw-waitfor", "qt-visual-wall-wait", "qt-literal-timeout"}
+WALLCLOCK_RULES = {"elapsed-bound", "fixed-deadline", "raw-waitfor", "qt-visual-wall-wait", "qt-literal-timeout", "qt-fuzzy-settle"}
 
 
 @dataclass(frozen=True)
@@ -259,8 +259,22 @@ def qt_wait_patterns(code, suffix):
                 yield match.start(), "qt-literal-timeout"
 
 
+# QML compare()/tryCompare() accept numbers within 1e-5 (Qt TestCase.qml qtest_compareInternal), so waiting for an animated
+# progress to reach its end value 0/1 passes while the animation is still running (0.4.176 build: NowPlaying p = 0.999994,
+# the next click was swallowed when the animation ended). Wait for the exact end: tryVerify(() => item.p === 1).
+QT_FUZZY_SETTLE = re.compile(r'(?<![\w$])tryCompare\s*\([^,()]+,\s*"(?:p|g|t|shown|progress|reveal|openT|pageT|wideT)"\s*,\s*[01](?:\.0*)?\s*\)')
+
+
 def other_patterns(text, suffix):
     code = masked(text)
+    if suffix in {".qml", ".qtjs"}:
+        for match in QT_FUZZY_SETTLE.finditer(text):
+            if code[match.start():match.start() + 10] != "tryCompare":
+                continue  # inside a comment or string
+            line = text.count("\n", 0, match.start()) + 1
+            snippet = text.splitlines()[line - 1].strip()
+            if not WALLCLOCK_OK.search(snippet):
+                yield line, "qt-fuzzy-settle", snippet
     rules = {
         "fixed-delay": r"\bThread\s*\.\s*sleep\s*\(" if suffix == ".kt" else r"(?<![\w.])(?:setTimeout|setInterval)\s*\(",
         "wall-clock": r"\bSystem\s*\.\s*currentTimeMillis\s*\(" if suffix == ".kt" else r"\bDate\s*\.\s*now\s*\(|\bnew\s+Date\s*\(\s*\)",

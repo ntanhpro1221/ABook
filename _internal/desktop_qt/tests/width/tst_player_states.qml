@@ -47,7 +47,7 @@ Item {
             compare(Player.sleepKind, "minutes")
             compare(Player.clock.sleepLeft, 60)
             const menu = createTemporaryObject(sleepComponent, host)
-            menu.show(); tryCompare(menu, "shown", 1); ready()
+            menu.show(); tryVerify(() => menu.shown === 1); ready()
             compare(findChild(menu, "sleepCountdown").text, "1:00")
             const path = Qt.resolvedUrl("../../build/d2shots/sleepkeep_paused.png").toString().replace(/^file:\/\/\/([A-Za-z]:)/,"$1").replace(/^file:\/\//,"")
             grabImage(findChild(menu, "popoverPanel")).save(path)
@@ -70,14 +70,14 @@ Item {
         function test_closing_player_unwinds_voice_consent_and_output() {
             textBook(); Player.pause()
             const voice = createTemporaryObject(voiceComponent, host)
-            voice.show(); tryCompare(voice, "shown", 1)
+            voice.show(); tryVerify(() => voice.shown === 1)
             click(findChild(voice, "playerVoice_edge")); tryVerify(function() { return Nav.layers.length === 2 })
             Nav.back(); tryVerify(function() { return voice.open && Nav.layers.length === 1 })
             click(findChild(voice, "playerVoice_edge")); tryVerify(function() { return Nav.layers.length === 2 })
             Player.close(); tryCompare(voice, "open", false); compare(Nav.layers.length, 0)
             Player.open("width", 1, 0, false)
             const output = createTemporaryObject(outputComponent, host)
-            output.show(); tryCompare(output, "shown", 1); Player.close()
+            output.show(); tryVerify(() => output.shown === 1); Player.close()
             tryCompare(output, "open", false); compare(Nav.layers.length, 0)
         }
         function test_voice_error_close_and_resume_from_picker() {
@@ -105,7 +105,7 @@ Item {
         function test_sleep_countdown_and_extend() {
             const fade = createTemporaryObject(fadeComponent, host, {width: 500})
             const sleep = createTemporaryObject(sleepComponent, host)
-            sleep.show(); tryCompare(sleep, "shown", 1)
+            sleep.show(); tryVerify(() => sleep.shown === 1)
             Player.resume(); Player.setSleep("minutes", 1); WidthNet.advance(35)
             tryCompare(Player, "fading", true); tryCompare(fade, "open", true); verify(findChild(fade, "playerFadeText").text.startsWith("Sắp tắt\u00a0·"))
             const countdown = findChild(sleep, "sleepCountdown")
@@ -194,7 +194,7 @@ Item {
             verify(chipBottom > now.topH && chipBottom < now.height)
             const sidebar = createTemporaryObject(sidebarComponent, host)
             compare(sidebar.Accessible.name, "Điều hướng chính")
-            now.close(); tryCompare(now, "p", 0); bar.destroy(); alert.destroy(); now.destroy(); sidebar.destroy()
+            now.close(); tryVerify(() => now.p === 0); bar.destroy(); alert.destroy(); now.destroy(); sidebar.destroy()
         }
     }
 }
