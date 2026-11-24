@@ -45,9 +45,7 @@ Interactive {
             width: parent.width
             text: TextWrap.keepDots(root.track.title || S.s_bai_nay_d9683a01)
             color: Theme.text
-            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            maximumLineCount: 2 // text-cut-ok: owner requests two title lines in music rows; details show the full title.
-            elide: Text.ElideRight // text-cut-ok: the full title is in the detail sheet.
+            wrapMode: Text.WrapAtWordBoundaryOrAnywhere // book text is never cut in a new place: a packaged track's title wraps in full
             font.pixelSize: Theme.sizeBody
         }
         Row {

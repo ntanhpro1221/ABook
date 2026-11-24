@@ -18,7 +18,7 @@ export function BundledTrackRow({ track, onOpen }: { track: BookMusicTrack; onOp
       <span aria-hidden className="music-row-preview grid size-9 shrink-0 place-items-center text-fg-3 pointer-coarse:min-w-[48px]"><BookAudio className="size-5" /></span>
       <button type="button" onClick={onOpen} className="relative min-w-0 flex-1 rounded-control py-2 pr-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <ChevronRight aria-hidden className="ink-end absolute right-0 top-2.5 size-4 text-fg-3" />
-        <span className="line-clamp-2 text-sm font-medium">{track.title || S.s_bai_nay_d9683a01}</span>
+        <span className="block text-sm font-medium [overflow-wrap:anywhere]">{track.title || S.s_bai_nay_d9683a01}</span>
         <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, S.s_bundled_track]} />
       </button>
       <span aria-hidden className="size-9 shrink-0" />

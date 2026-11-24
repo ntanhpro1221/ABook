@@ -125,8 +125,8 @@ fun BundledTrackRow(track: MusicLibrary.Track, onOpen: () -> Unit) {
         Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) { LucideIcon(LucidePaths.BOOK_AUDIO, colors.text3) }
         Spacer(Modifier.width(Dim.s8))
         Column(Modifier.weight(1f)) {
-            // cắt-có-chủ-ý: owner requests at most two title lines in music rows; the sheet shows the full title.
-            BasicText(track.title.ifEmpty { S.s_bai_nay_d9683a01 }, style = Abook.type.bodyStrong, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("music_row_title"))
+            // Book text is never cut in a new place (TextCutScanTest): a packaged track's title wraps in full.
+            BasicText(track.title.ifEmpty { S.s_bai_nay_d9683a01 }, style = Abook.type.bodyStrong, modifier = Modifier.testTag("music_row_title"))
             Spacer(Modifier.height(2.dp))
             val small = Abook.type.bodySmall.copy(color = colors.text2)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -137,6 +137,7 @@ fun BundledTrackRow(track: MusicLibrary.Track, onOpen: () -> Unit) {
                     }
                 }
                 Reveal(track.creator.isNotEmpty()) { BasicText("·", style = small, modifier = Modifier.padding(horizontal = Dim.s8)) }
+                // cắt-có-chủ-ý: short fixed app label kept on the creator line; it never truncates (no ellipsis), the creator yields instead.
                 BasicText(S.s_bundled_track, style = small, maxLines = 1, softWrap = false, modifier = Modifier.testTag("music_row_bundled"))
             }
         }
