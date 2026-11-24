@@ -507,8 +507,6 @@ class App:
                 }
                 notices.NOTICES.add(self.library_move_recovery["message"])
                 log.warning("Library move needs recovery: %s", error)
-            if not self.library_move_recovery:
-                self._sweep_trash_at_start()
         # Thư mục đã xuất trong phiên này - chỉ những thư mục này được mở bằng "Mở thư mục" sau khi xuất.
         self.exports: set[str] = set()
         # Xuất .abook / .abookproj có nhạc nền chưa tải thì tải ngầm vài phút: tiến độ + Huỷ theo từng cuốn (`music_exporting`).
@@ -531,6 +529,10 @@ class App:
         self.export_folders = export_leftovers.ExportFolders(preferences.path.with_name("export-folders.json"))
         self.export_work_dir = preferences.path.with_name(listen_export.WORK_FOLDER)
         if not read_only:
+            # Sau `export_work_dir` + `listen_exports`: luồng dọn Thùng rác chờ còn dọn cả chương đã ghép (`_sweep_listen_work`),
+            # thả sớm hơn thì nó văng AttributeError trong host.log (0.4.174, 24-11).
+            if not self.library_move_recovery:
+                self._sweep_trash_at_start()
             self._sweep_export_leftovers_at_start()
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
         # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi ghi ra file mỗi lần đổi (QUEUE_FILE): đóng app rồi

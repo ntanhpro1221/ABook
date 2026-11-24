@@ -81,6 +81,10 @@ QRect Platform::workArea(QWindow *window, const QPointF &position) const {
     return window && window->screen() ? window->screen()->availableGeometry() : QRect(0, 0, 1280, 800);
 }
 
+void Platform::exitApp() {
+    QCoreApplication::exit(0);
+}
+
 bool Platform::eventFilter(QObject *watched, QEvent *event) {
     switch (event->type()) {
     case QEvent::WindowStateChange:

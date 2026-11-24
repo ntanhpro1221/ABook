@@ -11,6 +11,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Thả tim cho cuốn bạn thích: chạm hình tim ở trang sách hay màn Đang nghe (điện thoại, máy tính, web); sách đã thả tim có dấu tim nhỏ dưới bìa và nằm trong bộ lọc "Yêu thích" của Thư viện. Tim đi theo hồ sơ nghe nên đồng bộ giữa các máy đã ghép như chỗ nghe.
 
+### Sửa lỗi
+
+- Máy tính: menu ở khay hệ thống làm việc trở lại - "Thoát ABook" tắt hẳn app (cả máy chủ nền) dù cửa sổ đang hiện, đang ẩn ở khay, thu nhỏ, ở cửa sổ mini hay đang mở hộp thoại; "Mở ABook", bấm icon khay, Phát/Tạm dừng, Lùi/Tới, Chương trước/sau và Cửa sổ mini từ khay cũng chạy (trước đây mọi mục của menu khay không làm gì).
+
 ## [0.4.175] - 2026-11-23
 
 ### Giao diện

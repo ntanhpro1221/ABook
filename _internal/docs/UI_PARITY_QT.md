@@ -253,7 +253,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thanh tiêu đề
 
-- chỉ Qt (2): ABook vẫn chạy ở khay (`qt/Main.qml:28`); Chưa tải được bản mới* (`qt/Main.qml:372`)
+- chỉ Qt (2): ABook vẫn chạy ở khay (`qt/Main.qml:29`); Chưa tải được bản mới* (`qt/Main.qml:375`)
 - chỉ web (3): Mở rộng (Ctrl+B) (`290`); Thu gọn (Ctrl+B) (`290`); Điều hướng (`307`)
 
 ### Chung
