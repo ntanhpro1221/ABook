@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.176] - 2026-11-24
+
 ### Thư viện
 
 - Thả tim cho cuốn bạn thích: chạm hình tim ở trang sách hay màn Đang nghe (điện thoại, máy tính, web); sách đã thả tim có dấu tim nhỏ dưới bìa và nằm trong bộ lọc "Yêu thích" của Thư viện. Tim đi theo hồ sơ nghe nên đồng bộ giữa các máy đã ghép như chỗ nghe.
@@ -14,6 +16,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nhạc nền
 
 - Tab "Nhạc" của trang sách liệt kê mọi bài cuốn sách dùng, theo thứ tự nghe - kể cả nhạc riêng người làm sách đóng gói kèm sách (trước đây những cuốn chỉ có nhạc như vậy ghi "Chưa có nhạc" dù vẫn đang phát nhạc). Bài đi kèm sách ghi "Đi kèm sách", không lưu riêng được; chạm để xem tên, người sáng tác và cảm xúc của đoạn nhạc.
+- Danh mục tra cứu nhạc nền anime, visual novel và game (không lời) cho sách nghe riêng có thêm nhiều bài (gồm Elfen Lied), mỗi bài ghi số bảng xếp hạng bên ngoài có nhắc tới nó.
+
+### Đọc
+
+- Chữ nói lắp đọc lặp lại âm tiết đầu của từ: "Kh-khoan" đọc "khoan… khoan", "H-Hinohara" đọc "hi… Hi-no-ha-ra" (trước đây đọc "kho… khoan" hoặc nhận nhầm thành tên riêng); từ ghép thật như "X-quang", "e-mail" và tiếng cười "Ha-ha" vẫn đọc như cũ. Trên máy tính và điện thoại.
+- Giọng VieNeu: tên phương Tây (như Elizabeth, William) để nguyên chữ cho giọng đọc tự nói, không phiên âm từng âm tiết nữa; tên Nhật, Hàn vẫn phiên âm như trước.
 
 ### Sửa lỗi
 
