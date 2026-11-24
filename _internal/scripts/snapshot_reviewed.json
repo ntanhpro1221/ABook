@@ -56,120 +56,140 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by f99cae03e): bottomgap: the fixed bottom strip is gone, the last control sits on the gesture clearance; import rows show per-step progress. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_chapter_narrators_dark.png": {
-    "sha256": "fd102385cf8ceac94f9d15997ed0c85feb580c49545bf70fb578b12679526886",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "42d9e6e724c7af7fc20502901193d405ff209e7f30169a76c8c736db4433994e",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_cast_chapter_narrators_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_chapter_narrators_light.png": {
-    "sha256": "820f6545f16c26fff1ebaaf1a80fcc507380429b89219985baf5869fb26f0327",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "5ad352b26e456777aec83b7a29de54dfa5b6202e411a878a62383baba5522d8f",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_cast_chapter_narrators_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_dark.png": {
-    "sha256": "5a75255162136266c6360c57373fe7c66023b402df29a51a77e8c23c93c78d84",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "7ffbdc9361283db83a72796d4fc5944aa2bb13a0a59690a719be1b16775f00a2",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_cast_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_light.png": {
-    "sha256": "d818ffdafa9e16e6a4a90a56f0ea3cd2e5883d2a7a1eea999c6d8de393116e63",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "356f3f26a61ddb03c8ffe1c6c685c3f960184b10dd06d7c5695e6291e0a4a616",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_cast_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_dark.png": {
-    "sha256": "5aea15454e6fad30968d43be86f75b5cda1440c9a15df05463b25d165c58909a",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "c55414204a3daa964115eb5c23aaaa8e1d40303af66de8f56eb6e8af9707aab2",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_delete_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_light.png": {
-    "sha256": "9a8991fa8dd073de9e918083849fd2d5207fde9977b754f1662d39a22c62cc94",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "52e06e945fe0cb54a50fa492aef796146c0e9a301c386bfce45207d424a2fb03",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_delete_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_expanded_light.png": {
-    "sha256": "9483528ba8d7162b9edec7764a8b23bfd90651599283cb8584f24c6da69cc5b1",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "8f8b673ea7ec00386c10c54dc80b263f50fcdc63080740a03fd64cacbdd45758",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_expanded_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_find_light.png": {
-    "sha256": "636b76ba5b70ab59853b8145f8e0807f61df42685849b81074c36eb16e1bd66d",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "8e70dd5263d814cefd7fe6732133c008a928feb1ea9781d340a2fd4584e08c13",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_find_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_finished_dark.png": {
-    "sha256": "e18f17fa19dc40b281fe8da96ef2ff810510e11f0c28229e0bf6d7627e2f74fe",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "2df32cb797ca4d08d6dcfb103fbc1e97746d3ac3c13d56d56aedbd52e0d158df",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_finished_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_fresh_dark.png": {
-    "sha256": "918db6ac6096a311c8df1e81070047b9ed91771892fbf6f82b4e65856553215a",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "7f63c08939ea8c0add6fc4eb11c6482a0da9d61a1e96d25172065857764cb985",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_fresh_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_fresh_light.png": {
-    "sha256": "7701cb0e91c95f60124a4012dd12f8a1cba812d798fc3ff23248a298c98ea950",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "e5ac2bfdc68ad2cb5ebe8839446e9973bea94bdcf32926476dd462797c00b6ba",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_fresh_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_gone_light.png": {
     "sha256": "c310cdded105be9255c335344f4b346aa77427930f5fadd97def91405edba9fe",
     "reason": "Reviewed old/new book_gone_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_head_light.png": {
-    "sha256": "d90d3716761d2b6a61685babad011246a0f87c8a3b9d09f6c88b694bf15904d5",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "4ba24a2c8f55fe1c80ade9301c07bb489dbabbb1c4bbb3d3ef2046cc6d2ba46d",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_head_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_heart_off_dark.png": {
+    "sha256": "c1cdc676348f5aae0dcac437006ddbce01c69cfee9c3e5ceaecafde96cf64f58",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. book_heart_off_dark.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_heart_off_light.png": {
+    "sha256": "fae8988d3256a7aaba9986c389c83aa3e8673cba8a75f9ebe54515a36941ac28",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. book_heart_off_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_heart_on_dark.png": {
+    "sha256": "c8e7cd7f06aac10d2826a15309dc15c84295bb1fe279802e323612b583074685",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. book_heart_on_dark.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_heart_on_light.png": {
+    "sha256": "b9153bb233e7496a80fe89d326b9dadb86e3f0dffa8a3301e0a8e78664d97933",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. book_heart_on_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_heart_on_light_130.png": {
+    "sha256": "6e4d8e8763848047127093d98fc51e44fcfcfc651f819df21228c95c6bb58135",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. book_heart_on_light_130.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_history_light.png": {
-    "sha256": "73ac8fc41b8ee90286064cebffc33c46f815c820e60cb05cffdfce1346e40dd0",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "a5fadb579bce91b7c2d3c02995d5df99f6a6eb81157d5d29da25d0b64a455b33",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_history_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_large_dark.png": {
-    "sha256": "8578fcbcbeb1d5c866a31346ac539e8a8a9cea372138ef9f8dbe57cc025b59c6",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "67d0bd552c119167a5d7fc3f773ae3a6c83acfd9bcacdcb88385923f4f49ca7f",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_large_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_dark.png": {
-    "sha256": "087504d30e455041fc86bdaab23338033c8c348d96c66163d989d6130e8422be",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "c1cdc676348f5aae0dcac437006ddbce01c69cfee9c3e5ceaecafde96cf64f58",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_listening_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_light.png": {
-    "sha256": "7ad0375dd894fc17656c8c36f37d4daa93909281caba19ae532729e48df499e3",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "fae8988d3256a7aaba9986c389c83aa3e8673cba8a75f9ebe54515a36941ac28",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_listening_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_loading_light.png": {
-    "sha256": "3530bf157ddb88d8c581088bf787376c55fe13812e4942f0f041b3293f092c5f",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "5d82ce111c5c670073a7a9a3340f5f29450c0266e2fa079d3b0151e3b68ad124",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_loading_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_menu_light.png": {
     "sha256": "8a1e4467ab855d6ca6ca65312c343a07a6af5acf54f2495c6d2a507a280c4224",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 214099d8f): 0.4.174 merges: book information lines (author, narrator) and wrapped primary labels on the screenshot classes. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_partial_dark.png": {
-    "sha256": "2f084b815436258326d08b26d8da3445e8bc1e5ab683ee149d3400f8061a719a",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "a5482d4bf368467bb5914a6cc1b8c28784b1eac3deefbf903166f63fc17d973a",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_partial_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_partial_light.png": {
-    "sha256": "17057130768bd9e73bc104f4a26fa87a97f534f6718021de4154ce23ec5c58d6",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "2ab71272f10338ae889669ca0ae0e016489f5ffbcec84013c674c8ed826fb7e0",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_partial_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_person_sheet_light.png": {
-    "sha256": "6d572c417d55c999f985c1986d3396137bdf3be77312c8eeeb0e7aae737f6090",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "897794aa698bd2e968ded90517b101e34857097f12e461511f667ee341fe68da",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_person_sheet_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_playing_dark.png": {
-    "sha256": "3aeff922bbbae4aa9dbd643d6040f9a133ba0df48eeee692d4ee7b506f07095f",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "74affd4f24b692ae2bee7c2bf8f75b5c172b30543a4ef48b74d66754dc9af906",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_playing_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_playing_light.png": {
-    "sha256": "dfd5a411856cc5db68ebdcb00edbd4c36c329a13209a6bb9a3c34ba7649fa066",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "89683d192e41469db1f46e2459fa01ee84a6420826a69367cfa4ea751a0902f6",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_playing_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/book_records_light.png": {
     "sha256": "e5506b031a29ca7a2dbab3e6e3f949a5603fdad8b0045cd43d29a85afecd379c",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 214099d8f): 0.4.174 merges: book information lines (author, narrator) and wrapped primary labels on the screenshot classes. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_save_as_light.png": {
-    "sha256": "4bfdfc31f067f0e15ec61481a5994935e836be03954d09c85a86aa0923f5bd18",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "395c0804b2a458ed8714e1c58d41e5b2f945abc1ef6a491e55e4d7d3fc9a7a01",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. book_save_as_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/bookmeta_details.png": {
-    "sha256": "ce35b8d8661dd52a59d102ce4fce1c05a2be7ff6185130a39d33839c7b3f8d5c",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "69fe7afb1edd280daa3c234cea78f51400274b622c7320b7564bacc8e1297bfe",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. bookmeta_details.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/bookmeta_details_expanded.png": {
     "sha256": "a7c7a63c5c861ea3174626d00db409ac477b8c987a2ca5f4f3d81a141450aa8f",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/bookmeta_library.png": {
-    "sha256": "bbf1bdda1ec5d7192a64a703c9f1c50033bbc1af6d79ee635431894b6c69d736",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "0c9169ca471404d43d0d95f5f8cffd0e3d38f62e098482c548b5b6b8ad56b0fe",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. bookmeta_library.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/cover_long_title.png": {
     "sha256": "1ee48d032b0a6407146604e1def501847b05e82d35c74f41937f2b64a143cae2",
@@ -436,24 +456,24 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by f99cae03e): bottomgap: the fixed bottom strip is gone, the last control sits on the gesture clearance; import rows show per-step progress. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/filters_360_dark.png": {
-    "sha256": "f83cac0e4969b45910a8f7f5a2c835ab1acc79a0edf0497086cb3e1b1073f8ff",
-    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "c909e2b6d1ed366143145f5877e2db652637700516da1590941c28f50ae07d6d",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. filters_360_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/filters_360_font130_dark.png": {
-    "sha256": "d90b0f602de24e336a9ccc21931d927d6af84df22bacd4120ff9352380fdcd4a",
-    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "47dd746eb68823575784d824dd749ab9e998a59424f75d948a4702a7e2f9e5b0",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. filters_360_font130_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/filters_360_light.png": {
-    "sha256": "ee385df7bd878f58b4db2951fdfb9d83de07be2b0f85fef2863b0dea4785360b",
-    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "a46e01a7bc8274dd1f4b20c0b234c64f6fd4c2823e32c3c8f07d8201ae6c89eb",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. filters_360_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_library_remote_dark.png": {
-    "sha256": "9ac889cfd29dfa7ae6794ea730ea5d50e5beb7f54ab0b13f29ad1898390eb8d2",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "11a74696316bdbd320d5ba6bf6f260ac2e0778cd185213ee378495ad6e0e5ed9",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. gap1_library_remote_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_library_remote_light.png": {
-    "sha256": "34240cd75883feb66a91508882eb199bc238d6c792d8da11db3a5d320cc3e204",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "5ae3249cda6d7ced01c65335207d320a0513d8f578ea42d5fe0e7912fca80fbb",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. gap1_library_remote_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_book_dark.png": {
     "sha256": "c3272175e03d92e2fc9f06f51fe644e432e75b55df96fcf122ad7994d0ca469a",
@@ -500,12 +520,12 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 1a74325f9): design lint R10: whole-screen empty and unavailable states stand centred with their action. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_undo_dark.png": {
-    "sha256": "bf44603894829d840feff3b94284f5790ac274fe9cafe3784dc9aa3773a2252e",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "a8ade9eb689620100e090bbef25fe7fad467f726f621f3db889a1295558a19de",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. gap1_undo_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_undo_light.png": {
-    "sha256": "20146c549921bdf9c2a08b2c606ebbbe06ce50be88bab020c333acce7ae52d68",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "decce5501fccd88582bfd52b13cf43632e7ed91d9828b2703bddec4d9eb26bab",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. gap1_undo_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_device_kinds_dark.png": {
     "sha256": "28d22adb74f1c118a49dc1773848ba6e90a565b62279d2f7da3a437fa9ffb063",
@@ -516,20 +536,20 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 214099d8f): 0.4.174 merges: book information lines (author, narrator) and wrapped primary labels on the screenshot classes. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_dark.png": {
-    "sha256": "fd2164122a63edce76d0b271940552fc89fe1fa581ee612246719419fffdaa07",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "b9a580b1ca9c3a4f68c7d382b1ba5997c6db24dd79f94b064ca0bbd0fd2be6e2",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. gap1b_shell_error_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_light.png": {
-    "sha256": "36d8cc0cf844112dc28a78047c4b1ace013a76c73fa22f65fcf2511a2b7396ac",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "72530ff647da31917c1f2da85ea078e162661297932373bffc3c0651a3a5fecf",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. gap1b_shell_error_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_dark.png": {
-    "sha256": "e12117d3f7fc736e15ba4dcc98e3375fb330a3d38329294c1e866d5d7ff86288",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "d3be3fbe03098f4473a58482cfe206e43b5495303fc18c744f18881b56237fc7",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. gap1b_shell_undo_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_light.png": {
-    "sha256": "f9a2d1be7ef1dad31ed44bd6d7ec41e24fe297732d0ebf6127f766d64a68bc1c",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "a300e1dbff907395d014ff2758d62756e87c8f33ad1cd5929e1d6956b794e766",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. gap1b_shell_undo_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1c_device_listen_only_dark.png": {
     "sha256": "379470f440d077c9a329c088188dc7b1daef6e217f459f5fd55189d7626735d5",
@@ -576,12 +596,12 @@
     "reason": "Reviewed old/new icon_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_30_dark.png": {
-    "sha256": "37a032b467c1c7e56db99386725b2afcc5c5abecacc2908b8dc327debe6f6938",
-    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "8f538c07a1c027ee758bc5527bd146048435d2a94431448f6a2f5826b38c9dbb",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_30_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/library_30_light.png": {
-    "sha256": "10685ced448d6d240d34941fddccb187e65c36e0040bfcb99403a5f6d83581e7",
-    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "125364c2bf2045d42848434e5361e21fd152e7711efbbf6b935c1680dc659d42",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_30_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/library_empty_dark.png": {
     "sha256": "b28055b2855d1ce3a2613fa21b46b9fae084f075f993d5a8b0d3aad04662a09e",
@@ -591,49 +611,69 @@
     "sha256": "42e6d0c0d43bc261e509fcb563fa07ebf55ab3a4213a8232a25a1ccfa0c29b47",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 1a74325f9): design lint R10: whole-screen empty and unavailable states stand centred with their action. No clipped text, overlap or misplaced control."
   },
+  "_internal/mobile/android/app/src/test/snapshots/library_filter_favorite_empty_light.png": {
+    "sha256": "224b2ee8f4d164f0699b1d1f99dd08ddc938b7b00d3e1431a54c981a98941224",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. library_filter_favorite_empty_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_filter_favorite_light.png": {
+    "sha256": "505813e99ebd1db395fca449b831e8513d7c874f90db0081eadd8006a17cc5df",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. library_filter_favorite_light.png"
+  },
   "_internal/mobile/android/app/src/test/snapshots/library_filter_finished_light.png": {
-    "sha256": "66753975e6733348725f357455048a2a7cd639ee3cc547895b846a212946dbe0",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "30756d0fbda8c2e9add6c46da479b9d2240b3c74f98590237b6e20a64f12d90a",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_filter_finished_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_heart_dark.png": {
+    "sha256": "ada24159ea72929b81d1d7f1382b739bd738d455d2ae01da1e1924d021ec5f80",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. library_heart_dark.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_heart_font130_light.png": {
+    "sha256": "65cd84674522ee23d7d63847839e7331222a35ac6ecb81c50e6d6629131d04f7",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. library_heart_font130_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/library_heart_light.png": {
+    "sha256": "a79a5b3b5ba2ddcc9a237f6bd40190114509e25f26521c3f3d4d0354d70d4149",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. library_heart_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/library_listening_light.png": {
-    "sha256": "0c65b523803074cfb13491d55e1ca329d7032d53b48a7b74f205dde69df3edcb",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "9b0fa59f6b0f00f5c9ff1a798c26e9a372d4c05704c61472231f8afd8e1e7fcb",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_listening_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/library_one_dark.png": {
-    "sha256": "7f8127fbd37461f88c0c89cb5504f10441304bfe9372bb4a51dbd354f6ce41c4",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "c48cfcd229b1aa02d49132966953bd3a6379efe36cf66df192bb408a34811580",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_one_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/library_one_light.png": {
-    "sha256": "a52405737f2a0097bd81ba6c808f75d85f3c4239e70ef45ff7634c8d0eb8cce6",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "61bc96a0d9dbb270e00a1b1a3495d1549832090129dd4a5533ebe1b20344e488",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_one_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/library_search_light.png": {
-    "sha256": "936be4a46ce440217956f7e2127dfdbf34c3bf6b5c0b30431fafec4b23d5ab84",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "adfe128b11653b388937f441d15048a23e155cb5f1e022cebf469d7221ed5f85",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_search_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/library_series_sheet_light.png": {
-    "sha256": "14c585746d3df83ab82daf6d617b98b283edb91a2b4836b0715cb96e7ee9f30e",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "8363c3c21ba78da03cdf90a851d6c07c1d2219c49207e066439d42ad30b5a932",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_series_sheet_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/library_sort_menu_light.png": {
-    "sha256": "4686b2a7d39488b056d5e04b88ad105472385346a4c1b4d8b89da74f15cc2689",
-    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "1b432b95eef2fcf3c2e17a69a80832e7c9ca4e39f65d82bc2a753a28455bd94f",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. library_sort_menu_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_dark.png": {
-    "sha256": "a251587cbea29c0f789d617fdabf25270033714a13a3e31a145925a1a279928d",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "95b956fa4835cfca3c34b3e1615decde71d6717d7eef9dd612094f13e8d7985f",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. link_book_mini_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_light.png": {
-    "sha256": "36bdc29ee5d8b9c1e5d4d3e16f61207e362567118fe8fd3d93fac5bd819f6815",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "f89fbf41052a74b12347556b18926a29a265d7ced26d1f061a725fbdf07f707d",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. link_book_mini_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/link_np_book_dark.png": {
-    "sha256": "4f73f0dc5d151f20b9c5dadeedc5eadb67e97c9e409d142a2e26d6215d85c446",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "2fb797908b9041ce3c1dbbd0b0c6d70ff86d4bdbaa212b490021d6a702d76d11",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. link_np_book_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/link_np_book_light.png": {
-    "sha256": "54c55fc358889386e31b67026b7d33f8a8e18f2dd2ffac1e1ad0e382d1d6ac04",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "af7ff873f98af7f9b23363076ab6b8f352d90b2453ab5fb4c59c9d97896ae1a6",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. link_np_book_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/mini_long_title_dark.png": {
     "sha256": "33207923975f49016d1774e3223bd46738a06b21fed988fad9ca6c885ec5e1ea",
@@ -731,6 +771,26 @@
     "sha256": "ffc11a4ee7aa1033c05d49c9fa254bc8d30d5b2dbfc0357cb045e289fdf7be54",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
   },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_bundled_dark.png": {
+    "sha256": "9f760e08dbd0cdcbffe65d31706d3b221ef991d631e332fd6934290a91f81167",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new bookmusic2 (6961525aa) snapshot; packaged rows 'Đi kèm sách' aligned with catalog rows, titles wrap whole, sheet with scene emotions; creator ellipsis only (at 130 % behind the sheet scrim 'Kuni…'). music_book_bundled_dark.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_bundled_light.png": {
+    "sha256": "129084865f83926597b9bdc0e5e95e618ad660c73f0dbe6067c0fd67320168d6",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new bookmusic2 (6961525aa) snapshot; packaged rows 'Đi kèm sách' aligned with catalog rows, titles wrap whole, sheet with scene emotions; creator ellipsis only (at 130 % behind the sheet scrim 'Kuni…'). music_book_bundled_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_bundled_sheet_dark.png": {
+    "sha256": "d0b9f076b7a4e274730e9467ea485b77f16c69f397355cc140bac4ba009824b6",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new bookmusic2 (6961525aa) snapshot; packaged rows 'Đi kèm sách' aligned with catalog rows, titles wrap whole, sheet with scene emotions; creator ellipsis only (at 130 % behind the sheet scrim 'Kuni…'). music_book_bundled_sheet_dark.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_bundled_sheet_font130_light.png": {
+    "sha256": "8f6fbab6c421925f05cd82bd2c0b37f8b307f2b0292a10090898596239c0fa9c",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new bookmusic2 (6961525aa) snapshot; packaged rows 'Đi kèm sách' aligned with catalog rows, titles wrap whole, sheet with scene emotions; creator ellipsis only (at 130 % behind the sheet scrim 'Kuni…'). music_book_bundled_sheet_font130_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_bundled_sheet_light.png": {
+    "sha256": "0c5fbc3159367d225295cc084602d6fb0ad3853b51da53a86769ac5bfda59279",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new bookmusic2 (6961525aa) snapshot; packaged rows 'Đi kèm sách' aligned with catalog rows, titles wrap whole, sheet with scene emotions; creator ellipsis only (at 130 % behind the sheet scrim 'Kuni…'). music_book_bundled_sheet_light.png"
+  },
   "_internal/mobile/android/app/src/test/snapshots/music_book_cues_dark.png": {
     "sha256": "07e4b3a3a76982150dcd2dae2d3ffcdadbda4610246406503962d5b514c56171",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by f99cae03e): bottomgap: the fixed bottom strip is gone, the last control sits on the gesture clearance; import rows show per-step progress. No clipped text, overlap or misplaced control."
@@ -754,6 +814,10 @@
   "_internal/mobile/android/app/src/test/snapshots/music_book_menu_row_light.png": {
     "sha256": "392748aef91687ad180ed7f2e184b7ea96b4a4dfca0e32349fe877cf53ff54bd",
     "reason": "Reviewed music_book_menu_row_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_mixed_light.png": {
+    "sha256": "9f2d067bacc528d060e2683b353feb65d20f755e44d63c5097b6c373cb3ad378",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new bookmusic2 (6961525aa) snapshot; packaged rows 'Đi kèm sách' aligned with catalog rows, titles wrap whole, sheet with scene emotions; creator ellipsis only (at 130 % behind the sheet scrim 'Kuni…'). music_book_mixed_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_page_dark.png": {
     "sha256": "aaaa508a85b3f96bb6750fe8f39eaa957f70be2d8f114e2757d3ddba56cf6ebc",
@@ -968,28 +1032,28 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b0914f160): data names preserved and action labels shortened (for example the unpair confirmation). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_caught_up_font130_light.png": {
-    "sha256": "d41711f0dbaa2012391d053d5410f74ca696d4842392529bc59367f8074068de",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "abf1974adb1ef2ca77dd8d8886ce029013337eeeb8d9fc1a19ded6ee58bb64da",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_caught_up_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_ended_font130_light.png": {
-    "sha256": "bce3e6fe322ff6976532ced3a16fda7d4471cffb1e075a35a7976860e70a7871",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "b5575c53886b52a92cb1b4505ed968c443d22db3580047d1cb2bd9482ddd683e",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_ended_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_error_font130_light.png": {
-    "sha256": "8f349c179426df02a42e0092e8a5220086ec95bd247f980a5546b82db088e1e2",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "5a86e806fe880b52dbd6e6da609149560188b85b8e63851ffa0363a5f00cdf26",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_error_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_long_font130_light.png": {
-    "sha256": "4336c8cb2296696cf4e676cdf2ad816920f6d7eae13eea8f3e753019c86c61bb",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "091ef4c2760bb1eb2b91587b22230f729f12bf5a19e65413aa9775cc1c4f6412",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_long_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_sleep_font130_light.png": {
-    "sha256": "656eb247bf5d90dabb29ae3d1f5d12ffb553cf520174ffb4a34698a78166ee12",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "f067b4a6b62dce0d9e2242b74bb66a5906c6d297343419e96b88a9e6b39dc1ae",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_sleep_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchors_font130_light.png": {
-    "sha256": "edb6ea03dba6e2f9faaa90152ae775458a32b3f06f621491f0a7f78ea2172ec0",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "1ec2c6cff7ba8a84b5e196a26c72a643a75a51ac25067b854d12b8af36e04d5f",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchors_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_audio_412_light.png": {
     "sha256": "a970a916abd974e19e7b40958c000d4a21aefff7b0003a11086c2a753d2adbd9",
@@ -1000,12 +1064,12 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_caught_up_dark.png": {
-    "sha256": "48749068861789d09102366b17d5dee4a62a492cb1e75dc48fd0be3a791cad0c",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "1c2a821830718de176f7edb9ed2de7ad93c6badf238b9e2d87437011a7d37518",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_caught_up_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_caught_up_light.png": {
-    "sha256": "6be97dd087098091ae80c4eec34a3a048544687cc250ecd47f0ecd36ed190448",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "9bb712ec855121a1f6c9afdedb39f983ed2f345363ab8280412f844da4e9ce5f",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_caught_up_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_chapters_dark.png": {
     "sha256": "0437659f297745d2a7dff0bd199fa27a755cf9df603fbc6707bdac91b76b86bd",
@@ -1016,24 +1080,44 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_ended_light.png": {
-    "sha256": "4803b5be1a6f49970d3a0440b4c0b35f356e50d4378bb29b4b142ab6fe0e4952",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "a21d0fa57eedbf0133ef31afa1466bb51942408a773294f85725c534f53540c6",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_ended_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_heart_off_dark.png": {
+    "sha256": "6ed02d7e9a798ef4381740917b30c64700e243643a6ed54c1da044117f695d1f",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_off_dark.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_heart_off_light.png": {
+    "sha256": "44311f760f1f671b64c40e9c0c5ccf286f704a4154e16430f65811e9a068b22f",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_off_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_heart_on_dark.png": {
+    "sha256": "83a230a7f95de8b4c3d18dda1b15c1926b480c72ea8a9046e15bc08fdadf72bf",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_on_dark.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_heart_on_font130_light.png": {
+    "sha256": "06f835f97116f60c265ebb4a243f87060edce4505069b832bb37bc85045d090e",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_on_font130_light.png"
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_heart_on_light.png": {
+    "sha256": "210e09e35933c4293d3a0f5f38c9347fc0aba545844c35039d56c0a4ee9679aa",
+    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_on_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_large_dark.png": {
-    "sha256": "f7a420efb1a2a65601f67b51756447519ae93e6d464e0aecba2f1bae5be6c4bd",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "a8053d1aaba56dd3dd92456af8eabad58b0a4af73b4e5f3ccc45bcdd8f5395cb",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_large_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_large_light.png": {
-    "sha256": "775a5534e721260cdd1fd191002f225a125a89db65f67fe429d5fa00e2a451f5",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 74e1ee117): titlewrap174: the Now Playing chapter box spans the full width. No clipped text, overlap or misplaced control."
+    "sha256": "b28e2aa7917816727fbcfd42d935fd023546fea6dc31d9d28328bc6e33b0e3e6",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_large_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_long_dark.png": {
-    "sha256": "608090da0d873249c5deda0b10a9a9db3425304ef0dcf088b4d7b978ca60c875",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "3c7dc82865b986e437c41735107b1952a445e91b8820c053aa4b722792d0db5c",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_long_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_long_light.png": {
-    "sha256": "bba646df31aa12396ab4f6970dd649ffb61326f55db8005309dd4e07fb117dde",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "3ceb54ebed1e58213874aa1fc93a8a088d148f71d2f092bf58b4c054f92eab83",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_long_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_look_dark.png": {
     "sha256": "90d00d4818ec9d899fb9b8de9ec7d218e0e9be1a6363f89d10b58592e91f1ef8",
@@ -1056,24 +1140,24 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_note_dark.png": {
-    "sha256": "0fba00659804183764e628b3e96b769e2a87dfd239623fc0656f82f83e5783df",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "c75045b8de8bedbe315482b47bf61dfcc2c6dc023bd4f9764f17e892eebd1e41",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_note_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_note_light.png": {
-    "sha256": "555792419dddd5086864d20ab21012fd445fc6a070fb7532818fe1a401db8bbf",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "3c0c13a316a6c7ca1d717bf4b4740b38a28b57cb8052fd1dccb3c205c634fe86",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_note_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_opening_start.png": {
     "sha256": "0f0c5d6fb35428e5634cce076336d5fdc2124ad6a8520481922dfb6e5536f079",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 7ec4a2610): left174: 12 px small-cover corners and the wrapping primary label. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_paused_dark.png": {
-    "sha256": "8180875f6e7f13eafe8acc6fc623e6e8ae212266a83ebdf7f26ae8ac01b5b842",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "6ed02d7e9a798ef4381740917b30c64700e243643a6ed54c1da044117f695d1f",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_paused_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_paused_light.png": {
-    "sha256": "2a58f303ba5dcac01ccd0a5f157952e3e51f83c267a45db630b1c8055d6b0275",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "44311f760f1f671b64c40e9c0c5ccf286f704a4154e16430f65811e9a068b22f",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_paused_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_dark.png": {
     "sha256": "504ef76a55f6112b1fd0ba197067bb058c8be89e44cb5462bab418f214bfc618",
@@ -1136,12 +1220,12 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_dark.png": {
-    "sha256": "ef300936a32cdd370716a81c9f6033fc85dfadf99ab2550f70b0160653c904d4",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "348e5634327b0c69f40eeddedfe2bf15341009fa0a13c61234c5f508937685e8",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_playing_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_light.png": {
-    "sha256": "fa453459e051197b2324c97a64b710526a2cc82bdd5f6ac97d66b96c0f8dca44",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "5bdea070ef4b5340835db2c748fb5e8d6b0aa9fee4d53baaedb6d65ad7f19315",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_playing_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_prepare_light.png": {
     "sha256": "f09ce9ab3218d937a13dcb1a2f0b2662035d5b2fb34c712e051046688c36e371",
@@ -1152,40 +1236,40 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_dark.png": {
-    "sha256": "67c44bcd19409dda836923af9e83b117d19fe0b4276da72687e5b08f54e559e2",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "294b2e253e3f2f9dbe40f582d10f954a6548435e0b48805e171c93ecde581388",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_reading_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_follow_light.png": {
-    "sha256": "27ae1b4d6c71698149bd825c62f52a7fd872fb44fbb3cb76647b1d6ed37ba904",
-    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "827e6291f7784523a11060ec4d9d0a07133303ecb24602e00edbdf03b4efd572",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_reading_follow_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_light.png": {
-    "sha256": "72528243cd65625319756157c648e098ce1b9c7aa3d3d2b677bec3b0543157ed",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "5d42b483af259ac6361560c0f07467bd14125fb742b10dc3dea2d4bbc4371c2a",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_reading_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_mid.png": {
-    "sha256": "7bba23b76adcb8a05d34385b99fc247663bcae6dadb9e1c18d6b4542015bf875",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "8fab4b519f8b35e006a95ee66b8864de18b601d1c697b1f000ffd7bc0f80a9f5",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_reading_mid.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_light.png": {
-    "sha256": "8ceed241b7290300371756481aefe48a00f003a118a09ab5e7c8dc0511c98acf",
-    "reason": "Reviewed by rel175 (23-11) side by side with v0.4.174 (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "0d178fd3071b4fef11fbaa626c97cfe5260c5621b1c9431ecb72ceecb73d3f52",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_listen_font130_dark.png": {
-    "sha256": "ae980f3b6d080de31805113e3ca467c2e0b5c7f5bb4ccb681a3eafff3b1a50d6",
-    "reason": "Reviewed by rel175 (23-11) alone (new at 130% font) (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "88326ade8c00ba16c9813d908d99cd726e0f5fcf418f654f698c98936c562364",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_listen_font130_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_listen_font130_light.png": {
-    "sha256": "94bd0dbef0de4045f6c1a947b6c6141e05d4fbac0e0da8d25a5de9b4bd62f040",
-    "reason": "Reviewed by rel175 (23-11) alone (new at 130% font) (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "180b871b792922d185a4884f492b76cfbbc048a844671a267e830d8d4e067895",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_listen_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_read_font130_dark.png": {
-    "sha256": "7fb9fde19a39d6d05c162a04e8d36bc48fb252da0885479ccde064ae0398b13d",
-    "reason": "Reviewed by rel175 (23-11) alone (new at 130% font) (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "d2f2cdfeb1960ab043a8df2a5b2ec5d6a417638d9df2a36096533f8445ed9e19",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_read_font130_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_read_font130_light.png": {
-    "sha256": "dadb681a10b1d99be857ef181ca6922776cf71b7778e28ec5b15a8ca5b32fa16",
-    "reason": "Reviewed by rel175 (23-11) alone (new at 130% font) (written by 5ca5c7979): chipfix: floating chips (\"Về chỗ vừa nghe\", \"Tới câu đang nghe\", the \"3 tập\" series badge) are opaque with a centred label; on Now Playing the cover yields room so the return chip sits between cover and chapter title, never over the cover. No clipped text, overlap or misplaced control."
+    "sha256": "8ee813ede4a81aa604fb5e67c3256ca2fb65bc5d1848862fd16a6a3a9e488534",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_read_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_dark.png": {
     "sha256": "ef5a982a9cb41571730da3bf14eb0fe4d010cddb8ca200c5fed57199f8b63b1f",
@@ -1244,12 +1328,12 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/recap_light.png": {
-    "sha256": "47e0317ec58f4f6d317f72654d2bd943ecb728da38329da97a3850e71aeac98a",
-    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "85e50868164b5a9b58b8fc520f39f557f9937cf9252104dcecbe32cd6ce21f1f",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. recap_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/recap_scrub_dark.png": {
-    "sha256": "f03e2b56d1122e75a3ec7765cc35d5dbad4fd54180c71987cff37649046ef4e3",
-    "reason": "Visually compared base and after in affordance review-delta/delta-03.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "153023b17a66648356174888b5103a48f7d7f12d02c27b97f7854c0b3b512b50",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. recap_scrub_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_advanced_dark.png": {
     "sha256": "9ef4ba40940bbde8bcfddf6f48909a81e260661f83fdbb42246fb4b2ecea84fe",
@@ -1340,44 +1424,44 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by c4d22f6c3): long voice and person names shrink to one line or wrap, never ellipsized. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_book_light.png": {
-    "sha256": "465033c7f7f384f9b3348ee84912f73a53a8456dbfcf6b9f3f1c498130a0f39b",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "583596b1f01f5bfd3a56d7d4343f4dfc197f62cf2b4e232e98914bf84515cd2a",
+    "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. shell_book_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_empty_light.png": {
     "sha256": "351334428e57bad90b5d7936bcfc14cc6a4ea6306588ad5697e06ed518faa107",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 1a74325f9): design lint R10: whole-screen empty and unavailable states stand centred with their action. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_library_dark.png": {
-    "sha256": "b3fc69524474f0d90878bda1a745d8b3501fa4da2e521a6ca3969f2b41cf04ec",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "a55e16f59998ff5167471b4123f3d98f9f291af2dafe99584e58d6aaecb97321",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. shell_library_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_library_light.png": {
-    "sha256": "14dd473503f188b3676afdcd2c38cbb11a5109c99ac8c515ab283f49252f3e09",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "c8cc300f4985ec2718c75842301c6a0d16e8c8c55e7f6f0fd277e1b76f6f3255",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. shell_library_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_mini_library_light.png": {
-    "sha256": "3e37430c4e39d182b714ca9c91cd1a1b4782863ffd8a89e4037f1b991db23592",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "3921d2d2c12f7adb91e5a059cf3d0daa596d669457f470a7db94d715ea1653e3",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. shell_mini_library_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_mini_restored_light.png": {
-    "sha256": "eb44380ca99c48b61937ecfae27318e43acb29b6a459bc783f33d5197a1fcd39",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by aac835b5d): left174: small covers use radius 12 and the primary button icon centres on the first line of a wrapped label. No clipped text, overlap or misplaced control."
+    "sha256": "aa1f88bc1c0b1cfc7b7b494a26afebdd52811ae26455f19de64f3c068a6d6374",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. shell_mini_restored_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_mid_light.png": {
-    "sha256": "da51bad66e6314607aa67f67246ceec7682ff04af083a6b4d77feecf415ce5c3",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "bd3b433d17ee3078d70ac316e9b7b43a43f9f4b78a7e15a05efe32d4edc15e8f",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. shell_now_playing_mid_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_open_light.png": {
-    "sha256": "54c55fc358889386e31b67026b7d33f8a8e18f2dd2ffac1e1ad0e382d1d6ac04",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "af7ff873f98af7f9b23363076ab6b8f352d90b2453ab5fb4c59c9d97896ae1a6",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. shell_now_playing_open_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_push_mid_light.png": {
-    "sha256": "06b322ee438f20b0c527f470d64910898e8968c45e60c9257c884dc0d3b92d14",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 52f30b21a): bookmeta: screens that gained author, genre and summary lines; long text wraps instead of being cut. No clipped text, overlap or misplaced control."
+    "sha256": "baf81c14de6653328acb86ba0e690e9abe34cb3f73eb7675e1d3a1d4ffde51ff",
+    "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. shell_push_mid_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_read_along_from_book_light.png": {
-    "sha256": "52d3041fe52913feef8463768bc3158a2b7ddf8f093dbe33e06c7c50c9442d24",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "3b67848e6d302df38d9877e940465262408ea88149d7d7f289c8f634fcc45beb",
+    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. shell_read_along_from_book_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_settings_dark.png": {
     "sha256": "dd6d33d7986f17cc797af5a351f5cd8ac1e666a063b43f7233fb5a880641eab9",
