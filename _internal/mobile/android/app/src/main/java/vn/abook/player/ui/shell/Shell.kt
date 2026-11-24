@@ -397,7 +397,7 @@ fun AppShell(
                             when (destination) {
                                 is Destination.Book -> CompositionLocalProvider(vn.abook.player.ui.screens.LocalBookPageState provides shell.bookPages[destination.book.id]) { BookScreen(
                                     destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music, prepare = settings.prepare,
-                                    bookMusic = musicLibrary?.let { lib -> { id -> vn.abook.player.ui.music.library.BookMusicFor(lib, shell.sheets, id, vn.abook.player.LocalStudio::sceneMoods, vn.abook.player.LocalStudio::bookScenes) } },
+                                    bookMusic = musicLibrary?.let { lib -> { id -> vn.abook.player.ui.music.library.BookMusicFor(lib, shell.sheets, id, vn.abook.player.LocalStudio::sceneMoods, vn.abook.player.LocalStudio::bookTrackNames, vn.abook.player.LocalStudio::bookScenes) } },
                                 ) }
                                 is Destination.MusicPick -> musicLibrary?.let { lib ->
                                     vn.abook.player.ui.music.library.MusicScreen(lib, shell.sheets, onBack = nav::pop,

@@ -362,6 +362,23 @@ object LocalStudio {
         }
     }
 
+    /** "Nhạc trong sách": {link: tên + người sáng tác} của các bài cuốn dùng, theo book.json (`music.tracks`, bài ghim từ "Nhạc của tôi"). */
+    fun bookTrackNames(id: String): Map<String, MusicLibrary.TrackName> = synchronized(lock) {
+        val dir = editable(id)
+        val book = BookEdits.rawBook(dir)
+        val edits = BookEdits.load(dir)
+        val pins = edits.optJSONObject("music")?.optJSONObject("pins")
+        val base = BookEdits.baseLinks(book)
+        val cues = BookEdits.musicView(book, edits).getJSONArray("cues")
+        val out = LinkedHashMap<String, MusicLibrary.TrackName>()
+        for (cue in (0 until cues.length()).map { cues.getJSONObject(it) }) {
+            val key = cue.getString("key")
+            val link = pins?.optString(key, "")?.ifEmpty { null } ?: base[key].orEmpty()
+            if (link.isNotEmpty() && link !in out) out[link] = MusicLibrary.TrackName(cue.optString("title"), cue.optString("creator"))
+        }
+        out
+    }
+
     /** "Vì sao bài này" của sách đóng gói: {khoá mốc: cảm xúc cảnh} từ các mốc nhạc của gói (`emotions`, music_plan.package). */
     fun sceneMoods(id: String): Map<String, Map<String, Double>> = synchronized(lock) {
         MusicLibrary.sceneMoods(BookEdits.rawBook(editable(id)).optJSONObject("music"))

@@ -471,6 +471,11 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
     Đổi bài. *Nhạc trong sách* (tab **Nhạc** của trang sách): danh sách bài cuốn dùng, mỗi dòng thêm "N đoạn", nút "Lưu tất cả (X MB)".
     Nhạc là nội dung nên có tab riêng; hàng **Nhạc nền** trong menu sách giữ phần điều chỉnh phát. Chỉ mở tab Nhạc mới đọc danh mục, cảnh và trạng thái tải ở nền;
     hiện "Đang tải", lỗi có "Thử lại", rỗng hiện "Chưa có nhạc". Mỗi hàng nhạc được dựng khi tới vùng nhìn, không gộp cả kho vào một mục cuộn.
+    Danh sách có MỌI bài cuốn dùng, theo thứ tự nghe: bài kho nhạc không có (`local:` đóng gói kèm sách, bài danh mục kho không biết) là dòng
+    *đi kèm sách* cùng cột với dòng kho (ô nghe thử mang dấu sách mờ, dòng phụ "người sáng tác · Đi kèm sách", cột tải để trống), tên theo
+    book.json; không nghe thử, không lưu, không tính vào "Lưu tất cả". Chạm mở sheet ở mức có dữ liệu: tên, người sáng tác, câu "đi kèm sách",
+    và "Vì sao bài này" khi đoạn đầu tiên dùng bài có cảm xúc cảnh (ba cảm xúc của đoạn, thanh màu "Đoạn này"). Sách chỉ có bài đi kèm
+    không chờ / không báo lỗi theo kho nhạc trực tuyến.
   - Bài người dùng lưu / tải tay là bài GHIM: bộ dọn bộ đệm nhạc không xoá. Điện thoại trên mạng tính phí: hỏi trước khi tải.
 
 ### Việc cần duyệt: vai phụ và người gọi (HITL mốc 2)

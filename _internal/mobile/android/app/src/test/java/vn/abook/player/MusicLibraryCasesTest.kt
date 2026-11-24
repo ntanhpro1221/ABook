@@ -105,8 +105,9 @@ class MusicLibraryCasesTest {
 
     @Test
     fun bookTracksMergeRepeatsAndCountScenes() {
-        val got = MusicLibrary.bookTracks(listOf("1:1" to "https://a/1", "1:2" to "https://a/2", "2:1" to "https://a/1", null to ""))
-        assertEquals(listOf(MusicLibrary.BookTrack("https://a/1", 2, "1:1"), MusicLibrary.BookTrack("https://a/2", 1, "1:2")), got)
+        val got = MusicLibrary.bookTracks(listOf("1:1" to "https://a/1", "1:2" to "https://a/2", "2:1" to "https://a/1", null to ""),
+            mapOf("https://a/2" to MusicLibrary.TrackName("Hai", "B")))
+        assertEquals(listOf(MusicLibrary.BookTrack("https://a/1", 2, "1:1"), MusicLibrary.BookTrack("https://a/2", 1, "1:2", "Hai", "B")), got)
     }
 
     @Test

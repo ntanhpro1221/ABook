@@ -2660,30 +2660,40 @@ class App:
         return self.music_downloads.state()
 
     def music_book_tracks(self, value: str) -> dict[str, Any]:
-        """"Nhạc trong sách" của trang sách: các bài cuốn này dùng (gộp trùng, đếm số đoạn), đã lưu / đã tải, MB còn phải tải để lưu tất cả."""
+        """"Nhạc trong sách" của trang sách: MỌI bài cuốn này dùng, theo thứ tự nghe (gộp trùng, đếm số đoạn), đã lưu / đã tải, MB còn phải tải
+        để lưu tất cả. Bài kho nhạc không có (`local:` đóng gói kèm sách hay ghim từ "Nhạc của tôi", link danh mục kho không biết) là dòng
+        `bundled`: tên + người sáng tác theo book.json / "Nhạc của tôi", `mood` = cảm xúc cảnh của đoạn đầu tiên dùng bài; không lưu, không tải."""
         path = self._listenable(value)
         scenes: list[dict[str, Any]] = []
+        names: dict[str, dict[str, Any]] = {}
         if packages.is_package(path):
-            scenes = book_edits.packaged_scenes(packages.edited_manifest(path).get("music"))
+            music = packages.edited_manifest(path).get("music")
+            scenes = book_edits.packaged_scenes(music)
+            names = music_library.track_names(music)
         else:
             scenes = (music_plan.read_plan(path) or {}).get("scenes") or []
-        used = [item for item in music_library.book_tracks(scenes) if str(item["link"]).startswith("https://")]
+        used = music_library.book_tracks(scenes)
+        catalog = [item["link"] for item in used if str(item["link"]).startswith("https://")]
         try:
-            info = self.music_catalog().lookup([item["link"] for item in used]) if used else {}
+            info = self.music_catalog().lookup(catalog) if catalog else {}
         except music_catalog.CatalogError:
             info = {}
+        mine = self.my_music.lookup([item["link"] for item in used if item["link"] not in names and item["link"] not in info])
+        moods = {scene.get("key"): music_plan.cue_emotions(scene.get("emotions")) for scene in scenes if isinstance(scene, dict)}
         saved = set(self.music_saved.links())
         rows, missing = [], 0
         for item in used:
             known = info.get(item["link"])
             if not isinstance(known, dict):
+                rows.append(music_library.bundled_row(item, names.get(item["link"]) or mine.get(item["link"]) or {}, moods.get(item["scene"])))
                 continue
             entry = {**music_library.row(item["link"], known), "scenes": item["scenes"], "scene": item["scene"],
                      "saved": item["link"] in saved, "downloaded": self._music_file(item["link"]).is_file()}
             if not entry["downloaded"]:
                 missing += int(known.get("bytes") or 0)
             rows.append(entry)
-        return {"tracks": rows, "missingBytes": missing, "unsaved": [row["link"] for row in rows if not row["saved"]]}
+        return {"tracks": rows, "missingBytes": missing,
+                "unsaved": [row["link"] for row in rows if not row.get("bundled") and not row["saved"]]}
 
     # ---- danh sách phát cho sách nghe bằng "Nghe ngay" (music_playlist.py) ---------------------------------------------
     def music_playlists(self) -> dict[str, Any]:

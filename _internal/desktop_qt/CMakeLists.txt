@@ -416,6 +416,8 @@ qt_add_qml_module(ABookDesk
         qml/AutoPickLine.qml
         qml/MyMusicTrack.qml
         qml/MusicScreen.qml
+        qml/MusicBundledRow.qml
+        qml/MusicBundledDetail.qml
         qml/MusicTrackRow.qml
         qml/MusicPreviewBar.qml
         qml/MusicArt.qml

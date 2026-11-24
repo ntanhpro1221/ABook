@@ -56,6 +56,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.insetSurface
 import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.Reveal
+import vn.abook.player.ui.components.SheetHost
 
 /** Sheet "Bài đang phát" (chạm dòng Nhạc nền của trình phát): Lưu / Bỏ lưu, Xem trong kho, Đổi bài. */
 class PlayingActions(val onOpenLibrary: (title: String) -> Unit, val onSwap: (() -> Unit)? = null)
@@ -200,12 +201,12 @@ private fun Section(title: String) {
 
 /** Thanh ngang 0-100 %: nhãn · thanh · số phần trăm (chữ số đều). Thanh vẽ trong pha vẽ. */
 @Composable
-private fun Bar(label: String, score: Double, modifier: Modifier = Modifier) {
+private fun Bar(label: String, score: Double, modifier: Modifier = Modifier, ink: androidx.compose.ui.graphics.Color = Abook.colors.accent) {
     val colors = Abook.colors
     val fraction = score.coerceIn(0.0, 1.0).toFloat()
     Row(modifier.fillMaxWidth().heightIn(min = 28.dp), verticalAlignment = Alignment.CenterVertically) {
         BasicText(label, style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.width(104.dp))
-        LinearProgress(Modifier.weight(1f).height(6.dp)) { fraction }
+        LinearProgress(Modifier.weight(1f).height(6.dp), ink = ink) { fraction }
         // The score column grows with the text size (130 %): the value never wraps away from its unit.
         ClockLabel(S.s_percent(MusicLibrary.percent(score)), style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.widthIn(min = 48.dp).padding(start = Dim.s8).testTag("emotion_score"))
     }
@@ -262,6 +263,39 @@ private fun Credit(info: JSONObject) {
     SwapContent(landing, contentKey = { landing -> landing != null }, layout = ContentLayout.Box) { landing ->
         if (landing != null) Fact(S.s_nguon_c76d57b3) {
             TextAction(S.s_mo_trang_nguon_af980960, { runCatching { uri.openUri(landing) } }, "track_source", align = Alignment.CenterStart)
+        }
+    }
+}
+
+/** Mở sheet của bài đi kèm sách ("Nhạc trong sách", bài không có trong kho nhạc). */
+fun openBundledTrack(sheets: SheetHost, state: LibraryState, track: MusicLibrary.Track, scene: Map<String, Double>) {
+    sheets.show { _ -> BundledTrackSheet(state, track, scene) }
+}
+
+/**
+ * Bài đi kèm sách (`local:` đóng gói trong .abook): chỉ có những gì book.json mang - tên, người sáng tác, câu "đi kèm sách" (không nghe thử, không lưu)
+ * và, khi mốc đầu tiên dùng bài có cảm xúc cảnh, "Vì sao bài này" ở mức có dữ liệu: ba cảm xúc mạnh nhất của đoạn (bài không có điểm cảm xúc để so).
+ */
+@Composable
+fun BundledTrackSheet(state: LibraryState, track: MusicLibrary.Track, scene: Map<String, Double>) {
+    val ui by state.ui.collectAsState()
+    val colors = Abook.colors
+    val top = scene.entries.sortedWith(compareBy({ -it.value }, { it.key })).take(3)
+    val label = { id: String -> ui.index?.emotionLabel(id) ?: id }
+    Column(Modifier.testTag("bundled_sheet")) {
+        MusicArt(track, Modifier.size(160.dp).align(Alignment.CenterHorizontally))
+        Spacer(Modifier.height(Dim.s16))
+        BasicText(track.title.ifEmpty { S.s_bai_nay_d9683a01 }, style = Abook.type.sectionTitle, modifier = Modifier.testTag("track_title"))
+        Reveal(track.creator.isNotEmpty()) { BasicText(track.creator, style = Abook.type.body.copy(color = colors.text2)) }
+        Spacer(Modifier.height(Dim.s8))
+        Caption(S.s_bundled_track_note, Modifier.testTag("bundled_note"))
+        Reveal(top.isNotEmpty()) {
+            Column {
+                Section(S.s_vi_sao_bai_nay_f681e004)
+                top.firstOrNull()?.let { Caption(S.s_bundled_scene_mood(label(it.key)), Modifier.testTag("bundled_mood")) }
+                Spacer(Modifier.height(Dim.s8))
+                for ((id, score) in top) Bar(label(id), score, Modifier.testTag("scene_emotion_$id"), ink = colors.text3)
+            }
         }
     }
 }

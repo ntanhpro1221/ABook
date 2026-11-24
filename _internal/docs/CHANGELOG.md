@@ -11,6 +11,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Thả tim cho cuốn bạn thích: chạm hình tim ở trang sách hay màn Đang nghe (điện thoại, máy tính, web); sách đã thả tim có dấu tim nhỏ dưới bìa và nằm trong bộ lọc "Yêu thích" của Thư viện. Tim đi theo hồ sơ nghe nên đồng bộ giữa các máy đã ghép như chỗ nghe.
 
+### Nhạc nền
+
+- Tab "Nhạc" của trang sách liệt kê mọi bài cuốn sách dùng, theo thứ tự nghe - kể cả nhạc riêng người làm sách đóng gói kèm sách (trước đây những cuốn chỉ có nhạc như vậy ghi "Chưa có nhạc" dù vẫn đang phát nhạc). Bài đi kèm sách ghi "Đi kèm sách", không lưu riêng được; chạm để xem tên, người sáng tác và cảm xúc của đoạn nhạc.
+
 ## [0.4.175] - 2026-11-23
 
 ### Giao diện
