@@ -40,7 +40,7 @@ Item {
         function shot(name) {
             waitForRendering(host)
             const path = Qt.resolvedUrl("../../build/d2shots/g4_" + name + ".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1")
-            grabImage(host).save(path)
+            grabImage(host).save(path); verify(qtUiTree.save(path, host))   // cây UI cạnh ảnh cho máy dò affordance của cổng phát hành
         }
         function test_openingDoesNotWriteAndSelectionIsExplicit() {
             const view = createTemporaryObject(factory, host, {item: host.fixture})
