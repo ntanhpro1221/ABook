@@ -668,12 +668,12 @@
     "reason": "Reviewed by merge176 (24-11) old/new crop of the changed band vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the book page action row (5 cells); labels whole, scrims unchanged, nothing else moved. link_book_mini_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/link_np_book_dark.png": {
-    "sha256": "2fb797908b9041ce3c1dbbd0b0c6d70ff86d4bdbaa212b490021d6a702d76d11",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. link_np_book_dark.png"
+    "sha256": "93b1bb5aaa565e16b1d914434e4869d129c8d45cefb9d8d516618c74eee8b5d2",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_np_book_light.png": {
-    "sha256": "af7ff873f98af7f9b23363076ab6b8f352d90b2453ab5fb4c59c9d97896ae1a6",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. link_np_book_light.png"
+    "sha256": "c1c53c5b26710ecd7e52b4de79a7734fd871db9fda544b9fc2eb985c77ee3621",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/mini_long_title_dark.png": {
     "sha256": "33207923975f49016d1774e3223bd46738a06b21fed988fad9ca6c885ec5e1ea",
@@ -708,68 +708,68 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 7ec4a2610): left174: 12 px small-cover corners and the wrapping primary label. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark.png": {
-    "sha256": "d630341d68a60eae764772c6e1abff66699adf42e1154de60f0be8fdb52a270d",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "8beccf37d05ccee8fe4f862880c4d77f251f1108c64561756330d3e25c5724f8",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark_bottom.png": {
-    "sha256": "79a4b7e5c2cda18fba03515e5c4d0866ba8a69bdbb88cf6af49be410d7c29508",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "701c06d530a8269d2c28f4038e460f750d921fef38e250a218bbdd762bc2690e",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark_off.png": {
-    "sha256": "0e38dcfb628de76eff006b7955b30d85556939c3007ab86ecdc7d3a4e4d615cb",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "bd0c4cdb3bc96bdc1ad0ceac26100fdd64851bd48e57531c4217c3ca05ef4930",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light.png": {
-    "sha256": "4c40275e44d901be494ca692843236897ad56fe6d40e8fcd1f6f59160952343a",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "8b67f3ab896fcab2c0984e726216eda50f01b52a79ceef1ef889cb42ac96e4ee",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light_bottom.png": {
-    "sha256": "14e7ba0d4a85ad3aecdb7d321c7c2d748d844278c17f68a825075817610c49b7",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "daab448d29b7ec70403618f5d31774441b2a93b30df8006fa5f5470579fe93bd",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light_off.png": {
-    "sha256": "268f8430de156e0473fbf793f099093b091135b00ebb2f9f8085c37d0764dede",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "85a0cd67841d16c88e3c17c65128ffa62aea84f5490a35d8864421c63501cb95",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark.png": {
-    "sha256": "4a61f2cf5c8f8016b07a631b919ce7fef1c99b32ebd21e152d4f13515a7cb3e0",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "09d104f8d4b1d663359c12265237ce70532efea342b7f26802f7549d546cd645",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark_bottom.png": {
-    "sha256": "4082b3a7caa32170429cf0636db63ddfe5fb37edea3f8bfb075a9ae897aa5b51",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "794cf99abd3a335c3e5887a2745a655d698488877221ab6994bae3187300685b",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark_off.png": {
-    "sha256": "84d02da8d5a33c5ddf5738ae1cfcbb7a0899f991a16138ccaecc04450526400a",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "6ed1f664f0462a704fcb1b61248de71dbfafd05074b2942da1c182bfc7d2283f",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_130_dark.png": {
-    "sha256": "a34b43d607dc47e4a74ee22f047f126f3e2f22fdd15756a2aebf766044eb9494",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "39cef9b6a009bea78dc6681a85a5c31eb58c95341cc3a78ab24f7a575c96a912",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_130_light.png": {
-    "sha256": "f147c166b4667978abb14aa9cc19ea1c995103fcbeb789bce029efec57639077",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "7a12501bbaf6ff8396040ec348ccd316b2ac679d64c19e77bed1c5f68d52cac7",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_dark.png": {
-    "sha256": "715bd3bee8e3bf96d4b3ab07f0134d24c88a49cc1d1a84512feb2d422cddff0d",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "65e1be6b6a60e7adb36a940384f36852ef35fbbdbbe3b340ecb7c719a183058b",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_light.png": {
-    "sha256": "92597957e347eb86be325e9492ed00ca8dc187840ea450d969ff9b21c0bac814",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "4be80295d08165b4446b805419b9514645cb3b7185b2afc11645d559da72b605",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light.png": {
-    "sha256": "89b644bae4f5285127dfd5e767d09c8c6183af2584b64db042260657a6662daa",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "437942ae2d370bb36ac08c4fea60b7234b90b5ce6377f13985ae9f6185c3f630",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light_bottom.png": {
-    "sha256": "ee550f5dad9a573f439d479007c591c7cb45f3e0f43ea83b431d5124c83da63b",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "fbd38ef9447ed526bd2c6d3e77a4d7e5c4dd1269cc0329cbee424eb2352ae1f4",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light_off.png": {
-    "sha256": "ffc11a4ee7aa1033c05d49c9fa254bc8d30d5b2dbfc0357cb045e289fdf7be54",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "0e1de129a8334412d07e3c9e3ceb149e67ae551fc9662512b0ba96f2c0fa093b",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_bundled_dark.png": {
     "sha256": "9f760e08dbd0cdcbffe65d31706d3b221ef991d631e332fd6934290a91f81167",
@@ -948,20 +948,20 @@
     "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_choices_dark.png": {
-    "sha256": "18b512102319f37cb16d932e32bbb5dff105377305a64bb8f40ba83222c74769",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "ed2b6e77419f9f07efa18e7175e4287b8a0ddf1d71016552be19cdcc1c7a40d1",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_choices_light.png": {
-    "sha256": "4aeda62863cb839bd6a67d9207d9128a25b576f45d5598bbbe09140801a4015c",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 664d13466): Now Playing cover moved: MusicScreenTest sheets drawn over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "d65d9bb00156270e0d5ea1294a7dec683586c93c5552d398f8a7bb3f282cbe42",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_credit_dark.png": {
-    "sha256": "189a821f16cd2f226b99805cdd9a97dc0676c51860331a744e01319b634c66d5",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "563a96d6f228e069d889108fa33959cc9400ab2f8c89f33448ec87d4a2b9e72f",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_credit_light.png": {
-    "sha256": "661e58d97d1f503f39658cacfc8c9063257c5d7b9ba5cdfbb65242bd370e1e45",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b23ddc52f): Now Playing cover moved: the remaining MusicScreenTest states over the new Now Playing layout. No clipped text, overlap or misplaced control."
+    "sha256": "3cd6f993b6256bac9e1f5ad29823545b63c2f20d0333906224d30305fe79d213",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_levels_dark.png": {
     "sha256": "7fdfda196c214a073c5a99f724a2898879ec45eb9c8d761bd8641cbe48138b92",
@@ -1032,76 +1032,76 @@
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by b0914f160): data names preserved and action labels shortened (for example the unpair confirmation). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_caught_up_font130_light.png": {
-    "sha256": "abf1974adb1ef2ca77dd8d8886ce029013337eeeb8d9fc1a19ded6ee58bb64da",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_caught_up_font130_light.png"
+    "sha256": "342b7848f06f28b9676a339b84903cc8684c0cf500fbc39b95b8a52e9f0a42e8",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_ended_font130_light.png": {
-    "sha256": "b5575c53886b52a92cb1b4505ed968c443d22db3580047d1cb2bd9482ddd683e",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_ended_font130_light.png"
+    "sha256": "c5e67d94c25e7675097961802947f4c41c667e81f7f33d85b84420625d3c4d3d",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_error_font130_light.png": {
-    "sha256": "5a86e806fe880b52dbd6e6da609149560188b85b8e63851ffa0363a5f00cdf26",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_error_font130_light.png"
+    "sha256": "bca0f167b555e23950c7965a24bd6a76e2a53ad1fe7fbbd641e4944f1ef71bad",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_long_font130_light.png": {
-    "sha256": "091ef4c2760bb1eb2b91587b22230f729f12bf5a19e65413aa9775cc1c4f6412",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_long_font130_light.png"
+    "sha256": "28ccfe1b459d69011eb9036104b242d2c45c30e675551afffd71fc9ac386a842",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchor_sleep_font130_light.png": {
-    "sha256": "f067b4a6b62dce0d9e2242b74bb66a5906c6d297343419e96b88a9e6b39dc1ae",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchor_sleep_font130_light.png"
+    "sha256": "59e1e9a7604e115b26875e638f2527a6b9bb776ae23de90c57c0b02a1ef245a1",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_anchors_font130_light.png": {
-    "sha256": "1ec2c6cff7ba8a84b5e196a26c72a643a75a51ac25067b854d12b8af36e04d5f",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_anchors_font130_light.png"
+    "sha256": "3716423955caa973bcbf2f5292b99a6b97902df653dfe8c9b18c42e14b30f0cc",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_audio_412_light.png": {
-    "sha256": "a970a916abd974e19e7b40958c000d4a21aefff7b0003a11086c2a753d2adbd9",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "46936e2745501e49c3a58fcdde3de43c6e17d0585dd86f64259e3e21e4e2e187",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_audio_light.png": {
-    "sha256": "bb11d2315fff0319515efcf1bb0589ac3b03c825c94f9ec8a74eec3b10a429af",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "c173e98b1e996ec99a4dcc712b3a77596f2c2528d1701d1745c4eeec1172ba7c",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_caught_up_dark.png": {
-    "sha256": "1c2a821830718de176f7edb9ed2de7ad93c6badf238b9e2d87437011a7d37518",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_caught_up_dark.png"
+    "sha256": "226aee71ce6674d72919d4e45ee2788fd57a9f2555b6ab24943e791806de34c5",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_caught_up_light.png": {
-    "sha256": "9bb712ec855121a1f6c9afdedb39f983ed2f345363ab8280412f844da4e9ce5f",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_caught_up_light.png"
+    "sha256": "548377f6d9d00e8200c13832917775b26b193d79facd66dc2b07cf61b7b4cba5",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_chapters_dark.png": {
-    "sha256": "0437659f297745d2a7dff0bd199fa27a755cf9df603fbc6707bdac91b76b86bd",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "e7ea88309008a053e636ee56f3cbb848623d13662d1edaaa80f0b0b2d8316ea0",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_chapters_light.png": {
-    "sha256": "3c2f04cc16969dcd52849349ad1db22a13ff436eda65966f0f49715ca24cfd7f",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "f5ab1591d72d2bb84d94f568f83bb88277ea6fae73bd42e1312801d92358cbd2",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_ended_light.png": {
-    "sha256": "a21d0fa57eedbf0133ef31afa1466bb51942408a773294f85725c534f53540c6",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_ended_light.png"
+    "sha256": "bcc0ea9ae22f4af96128a077ac7b2fdb04fe14114e700119584704dae5f4e498",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_heart_off_dark.png": {
-    "sha256": "6ed02d7e9a798ef4381740917b30c64700e243643a6ed54c1da044117f695d1f",
-    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_off_dark.png"
+    "sha256": "75bfaae05a712d4829dc0241f49647ccd2bda49d1ef9f8531d752d3995087c56",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_heart_off_light.png": {
-    "sha256": "44311f760f1f671b64c40e9c0c5ccf286f704a4154e16430f65811e9a068b22f",
-    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_off_light.png"
+    "sha256": "20210d726a3add486e51f63d751f021041ca766284f0f9407a97e3113f94496b",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_heart_on_dark.png": {
-    "sha256": "83a230a7f95de8b4c3d18dda1b15c1926b480c72ea8a9046e15bc08fdadf72bf",
-    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_on_dark.png"
+    "sha256": "9e546892396f37c253cc198e3434fa3c7b7b45528e090be96ecc2369241d15b8",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_heart_on_font130_light.png": {
-    "sha256": "06f835f97116f60c265ebb4a243f87060edce4505069b832bb37bc85045d090e",
-    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_on_font130_light.png"
+    "sha256": "ca6905d3b5081e3a0d7c1db38dcbd42a42baa9118bdbc45f5184c2d2a69c138c",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_heart_on_light.png": {
-    "sha256": "210e09e35933c4293d3a0f5f38c9347fc0aba545844c35039d56c0a4ee9679aa",
-    "reason": "Reviewed by merge176 (24-11) zoomed: new heart (bb223591f) snapshot; heart on/off states, small heart under the cover, favourite filter and its empty state; no clipped text or overlap. np_heart_on_light.png"
+    "sha256": "a394ab7c4ec49ac3b50a2ff99c342c407f8d15134c6018589452d4c407e94172",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_large_dark.png": {
     "sha256": "a8053d1aaba56dd3dd92456af8eabad58b0a4af73b4e5f3ccc45bcdd8f5395cb",
@@ -1112,188 +1112,188 @@
     "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_large_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_long_dark.png": {
-    "sha256": "3c7dc82865b986e437c41735107b1952a445e91b8820c053aa4b722792d0db5c",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_long_dark.png"
+    "sha256": "3537dc8fedb997641e7ea113f7370fa2e817735f1e5c050dc4e3e65ff172993d",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_long_light.png": {
-    "sha256": "3ceb54ebed1e58213874aa1fc93a8a088d148f71d2f092bf58b4c054f92eab83",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_long_light.png"
+    "sha256": "031d1eac3aed7562eca88726d98448062e0963c798029df59686ac464171e687",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_look_dark.png": {
-    "sha256": "90d00d4818ec9d899fb9b8de9ec7d218e0e9be1a6363f89d10b58592e91f1ef8",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "678d3c52134e2ab56351a4163d67647433b67adf92dbd59bd960e133a7360d75",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_look_light.png": {
-    "sha256": "f2d1c4912423999cbfeaa80ea158be98d0482d8f7560487a26209c1a0ebc9aa2",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "c1c90f012505353d6c14d3bbee41ecbdb04a3b53b227ac73e86148883f95a396",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_more_412_light.png": {
-    "sha256": "96d152cbbdcb8282a43850c314da530a145e49ab0c06a807a5882ad14f101fe5",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "fb5abef0912eb4f36dfffe88f490fa9ea573f9bc1376ce56c38429a4c1654e08",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_more_light.png": {
-    "sha256": "61d6f4ba1d68197787f1f1bdcede7f3c0f09e7ed918e3619132ecd6581b6c2ff",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "14cfc6ac5b6000637f309e714da88484f8d3c1d0389ca8ee8995f78de43fca22",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_more_progress_light.png": {
-    "sha256": "46fe39498d0403076315674c01a78e79b714e6afbad18e1b53f0cc6d4e9e7dae",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "546e48155b28190f28ef68ca2f4d562956d766a2f3b95c86b878b701955b91e1",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_note_dark.png": {
-    "sha256": "c75045b8de8bedbe315482b47bf61dfcc2c6dc023bd4f9764f17e892eebd1e41",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_note_dark.png"
+    "sha256": "73f4e96b02ad93900bdcf5994b02988da131c682873cd15134938e86aab6ad6e",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_note_light.png": {
-    "sha256": "3c0c13a316a6c7ca1d717bf4b4740b38a28b57cb8052fd1dccb3c205c634fe86",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_note_light.png"
+    "sha256": "2b3f5638e9f860c70ac5ff4cd03845ffb745f1dd23d1d16b708e946f6f39fe7d",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_opening_start.png": {
     "sha256": "0f0c5d6fb35428e5634cce076336d5fdc2124ad6a8520481922dfb6e5536f079",
     "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 7ec4a2610): left174: 12 px small-cover corners and the wrapping primary label. No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_paused_dark.png": {
-    "sha256": "6ed02d7e9a798ef4381740917b30c64700e243643a6ed54c1da044117f695d1f",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_paused_dark.png"
+    "sha256": "75bfaae05a712d4829dc0241f49647ccd2bda49d1ef9f8531d752d3995087c56",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_paused_light.png": {
-    "sha256": "44311f760f1f671b64c40e9c0c5ccf286f704a4154e16430f65811e9a068b22f",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_paused_light.png"
+    "sha256": "20210d726a3add486e51f63d751f021041ca766284f0f9407a97e3113f94496b",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_dark.png": {
-    "sha256": "504ef76a55f6112b1fd0ba197067bb058c8be89e44cb5462bab418f214bfc618",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control.",
+    "sha256": "ecc5163935609eb9f03021a1862fa5c3fc37c627aefad095ee7dcec0e89e57b7",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control.",
     "scroll_dimensions": [
       1080,
       10200
     ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_dark.png": {
-    "sha256": "1a75b9c51251775da0312121874b6d5c7cf2a360fd37de4a2383ebecb556ff5b",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control.",
+    "sha256": "eaaba052c3ad2a571d3fdab99db94eaff47b9a07a45c4e89b7d5375bddca9519",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control.",
     "scroll_dimensions": [
       1080,
       10200
     ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_light.png": {
-    "sha256": "0e7969319f44af8d08f7856463b2fe34105481b7a87100d6501f54fb49de4961",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control.",
+    "sha256": "eb0d20c376c9380a8b1da6e0815b2f675d899f4d6c535770c075a69cba7c41b2",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control.",
     "scroll_dimensions": [
       1080,
       10200
     ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_light.png": {
-    "sha256": "82bad7bcbde7ea3eb8dba725ca5d5e729478a67f98eb027bd7a7597897cd10d5",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control.",
+    "sha256": "9503ab17c858722b8d09904118789533360fbc5cf5c7207c07a4db164e834e27",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control.",
     "scroll_dimensions": [
       1080,
       10200
     ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_dark.png": {
-    "sha256": "5ded9bd9ddb62aef3f4aec3a0de3c6decb01c5d3b2c0f2f571558e77010062bb",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "85fb2aed170325868b8f4e4d0a7ccb1893f2ae9eb8929ff1ec604f35e0239c8e",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_light.png": {
-    "sha256": "0e01c2c3910f0fe503bfdfdcfd76c0b49fa67149ba7c108d4539a7782cbbf7bf",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "b091dc173fa0925649ff1be1dd9253a27244ac6842c3f3d5c0500043203b2a2b",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_chapters_light.png": {
-    "sha256": "7c2b04746e5ee58067800b9c28ed58555cc8707d556e48044e020e75e705ada3",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "292078c09654bb53ba0ecda3eeaa72197504655fb8a26173aad52e8488fac1f6",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_dark.png": {
-    "sha256": "5b2aabdf587dadea7d11493142f2c91b6914fe7a73bd605db25f8d975a5361fe",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "51333766bfd6fab9cb9d3f35be0f2ecbb38e6d915841fa41b1a66903c4d48e27",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_light.png": {
-    "sha256": "0e33d0d81625f9b890a0e90476262b9c4f797637acb326801720b4e00e768b46",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "88f95e40517330d0fb47f17894dcc6ac0358456dd124c1a6ee7b840a6d1427b8",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_speed_font130_dark.png": {
-    "sha256": "66a19a5cde5626a37385a43c6d1d4b5bcf4dbb483c3513394668901cc3e38a94",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "8d7793cef0aaff13f78cb1283cd8079f1c256a440da6b1442f08ab38cccb5449",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_speed_font130_light.png": {
-    "sha256": "e5c28376d41c85f1bbc840a098dde5dc0e53db8334f57a8839083f7c47c8759e",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "9c887b33cb6440ad066efb258e04cf09c9029ae3e2e3b75f4911215b13d933f0",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_dark.png": {
-    "sha256": "348e5634327b0c69f40eeddedfe2bf15341009fa0a13c61234c5f508937685e8",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_playing_dark.png"
+    "sha256": "197d9bd4dfb90fb08286f53b8228f957e5bca43255a90226fc88be46a3090486",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_light.png": {
-    "sha256": "5bdea070ef4b5340835db2c748fb5e8d6b0aa9fee4d53baaedb6d65ad7f19315",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_playing_light.png"
+    "sha256": "374607a917eb2d05e34a95a1fb77e5738c2712855ec620b10bff6a55270335f6",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_prepare_light.png": {
-    "sha256": "f09ce9ab3218d937a13dcb1a2f0b2662035d5b2fb34c712e051046688c36e371",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "7c085af7ab1af9d88b83be00726950dca024170b6efe9cb90a7169275c0a31b5",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_prepare_waiting_light.png": {
-    "sha256": "9ddc030bcbe632c3c970462e27d25962a6a9c9df2b68ccac9e355592fcb41643",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "0e3e8f110f0b6d42ba66b10ff287c6f2f3181fff0fda0e3bf10dcb69d252c0bd",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_dark.png": {
-    "sha256": "294b2e253e3f2f9dbe40f582d10f954a6548435e0b48805e171c93ecde581388",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_reading_dark.png"
+    "sha256": "bd42c47662d0e479c7d5f8d5bbd77df4130d9467f5cac095a068f03c0d09c623",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_follow_light.png": {
-    "sha256": "827e6291f7784523a11060ec4d9d0a07133303ecb24602e00edbdf03b4efd572",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_reading_follow_light.png"
+    "sha256": "4cbf110e6e85b2b934001eea80925d7f132602987c4687a2c11665dcf3995d80",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_light.png": {
-    "sha256": "5d42b483af259ac6361560c0f07467bd14125fb742b10dc3dea2d4bbc4371c2a",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_reading_light.png"
+    "sha256": "2ba4a203e2d6085dfa13a11bb7a82651821c91823e31e8a6ca5788148aca1688",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_mid.png": {
-    "sha256": "8fab4b519f8b35e006a95ee66b8864de18b601d1c697b1f000ffd7bc0f80a9f5",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_reading_mid.png"
+    "sha256": "c3319fbab5db867e59f43313fe4d6a42a665b3f4caffc9f186354ea560381d0c",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_light.png": {
-    "sha256": "0d178fd3071b4fef11fbaa626c97cfe5260c5621b1c9431ecb72ceecb73d3f52",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_light.png"
+    "sha256": "f455ef14aed5c101ec027f95ee2e920f05bdb4ef2dce23083607173a12efdec6",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_listen_font130_dark.png": {
-    "sha256": "88326ade8c00ba16c9813d908d99cd726e0f5fcf418f654f698c98936c562364",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_listen_font130_dark.png"
+    "sha256": "8b0b6370d5b5169d976ac6afb50f2d68b4d04bf4ec5dc346b0f4d3af8dbbb293",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_listen_font130_light.png": {
-    "sha256": "180b871b792922d185a4884f492b76cfbbc048a844671a267e830d8d4e067895",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_listen_font130_light.png"
+    "sha256": "3a4f149c190d7d664c373e0a1ebbb84634113341510d6d254806129fae1ffadf",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_read_font130_dark.png": {
-    "sha256": "d2f2cdfeb1960ab043a8df2a5b2ec5d6a417638d9df2a36096533f8445ed9e19",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_read_font130_dark.png"
+    "sha256": "ccde2c952d556742410eeac8dedc5c9602fdf79df658f020c6a5536bc20697cb",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_read_font130_light.png": {
-    "sha256": "8ee813ede4a81aa604fb5e67c3256ca2fb65bc5d1848862fd16a6a3a9e488534",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. np_return_chip_read_font130_light.png"
+    "sha256": "c29aeeed007b3a1d76477675ace58c36092a00bd4ab3d47ab74983d8bed84e35",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_dark.png": {
-    "sha256": "ef5a982a9cb41571730da3bf14eb0fe4d010cddb8ca200c5fed57199f8b63b1f",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "7213d352089d6d34464b1cc56b6026d097f6760ff4a7a9d919765499adf6c372",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_light.png": {
-    "sha256": "fb1e4e61d458593ec90ab7d5c5c1f0727e2b6fbf639a13457f85b3b504838a06",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "e4c8a615479a5671391b801aacf11cee2f461471f518ee9f2fffe98e073efccd",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_speed_dark.png": {
-    "sha256": "b3a9e14293239c78880f9c11d7376f73a0f679f5d08b8eac338b51b5a15aacbd",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "67fa1d10cc1fe147f6c9384867cac735326fcd4e177ab707000a678c5c0d707c",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_speed_light.png": {
-    "sha256": "e1b55681d92996ad426f878fb928ca97a9dc9c74a7e0424d7ef45fe851c2dd2f",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "ccca789e04e9024ed55dcdc7856efa988433f53676bf31cc5a38b8621cb02eb2",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_voice_affordance_dark.png": {
-    "sha256": "8615dcd915ba5a893d488ad32e3184bac79b105e4e93cae3cac923d72789f362",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "c7e810b8e0366fa41e991f1a7fcfba438701905fb6f8c9228d2dab57f97e9175",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_voice_affordance_light.png": {
-    "sha256": "1c8c6ad04e49c0cdcf58bbe9bf2459593a25e872c021be5866175fc051e03fb8",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "a94ffd1a921d39d7a6b38b6080cf02b5af098474da454f4a54c97b24f285d0ed",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_dark.png": {
     "sha256": "0459127fd49e68450f77c392d37a8533aad80682fa01b70f65625442f30acd15",
@@ -1320,12 +1320,12 @@
     "reason": "Reviewed old/new pip_content_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/pip_now_playing_button_dark.png": {
-    "sha256": "499f399e565ff319fd61d2091924c7710ff4cba988c3c17eea9aafdf9838529b",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "b6ba649b29d5df9ec66dafe72d0c65d90a758f9ad055565d20c8fafd057fdcb6",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/pip_now_playing_button_light.png": {
-    "sha256": "b1a57b55786daa1a6cb4978ced74da6ba2a1a3324b9cfd03521cc68e92ed38b2",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "sha256": "92676ae9e38c2525884d470482c8a8e39fe1125785ee2ef56ec12334171ffec2",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/recap_light.png": {
     "sha256": "85e50868164b5a9b58b8fc520f39f557f9937cf9252104dcecbe32cd6ce21f1f",
@@ -1452,16 +1452,16 @@
     "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. shell_now_playing_mid_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_open_light.png": {
-    "sha256": "af7ff873f98af7f9b23363076ab6b8f352d90b2453ab5fb4c59c9d97896ae1a6",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. shell_now_playing_open_light.png"
+    "sha256": "c1c53c5b26710ecd7e52b4de79a7734fd871db9fda544b9fc2eb985c77ee3621",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_push_mid_light.png": {
     "sha256": "baf81c14de6653328acb86ba0e690e9abe34cb3f73eb7675e1d3a1d4ffde51ff",
     "reason": "Reviewed by merge176 (24-11) old/new vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the scrollable library filter row (edge fade at normal width) and drops the old 4dp indent of the tile's second meta line; covers and titles unchanged. shell_push_mid_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_read_along_from_book_light.png": {
-    "sha256": "3b67848e6d302df38d9877e940465262408ea88149d7d7f289c8f634fcc45beb",
-    "reason": "Reviewed by merge176 (24-11) old/new crop vs v0.4.175: heart (bb223591f) adds 'Yêu thích' to the Now Playing secondary row (4 cells); labels whole incl. font 130 %, transport row unchanged. shell_read_along_from_book_light.png"
+    "sha256": "3171de8a0f05ca07e2e49ce23205fe9e46707c250c474033dd491ff99a98f368",
+    "reason": "Reviewed by rel177 (26-11) against v0.4.176 pixel by pixel: the only change in every image lies inside the top Nghe / Đọc theo switch band (y <= 117 px); the two labels sit about 1px lower because the player mode tabs now measure the full switch height (touch target was 17.67dp). No clipped text, overlap or misplaced control."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_settings_dark.png": {
     "sha256": "dd6d33d7986f17cc797af5a351f5cd8ac1e666a063b43f7233fb5a880641eab9",
