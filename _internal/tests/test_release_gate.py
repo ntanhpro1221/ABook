@@ -1352,3 +1352,25 @@ def test_release_gate_runs_both_ux_detectors():
     assert set(names["affordance"].requires) >= {"android-snapshots", "qt-tests"}
     assert "pending_audit.py" in " ".join(names["pending-states"].command)
     assert "--probe" in names["affordance-web"].command
+
+
+def test_run_placeholder_is_this_runs_folder_in_every_argument(tmp_path):
+    seen = []
+    def runner(command, cwd, timeout):
+        seen.append(command)
+        return gate.Execution(0, "")
+    check = gate.Check("shots", ["node", "shots.mjs", "--out", "<run>/affordance-web", "--probe", "p.js"], timeout=1)
+    gate.run_gate([check], tmp_path, runner)
+    assert seen == [["node", "shots.mjs", "--out", f"{tmp_path}/affordance-web", "--probe", "p.js"]]
+
+
+def test_every_gate_row_that_names_the_run_folder_gets_it_substituted(tmp_path):
+    seen = {}
+    def runner(command, cwd, timeout):
+        seen[command[0]] = command
+        return gate.Execution(0, "")
+    rows = [gate.Check(check.name, [check.name, *check.command[1:]], timeout=1)
+            for check in gate.checks() if any("<run>" in str(part) for part in check.command)]
+    assert {row.name for row in rows} >= {"affordance-web"}
+    gate.run_gate(rows, tmp_path, runner)
+    assert seen and not any("<run>" in str(part) for command in seen.values() for part in command), seen

@@ -1314,6 +1314,8 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
             command = [*command, "--outDir", str(directory / "ui-static")]
         if check.parser.startswith("tap"):
             command += ["--static-dir", str(directory / "ui-static")]
+        # "<run>" in any other argument is this run's folder (affordance-web wrote into a literal "<run>" directory).
+        command = [part.replace("<run>", str(directory)) if isinstance(part, str) else part for part in command]
         row["command"] = command
         try:
             if inject == check.name:
