@@ -25,6 +25,11 @@
   const findings = [];
   const selectionCue = el => {
     if (!el.matches('[aria-selected=true],[aria-checked=true],[aria-pressed=true],[data-state=active]')) return false;
+    // The current option of a choice set (ruler ticks, value chips) reads as state, not as an action: its siblings carry the
+    // action ink, and tapping it changes nothing. A lone pressed control still needs its own cue.
+    const siblings = [...(el.parentElement?.children ?? [])].filter(other => other !== el && other.tagName === el.tagName && visible(other) && enabled(other)
+      && other.matches('[aria-pressed=false],[aria-selected=false],[aria-checked=false]'));
+    if (siblings.length && siblings.every(other => [other, ...other.querySelectorAll('*')].some(part => part.textContent?.trim() && accent(part, getComputedStyle(part).color)))) return true;
     const group = el.closest('[role=tablist],[role=radiogroup],[role=group],.choice-row');
     if (!group) return false;
     const r = el.getBoundingClientRect();
@@ -59,6 +64,9 @@
   };
   for (const el of nodes.filter(el => click(el) && enabled(el) && exposed(el))) {
     if (el.matches('input,select,textarea,[role=slider]') || !label(el)) continue;
+    // Read-along sentences are the book text itself: tapping one plays from there (hint "Chạm chữ để nghe từ đó"). Android marks
+    // its timed paragraphs the same way (ReadAlongPane visualIcon); underlining every sentence would bury the text.
+    if (el.matches('[data-sentence]')) continue;
     const own = ownNodes(el);
     const box=el.getBoundingClientRect();
     if (Math.min(box.bottom, innerHeight)-Math.max(box.top, 0) < Math.min(24, box.height*.5)) continue;

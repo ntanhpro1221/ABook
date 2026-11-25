@@ -482,7 +482,8 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
         // Nhãn đã có lề 8 dp mỗi bên; thêm 8 dp nữa (đủ 16) khi còn chỗ. Hai ô luôn bằng nhau và vừa nửa bề ngang.
         val segment = (measurables.maxOf { it.maxIntrinsicWidth(constraints.maxHeight) } + 16.dp.roundToPx())
             .coerceAtMost(constraints.maxWidth / 2)
-        val placeables = measurables.map { it.measure(Constraints(minWidth = segment, maxWidth = segment, maxHeight = constraints.maxHeight)) }
+        // Mỗi ô cao bằng cả công tắc (tối thiểu 36 dp): vùng chạm và viên chỉ báo là một, không chỉ dòng chữ 18 dp ở giữa.
+        val placeables = measurables.map { it.measure(Constraints(minWidth = segment, maxWidth = segment, minHeight = constraints.minHeight, maxHeight = constraints.maxHeight)) }
         val height = (placeables.maxOfOrNull { it.height } ?: 0).coerceIn(constraints.minHeight, constraints.maxHeight)
         layout(segment * 2, height) {
             placeables.forEachIndexed { i, p -> p.place(segment * i, (height - p.height) / 2) }

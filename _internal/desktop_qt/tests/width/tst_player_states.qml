@@ -51,6 +51,7 @@ Item {
             compare(findChild(menu, "sleepCountdown").text, "1:00")
             const path = Qt.resolvedUrl("../../build/d2shots/sleepkeep_paused.png").toString().replace(/^file:\/\/\/([A-Za-z]:)/,"$1").replace(/^file:\/\//,"")
             grabImage(findChild(menu, "popoverPanel")).save(path)
+            verify(qtUiTree.save(path, findChild(menu, "popoverPanel")))   // cây UI cạnh ảnh: máy dò affordance / design_lint đọc cặp này
             Nav.back(); tryCompare(menu, "open", false)
             Player.seek(0); Player.resume(); WidthNet.advance(58); compare(Player.playing, true)
             WidthNet.advance(3); compare(Player.playing, false); compare(Player.clock.sleepLeft, 60)

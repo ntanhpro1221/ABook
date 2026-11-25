@@ -48,7 +48,9 @@ Item {
                 if (scenario.name === "upcoming") {
                     let captured = false
                     verify(view.grabToImage(function(result) {
-                        captured = result.saveToFile(Qt.resolvedUrl("../../build/d2shots/g5_priority.png").toString().replace(/^file:\/\/\//, ""))
+                        const path = Qt.resolvedUrl("../../build/d2shots/g5_priority.png").toString().replace(/^file:\/\/\//, "")
+                        // Cây UI cạnh ảnh: máy dò affordance / design_lint đọc cặp này, ảnh thiếu cây làm hàng gate hỏng.
+                        captured = result.saveToFile(path) && qtUiTree.save(path, view)
                     }))
                     tryVerify(function() { return captured })
                 }

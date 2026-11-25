@@ -179,7 +179,7 @@ fun BusyRing(modifier: Modifier = Modifier, color: Color = Abook.colors.accentTe
     val reduced = rememberReducedMotion()
     val turn = if (reduced) 0f else rememberInfiniteTransition(label = "pending").animateFloat(
         0f, 360f, infiniteRepeatable(tween(1000, easing = LinearEasing)), label = "pending-turn").value
-    Canvas(modifier.size(20.dp)) { drawBusyRing(color, turn) }
+    Canvas(modifier.size(20.dp).visualIcon()) { drawBusyRing(color, turn) }
 }
 
 internal fun DrawScope.drawBusyRing(color: Color, turn: Float = 0f) {

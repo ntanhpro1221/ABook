@@ -5,7 +5,7 @@ import "MusicLibraryLogic.js" as Logic
 import "TextWrap.js" as TextWrap
 
 // Một dòng của Kho nhạc (TrackRow của ui/src/music/MusicScreen.tsx): nút nghe thử · tên (xuống dòng, không cắt) + người sáng tác · thời lượng
-// · phong cách · trạng thái tải (phần trăm / dấu tích / lỗi), chế độ chọn thêm nút "Dùng". Bấm dòng mở chi tiết. Mất mạng: nút nghe thử của bài
+// · phong cách · trạng thái tải (phần trăm / dấu tích / lỗi), chế độ chọn thêm nút "Dùng". Bấm dòng mở chi tiết (mũi tên ">"). Mất mạng: nút nghe thử của bài
 // chưa tải mờ đi, không bấm được. "Đã tải" là trạng thái, không phải nút xoá ngầm: xoá bản tải nằm ở chi tiết ("Xoá bản tải" + hộp xác nhận).
 Interactive {
     id: root
@@ -56,7 +56,7 @@ Interactive {
         id: words
         x: play.x + play.width + Theme.s12
         y: 1 + Theme.s12
-        width: root.width - x - tail.width - Theme.s12
+        width: root.width - x - tail.width - Theme.s12 - chevron.width - Theme.s4
         spacing: 4
         Text {
             width: parent.width
@@ -82,6 +82,13 @@ Interactive {
                 color: root.load.kind === "failed" ? Theme.danger : Theme.text2; font.pixelSize: Theme.sizeBodySmall
             }
         }
+    }
+    // Bấm dòng mở chi tiết: mũi tên như web (ChevronRight ở cuối khối chữ) và điện thoại (ChevronIcon trước cột nút).
+    Icon {
+        id: chevron
+        objectName: "musicRowChevron"
+        x: root.width - tail.width - Theme.s12 - width; y: 1 + Theme.s12 + 2
+        name: "chevron-right"; size: 16; color: Theme.text3
     }
     Row {
         id: tail

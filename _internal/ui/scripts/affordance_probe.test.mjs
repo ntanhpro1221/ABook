@@ -16,6 +16,9 @@ it.skipIf(!browserAvailable)('detects plain actions and false accent with render
       '<p>False accent</p><button disabled style="color:#8a5309">Disabled accent</button>' +
       '<button aria-label="Close sheet"><span aria-hidden="true" style="display:block;width:40px;height:4px;background:#777;border-radius:2px"></span></button>' +
       '<div role="group" style="position:relative;width:160px"><button aria-pressed="true">Selected tab</button><span data-sliding-indicator style="position:absolute;bottom:0;left:0;width:90px;height:2px;background:#d4912b"></span></div>' +
+      '<div><button aria-pressed="true">Current tick</button><button aria-pressed="false" style="color:#8a5309">Other tick</button></div>' +
+      '<div><button aria-pressed="true">Current plain</button><button aria-pressed="false">Other plain</button></div>' +
+      '<p><span role="button" data-sentence>Read along sentence</span></p>' +
       '<div style="position:relative;width:80px;height:80px"><svg style="pointer-events:none" width="40" height="40"><circle cx="20" cy="20" r="18"/></svg><button aria-label="Open picture" style="position:absolute;inset:0"></button></div>';
     await cdp.send('Page.navigate', { url: 'data:text/html;charset=utf-8,' + encodeURIComponent(html) }, page.sessionId);
     await waitUntil(cdp, page.sessionId, "document.body?.textContent.includes('Plain action')", 10000, 'affordance fixture');
@@ -25,6 +28,10 @@ it.skipIf(!browserAvailable)('detects plain actions and false accent with render
     expect(findings).toContain('AFFORDANCE_ACCENT p False accent');
     expect(findings).toContain('AFFORDANCE_ACCENT button Disabled accent');
     expect(findings.some(f => f.includes('Accent action') || f.includes('Icon action'))).toBe(false);
+    // The current option among accent options is state; among plain options every option fails. Read-along text is exempt.
+    expect(findings).toContain('AFFORDANCE_CLICK button Current plain');
+    expect(findings).toContain('AFFORDANCE_CLICK button Other plain');
+    expect(findings.some(f => f.includes('Current tick') || f.includes('Other tick') || f.includes('Read along sentence'))).toBe(false);
     expect(findings.some(f => f.includes('Selected tab') || f.includes('Open picture') || f.includes('Close sheet'))).toBe(false);
   } finally { cdp?.close(); await browser.close(); }
 });

@@ -233,6 +233,6 @@ fun DownloadRing(percent: Int?, label: String, modifier: Modifier = Modifier) {
             drawArc(colors.line, 0f, 360f, false, topLeft = topLeft, size = box, style = stroke)
             drawArc(colors.accent, turn - 90f, (percent ?: 25) * 3.6f, false, topLeft = topLeft, size = box, style = stroke)
         }
-        androidx.compose.foundation.Canvas(Modifier.size(8.dp)) { drawRect(colors.accentText) }
+        androidx.compose.foundation.Canvas(Modifier.size(8.dp).visualIcon()) { drawRect(colors.accentText) }
     }
 }

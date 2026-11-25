@@ -269,18 +269,15 @@ def audit(tree, image=None):
     findings.extend(text_spacing(spacing_nodes, exposed))
     return checked, findings
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('directories', nargs='+', type=Path)
-    parser.add_argument('--out', type=Path, required=True)
-    parser.add_argument('--rules', nargs='+', choices=['AFFORDANCE_CLICK', 'AFFORDANCE_ACCENT', 'TEXT_GAP'],
-                        help='Run only these rules; image/tree integrity is always checked')
-    args = parser.parse_args()
+def audit_dirs(directories, rules=None, since=None):
+    """Audit every captured tree/image pair under `directories`. `since` (epoch seconds) skips pairs
+    written before it: a release gate audits only what this run captured, not leftovers of removed tests."""
     report = {'screens': 0, 'controls': 0, 'findings': [], 'errors': []}
-    for directory in args.directories:
-        paths = sorted(directory.rglob('*.tree.json'))
+    fresh = lambda path: since is None or path.stat().st_mtime >= since
+    for directory in directories:
+        paths = sorted(p for p in directory.rglob('*.tree.json') if fresh(p))
         for png in directory.rglob('*.png'):
-            if not png.with_suffix('.tree.json').exists():
+            if fresh(png) and not png.with_suffix('.tree.json').exists():
                 report['errors'].append(f'Missing captured tree: {png}')
         if not paths:
             report['errors'].append(f'No captured trees: {directory}')
@@ -294,9 +291,20 @@ def main():
                 count, findings = audit(tree, image)
                 report['screens'] += 1
                 report['controls'] += count
-                report['findings'].extend(dict(f, image=str(png)) for f in findings if not args.rules or f['rule'] in args.rules)
+                report['findings'].extend(dict(f, image=str(png)) for f in findings if not rules or f['rule'] in rules)
             except (OSError, ValueError, KeyError) as error:
                 report['errors'].append(f'{path}: {error}')
+    return report
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('directories', nargs='+', type=Path)
+    parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--rules', nargs='+', choices=['AFFORDANCE_CLICK', 'AFFORDANCE_ACCENT', 'TEXT_GAP'],
+                        help='Run only these rules; image/tree integrity is always checked')
+    args = parser.parse_args(argv)
+    report = audit_dirs(args.directories, args.rules)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     print(f"Affordance: {report['screens']} screens, {report['controls']} controls, {len(report['findings'])} findings, {len(report['errors'])} errors")
