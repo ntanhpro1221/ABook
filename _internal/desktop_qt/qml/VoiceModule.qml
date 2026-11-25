@@ -17,6 +17,7 @@ Item {
     property var status: ({})
     property var chosen: null                // null: theo lựa chọn đánh dấu sẵn
     property bool busy: false
+    property string running: ""   // đuôi đường dẫn của việc đang chạy ("/accelerate"...): hàng bấm ra việc ấy hiện vòng chờ
     property var asking: null                // {id, label, use}: use undefined = đang hỏi máy chủ, null = không biết
     property string askLabel: ""
     property real peak: 0                    // % không bao giờ lùi trong lúc tải
@@ -48,8 +49,10 @@ Item {
     // Một việc ghi lên mô-đun; lỗi thì lời báo hai dòng (tiêu đề + nguyên nhân) như toast.error(failure, {description})
     function run(suffix, body, failure, after) {
         busy = true
+        running = suffix
         Api.quiet("POST", copy.path + suffix, body, function(data, error) {
             root.busy = false
+            root.running = ""
             if (error) Api.notice = failure + "\n" + error
             else root.status = data
             if (after) after()
@@ -293,7 +296,10 @@ Item {
                 Accessible.name: S.s_dung_ban_tang_toc_40b7f3dd
                 Accessible.checked: Boolean(root.status.accelerated && root.status.accelerated.on)
                 onClicked: root.run("/accelerate", {on: !(root.status.accelerated && root.status.accelerated.on)}, S.s_chua_doi_duoc_cach_doc_5077e18b)
-                VoiceCheck { checked: Boolean(root.status.accelerated && root.status.accelerated.on); anchors.verticalCenter: parent.verticalCenter }
+                // Đang đổi: ô chọn nhường chỗ cho vòng chờ chung tại chỗ (hàng bị khoá theo root.busy).
+                property bool pending: root.running === "/accelerate"
+                VoiceCheck { checked: Boolean(root.status.accelerated && root.status.accelerated.on); anchors.verticalCenter: parent.verticalCenter; opacity: accelWait.shown ? 0 : 1 }
+                PendingIndicator { id: accelWait; width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter; pending: parent.pending }
                 Text {
                     id: accelText
                     x: 24

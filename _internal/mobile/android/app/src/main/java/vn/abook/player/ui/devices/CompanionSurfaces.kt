@@ -57,6 +57,13 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
     val here by local.state.collectAsState()
     val scope = rememberCoroutineScope()
     var sleepFor by remember { mutableStateOf<String?>(null) }
+    // Lệnh gửi máy kia: đúng nút vừa bấm hiện vòng chờ tới khi máy trả lời; các nút khác vẫn khoá theo ui.busy như trước.
+    var sending by remember { mutableStateOf<String?>(null) }
+    fun send(tag: String, work: suspend () -> Unit) {
+        if (ui.busy || sending != null) return
+        sending = tag
+        scope.launch { try { work() } finally { sending = null } }
+    }
     val players = rememberPresence(ui.players) { it.device }
     BackHandler(enabled = sleepFor != null) { sleepFor = null }
     val available = (LocalConfiguration.current.screenHeightDp * 0.8f).dp
@@ -86,17 +93,17 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                                     Caption("${Fmt.clock(remote.positionAfter(0.0))} · ${Fmt.clock(remote.duration)}", ticking = true)
                                     // All playback controls belong to this device's text column, including their shared centre.
                                     Row(Modifier.fillMaxWidth().testTag("remote_transport_${remote.device}"), horizontalArrangement = Arrangement.spacedBy(Dim.s8, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                                        IconAction(S.s_lui_15_giay_tren_0_ef9cea4b(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, "skip", -15.0) } }, "remote_back_${remote.device}") { PlayerGlyph("↶15") }
+                                        IconAction(S.s_lui_15_giay_tren_0_ef9cea4b(remote.name), { send("remote_back_${remote.device}") { repo.send(remote, "skip", -15.0) } }, "remote_back_${remote.device}", pending = sending == "remote_back_${remote.device}") { PlayerGlyph("↶15") }
                                         IconAction(if (remote.playing) S.s_tam_dung_tren_0_55c295eb(remote.name) else S.s_phat_tiep_tren_0_de5ffa35(remote.name),
-                                            { if (!ui.busy) scope.launch { repo.send(remote, "toggle") } }, "remote_toggle_${remote.device}") {
+                                            { send("remote_toggle_${remote.device}") { repo.send(remote, "toggle") } }, "remote_toggle_${remote.device}", pending = sending == "remote_toggle_${remote.device}") {
                                             Box(Modifier.size(40.dp).background(Abook.colors.text, CircleShape), contentAlignment = Alignment.Center) {
                                                 PlayPauseGlyph(remote.playing, Abook.colors.bg, 20.dp)
                                             }
                                         }
-                                        IconAction(S.s_toi_15_giay_tren_0_4023d456(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, "skip", 15.0) } }, "remote_forward_${remote.device}") { PlayerGlyph("15↷") }
+                                        IconAction(S.s_toi_15_giay_tren_0_4023d456(remote.name), { send("remote_forward_${remote.device}") { repo.send(remote, "skip", 15.0) } }, "remote_forward_${remote.device}", pending = sending == "remote_forward_${remote.device}") { PlayerGlyph("15↷") }
                                     }
                                     Reveal(remote.known) {
-                                        TextAction(S.s_nghe_o_day_f7f1d741, { if (!ui.busy) scope.launch { if (repo.listenHere(remote, local::playChapter)) dismiss() } }, "remote_here_${remote.device}", align = Alignment.CenterStart)
+                                        TextAction(S.s_nghe_o_day_f7f1d741, { send("remote_here_${remote.device}") { if (repo.listenHere(remote, local::playChapter)) dismiss() } }, "remote_here_${remote.device}", align = Alignment.CenterStart, pending = sending == "remote_here_${remote.device}")
                                     }
                                     Reveal(remote.cast) {
                                         Column {
@@ -114,8 +121,8 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                                                         { minutes -> S.s_0_phut_2596d212(minutes.toInt()) }, S.s_hen_gio_39d9ca26, "remote_sleep_${remote.device}_minutes",
                                                         current = remote.sleep == "minutes",
                                                     )
-                                                    TextAction(S.s_tat_hen_gio_fc8af231, { if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = 0); sleepFor = null } }, "remote_sleep_off", Modifier.fillMaxWidth(), Alignment.CenterStart)
-                                                    TextAction(S.s_het_chuong_f1d590bb, { if (!ui.busy) scope.launch { repo.send(remote, "sleep", mode = "chapter"); sleepFor = null } }, "remote_sleep_chapter", Modifier.fillMaxWidth(), Alignment.CenterStart)
+                                                    TextAction(S.s_tat_hen_gio_fc8af231, { send("remote_sleep_off") { repo.send(remote, "sleep", minutes = 0); sleepFor = null } }, "remote_sleep_off", Modifier.fillMaxWidth(), Alignment.CenterStart, pending = sending == "remote_sleep_off")
+                                                    TextAction(S.s_het_chuong_f1d590bb, { send("remote_sleep_chapter") { repo.send(remote, "sleep", mode = "chapter"); sleepFor = null } }, "remote_sleep_chapter", Modifier.fillMaxWidth(), Alignment.CenterStart, pending = sending == "remote_sleep_chapter")
                                                 }
                                             }
                                         }
@@ -124,7 +131,7 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                             }
                             val owner = Regex("^p([0-9a-f]{8})_").find(here.bookId)?.groupValues?.get(1) ?: "main"
                             Reveal(here.hasTrack && (remote.cast || remote.device == owner)) {
-                                TextAction(S.s_phat_tren_0_1_757da6a7(remote.name, if (remote.protocol == "gcast") " (Google Cast)" else ""), { if (!ui.busy) scope.launch { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, "remote_load_${remote.device}", align = Alignment.CenterStart)
+                                TextAction(S.s_phat_tren_0_1_757da6a7(remote.name, if (remote.protocol == "gcast") " (Google Cast)" else ""), { send("remote_load_${remote.device}") { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, "remote_load_${remote.device}", align = Alignment.CenterStart, pending = sending == "remote_load_${remote.device}")
                             }
                             Reveal(remote.book.isNotEmpty()) { TextAction(S.s_an_9c7a6c2d, { repo.hide(remote); dismiss() }, "remote_hide_${remote.device}", align = Alignment.CenterStart) }
                         },
@@ -134,7 +141,7 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                 }
             }
         }
-        IconAction(S.s_tim_lai_thiet_bi_phat_0dc4396a, { if (!ui.busy) scope.launch { repo.findPlayers() } }, "remote_retry", Modifier.align(Alignment.End)) { RefreshIcon(Abook.colors.text) }
+        IconAction(S.s_tim_lai_thiet_bi_phat_0dc4396a, { send("remote_retry") { repo.findPlayers() } }, "remote_retry", Modifier.align(Alignment.End), pending = sending == "remote_retry") { RefreshIcon(Abook.colors.text) }
     }
 }
 

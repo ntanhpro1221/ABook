@@ -1,0 +1,37 @@
+[
+  {
+    "id": "85bcd306f61ac0fd71fc",
+    "path": "desktop_qt/qml/BookPage.qml",
+    "control": "MenuRow",
+    "handler": "{ more.close(); root.setFinished(!root.finishedNow) }",
+    "reason": "Menu row closes its menu on choice (tst_d3/tst_records assert the menu is closed at once); the book page flips \"Đã nghe xong\" when the server answers. No control remains to carry a spinner; same menu pattern as the web book menu."
+  },
+  {
+    "id": "3d9f67979c4b1cc4b4fb",
+    "path": "desktop_qt/qml/BookPage.qml",
+    "control": "MenuRow",
+    "handler": "{ chapterMenu.close(); root.setChapterDone(parent.c.chapterId, !parent.c.done) }",
+    "reason": "Chapter menu closes on choice (tst_d3 test_chapterMenuMarksDoneWithShownRecord asserts it); the chapter row shows the new state when the server answers."
+  },
+  {
+    "id": "fa729938ae8a207d5cb8",
+    "path": "desktop_qt/qml/ConnectionPopover.qml",
+    "control": "MenuRow",
+    "handler": "{ root.close(); Backend.restart() }",
+    "reason": "Restart closes the popover and switches Backend.state to Starting: the whole window shows the starting state (connection chip, library loading) until the host is back."
+  },
+  {
+    "id": "3ddd4729ae70daaac4d4",
+    "path": "desktop_qt/qml/MusicScreen.qml",
+    "control": "ChoiceChip",
+    "handler": "root.setFilter(\"downloaded\", !root.filters.downloaded)",
+    "reason": "Filter chip is a query, not an action: MusicScreen.refresh sets `loading` and the track list shows its loading state until the filtered list arrives."
+  },
+  {
+    "id": "535bf378c02dd7092b06",
+    "path": "desktop_qt/qml/MusicScreen.qml",
+    "control": "TextLink",
+    "handler": "root.clearFilters() }",
+    "reason": "Clearing filters is a query: MusicScreen.refresh sets `loading` and the list shows its loading state."
+  }
+]

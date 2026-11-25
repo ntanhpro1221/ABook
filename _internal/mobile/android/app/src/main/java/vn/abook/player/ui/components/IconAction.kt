@@ -12,7 +12,8 @@ import vn.abook.player.ui.theme.Dim
 
 /** Icon-only action: a 48dp touch target and an explicit spoken name. */
 @Composable
-fun IconAction(description: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, glyph: @Composable () -> Unit) {
-    Box(modifier.size(Dim.s48).pressable(onClick = onClick).semantics { contentDescription = description }.testTag(tag),
-        contentAlignment = Alignment.Center) { glyph() }
+fun IconAction(description: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, pending: Boolean = false, glyph: @Composable () -> Unit) {
+    // `pending`: the action is waiting for its answer - the glyph crossfades to the shared spinner in place and a repeat tap is ignored.
+    Box(modifier.size(Dim.s48).pressable(onClick = { if (!pending) onClick() }).semantics { contentDescription = description }.testTag(tag),
+        contentAlignment = Alignment.Center) { StateIcon(pendingVisible(pending)) { waiting -> if (waiting) BusyRing() else glyph() } }
 }

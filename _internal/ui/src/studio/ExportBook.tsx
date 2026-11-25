@@ -376,7 +376,7 @@ export function ExportDialog({
   const layoutValues: Layout[] = ["single", "perPart"];
   return (
     <Dialog footer={busy ? (<DialogActions>
-            <Reveal when={packing}><Button variant="ghost" disabled={cancelling} onClick={cancelPacking}>{S.s_huy_xuat_ca425e96}</Button></Reveal>
+            <Reveal when={packing}><Button variant="ghost" loading={cancelling} onClick={cancelPacking}>{S.s_huy_xuat_ca425e96}</Button></Reveal>
             <Button variant="ghost" onClick={() => handleOpenChange(false)}>{S.s_dong_cu_de_chay_9a342df0}</Button>
           </DialogActions>) : (finished ? (<DialogActions>
             <Reveal when={!info?.remote}><Button variant="ghost" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>{S.s_mo_thu_muc_4bf5b127}</Button></Reveal>

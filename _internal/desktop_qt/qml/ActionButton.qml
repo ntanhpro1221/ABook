@@ -9,6 +9,8 @@ Interactive {
     property string icon: ""
     property string label: ""
     property bool active: false
+    // Việc đang chờ trả lời (vd thả tim): biểu tượng nhường chỗ cho vòng chờ chung, như IconButton.
+    property bool pending: false
     readonly property color ink: !enabled ? Theme.text2 : active ? Theme.accentText : hovered ? Theme.text : Theme.text2
     implicitWidth: Math.max(64, labelText.implicitWidth + 16)
     implicitHeight: Math.max(56, 6 + 24 + 4 + labelText.implicitHeight + 6)
@@ -27,10 +29,11 @@ Interactive {
         opacity: root.enabled && root.hovered ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     }
+    PendingIndicator { id: wait; x: (root.width - 20) / 2; y: 6 + 2; pending: root.pending; color: root.ink }
     StateIcon {
         x: (root.width - 20) / 2
         y: 6 + 2
-        name: root.icon
+        name: wait.shown ? "" : root.icon
         size: 20
         color: root.ink
     }

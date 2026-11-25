@@ -498,6 +498,7 @@ Item {
                             tip: root.favoriteNow ? S.s_heart_unfavorite : S.s_heart_favorite
                             Accessible.name: root.favoriteNow ? S.s_heart_unfavorite : S.s_heart_favorite
                             enabled: Player.bookId !== ""
+                            pending: root.hearting
                             onClicked: root.setFavorite(!root.favoriteNow)
                         }
                         ControlChip {

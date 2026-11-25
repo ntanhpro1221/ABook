@@ -1,3 +1,4 @@
+import { settled } from "@/shared/usePendingAction";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@/shared/DropdownMenu";
@@ -104,11 +105,11 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
         {items.map((notice) => (
           <li key={notice.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="min-w-0 flex-1 text-pretty">{notice.label}</span>
-            <Button size="sm" variant="ghost" icon={Undo2} disabled={act.isPending} onClick={() => act.mutate({ verb: "undo", notice })}>{S.s_hoan_tac_e72ff675}</Button>
+            <Button size="sm" variant="ghost" icon={Undo2} disabled={act.isPending} onClick={() => settled(act.mutateAsync({ verb: "undo", notice }))}>{S.s_hoan_tac_e72ff675}</Button>
           </li>
         ))}
       </ul>
-      <Button size="sm" variant="ghost" className="mt-2" icon={X} disabled={act.isPending} onClick={() => act.mutate({ verb: "dismiss" })}>{S.s_da_hieu_9bb82968}</Button>
+      <Button size="sm" variant="ghost" className="mt-2" icon={X} disabled={act.isPending} onClick={() => settled(act.mutateAsync({ verb: "dismiss" }))}>{S.s_da_hieu_9bb82968}</Button>
     </MotionRegion>
   );
 }

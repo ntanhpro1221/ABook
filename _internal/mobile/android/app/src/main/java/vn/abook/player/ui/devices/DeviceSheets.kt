@@ -94,7 +94,7 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
                         problem = error.orEmpty()
                         if (error == null) dismiss()
                     }
-                }) { ink -> LaptopIcon(ink) }
+                }, pending = opening) { ink -> LaptopIcon(ink) }
             }
         }
         MenuRow(S.s_lam_moi_b4c61340, "device_refresh", onClick = { state.refresh(); dismiss() }) { ink -> RefreshIcon(ink) }
@@ -188,7 +188,7 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
                     problem = error.orEmpty()
                     if (error == null) dismiss()
                 }
-            }, Modifier.fillMaxWidth().testTag("rename_save"), enabled = !working && name.isNotBlank())
+            }, Modifier.fillMaxWidth().testTag("rename_save"), enabled = name.isNotBlank(), pending = working)
             QuietButton(S.s_de_nguyen_2f029b4a, dismiss, "rename_cancel")
         }
     }

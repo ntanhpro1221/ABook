@@ -557,6 +557,7 @@ Item {
                                 Accessible.name: root.favoriteNow ? S.s_heart_unfavorite : S.s_heart_favorite
                                 active: root.favoriteNow
                                 enabled: root.fullBook.id !== undefined
+                                pending: root.hearting
                                 onClicked: root.setFavorite(!root.favoriteNow)
                             }
                             ActionButton {

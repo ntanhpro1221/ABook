@@ -1,3 +1,4 @@
+import { settled } from "@/shared/usePendingAction";
 import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
@@ -198,7 +199,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
                 </div>
               </div>
               <span className="flex shrink-0 gap-1">
-                <Reveal when={cue.pinned}><Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ pins: { [cue.key]: null } })}>{S.s_ve_bai_goc_dc6a21f6}</Button></Reveal>
+                <Reveal when={cue.pinned}><Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => settled(change.mutateAsync({ pins: { [cue.key]: null } }))}>{S.s_ve_bai_goc_dc6a21f6}</Button></Reveal>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -207,7 +208,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
                   disabled={change.isPending}
                   onClick={(event) => { swapButton.current = event.currentTarget; setSwapping(swapping === cue.key ? null : cue.key); }}
                 >{S.s_doi_bai_7b81488f}</Button>
-                <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ silence: { [cue.key]: !cue.silenced } })}>
+                <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => settled(change.mutateAsync({ silence: { [cue.key]: !cue.silenced } }))}>
                   {/* Bề ngang theo chữ dài hơn trong hai chữ: "Đổi bài" đứng một cột ở mọi dòng. */}
                   <span className="grid">
                     <span className="col-start-1 row-start-1">{cue.silenced ? S.s_co_nhac_f514e0fa : S.s_im_lang_1a012238}</span>
@@ -495,7 +496,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
   });
   return (
     <Dialog footer={<DialogActions>
-          <Button type="button" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ revert: true })}>{S.s_ve_ten_goc_643cd2e0}</Button>
+          <Button type="button" variant="ghost" disabled={save.isPending} onClick={() => settled(save.mutateAsync({ revert: true }))}>{S.s_ve_ten_goc_643cd2e0}</Button>
           <Button type="button" variant="ghost" onClick={onClose}>{S.s_thoi_e68f9e88}</Button>
           <Button type="submit" form={dialogForm1} variant="primary" loading={save.isPending} disabled={!label.trim()}>{S.s_luu_e91f26c0}</Button>
         </DialogActions>}

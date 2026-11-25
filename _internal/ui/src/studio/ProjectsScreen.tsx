@@ -1,3 +1,4 @@
+import { settled } from "@/shared/usePendingAction";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
@@ -78,7 +79,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
         {busy ? (
           <>
             <IconButton label={S.s_thu_lai_c58d068c} icon={RotateCw} onClick={() => void client.invalidateQueries({ queryKey: ["library"] })} />
-            {<Presence>{local && <IconButton label={S.s_mo_thu_muc_4bf5b127} icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}</Presence>}
+            {<Presence>{local && <IconButton label={S.s_mo_thu_muc_4bf5b127} icon={FolderOpen} onClick={() => settled(reveal.mutateAsync(book.id))} />}</Presence>}
           </>
         ) : local ? (
           <ProjectMenu book={book} rename={false}>

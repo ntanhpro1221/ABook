@@ -6,10 +6,10 @@ import contract from "../../../tests/fixtures/work_priority/contract.json";
 import { WorkCards, type WorkItem } from "./WorkInbox";
 import type { BookSummary } from "./api";
 
-const mocks = vi.hoisted(() => ({ mutate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ mutate: vi.fn(() => Promise.resolve()) }));
 vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
-  useMutation: () => ({ mutate: mocks.mutate, isPending: false }),
+  useMutation: () => ({ mutate: mocks.mutate, mutateAsync: mocks.mutate, isPending: false }),
   useQuery: () => ({ data: undefined, isLoading: false }),
 }));
 vi.mock("@/listen/clip", () => ({ useClip: () => ({ current: null, toggle: vi.fn() }) }));

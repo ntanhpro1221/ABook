@@ -239,7 +239,8 @@ private fun ReadingEditor(state: StudioReadingsState, item: NameReading, fresh: 
         )
         InlineProblem(problem, null, "studio_reading_problem")
         Reveal(suggestion.isNotEmpty()) {
-            TextAction(WorkText.readingUse(suggestion), { value = suggestion; save(suggestion) }, "studio_reading_suggestion", align = Alignment.CenterStart)
+            TextAction(WorkText.readingUse(suggestion), { value = suggestion; save(suggestion) }, "studio_reading_suggestion", align = Alignment.CenterStart,
+                pending = busy && value == suggestion)
         }
         Reveal(never) { RowHint(ReadingsLogic.neverText(item.surface), Modifier.padding(top = Dim.s4).testTag("studio_reading_never"), Abook.colors.danger) }
         Reveal(heard.isNotEmpty()) { RowHint(heard, Modifier.padding(top = Dim.s4).testTag("studio_reading_heard")) }

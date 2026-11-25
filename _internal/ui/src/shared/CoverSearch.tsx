@@ -138,6 +138,7 @@ export function CoverSearchPanel({
                 key={found.url}
                 type="button"
                 disabled={choose.isPending}
+                aria-busy={(choose.isPending && choose.variables?.url === found.url) || undefined}
                 onClick={() => choose.mutate(found)}
                 className="group rounded-control p-2 text-left hover:bg-hover disabled:opacity-50"
                 title={`${found.title}${found.author ? " - " + found.author : ""} (${found.provider})`}

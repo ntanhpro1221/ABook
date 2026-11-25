@@ -33,6 +33,8 @@ class Backend : public QObject {
     Q_PROPERTY(QString logPath READ logPath CONSTANT)
     Q_PROPERTY(LibraryModel *library READ library CONSTANT)
     Q_PROPERTY(bool libraryLoaded READ libraryLoaded NOTIFY libraryLoadedChanged)
+    /// Đang hỏi lại thư viện (refreshLibrary chưa trả lời): nút "Thử lại" của trang Thư viện hiện vòng chờ tới khi có kết quả, kể cả khi lỗi cũ lặp lại.
+    Q_PROPERTY(bool libraryRefreshing READ libraryRefreshing NOTIFY libraryRefreshingChanged)
 
 public:
     enum State { Starting, Ready, Failed };
@@ -64,6 +66,7 @@ public:
     QString logPath() const;
     LibraryModel *library() const { return m_library; }
     bool libraryLoaded() const { return m_libraryLoaded; }
+    bool libraryRefreshing() const { return m_refreshing > 0; }
 
     Q_INVOKABLE void start();
     Q_INVOKABLE void restart();
@@ -81,6 +84,7 @@ public:
 signals:
     void stateChanged();
     void libraryLoadedChanged();
+    void libraryRefreshingChanged();
     /// Thư viện vừa tải xong (JSON thô): bộ phát tìm cuốn nghe dở gần nhất trong đó.
     void libraryFetched(const QJsonArray &books);
     /// Sự kiện host chuyển tới giao diện ({"event", "detail"}; vỏ Tauri phát thành sự kiện cửa sổ cùng tên): "abook-update" = vừa có bản mới.
@@ -110,6 +114,7 @@ private:
     int m_readyMs = 0;
     bool m_quitting = false;
     bool m_libraryLoaded = false;
+    int m_refreshing = 0;
     QByteArray m_buffer;
     QElapsedTimer m_since;
     QTimer m_startLimit;

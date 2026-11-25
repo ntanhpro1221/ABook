@@ -169,6 +169,7 @@ private fun MenuActions(
     if (music != null) LaunchedEffect(book.id) { music.open(book.id) }
     val context = LocalContext.current
     var sharing by remember { mutableStateOf(false) }
+    var marking by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
     SheetMenu() {
         BasicText(book.title, style = Abook.type.sectionTitle)
@@ -184,9 +185,10 @@ private fun MenuActions(
         }
         if (!book.textOnly) {
             val finished = book.progress.finished
-            MenuRow(if (finished) S.s_chua_nghe_xong_6b821209 else S.s_da_nghe_xong_d276b702, tag = "menu_finished", onClick = {
+            MenuRow(if (finished) S.s_chua_nghe_xong_6b821209 else S.s_da_nghe_xong_d276b702, tag = "menu_finished", pending = marking, onClick = {
+                marking = true
                 scope.launch {
-                    source.setFinished(book.id, !finished)
+                    try { source.setFinished(book.id, !finished) } finally { marking = false }
                     dismiss()
                 }
             }) { ink -> if (finished) DashedCircleIcon(ink) else CheckIcon(ink) }
@@ -206,7 +208,7 @@ private fun MenuActions(
         }
         SwapContent(detail, contentKey = { detail -> detail?.canShare == true }, layout = ContentLayout.Column) { detail ->
             if (detail?.canShare == true) {
-                MenuRow(if (sharing) S.s_dang_dong_file_sach_6d7ee4ad else S.s_chia_se_8811b78c, tag = "menu_share", onClick = {
+                MenuRow(if (sharing) S.s_dang_dong_file_sach_6d7ee4ad else S.s_chia_se_8811b78c, tag = "menu_share", pending = sharing, onClick = {
                     if (sharing) return@MenuRow
                     sharing = true
                     scope.launch {
@@ -293,6 +295,7 @@ fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onL
     val colors = Abook.colors
     val scope = rememberCoroutineScope()
     var renaming by remember { mutableStateOf(false) }
+    var marking by remember { mutableStateOf(false) }
     if (renaming) return RenameChapterPage(book, chapter, source, notes, dismiss) { renaming = false }
     SheetMenu(Modifier.testTag("chapter_sheet")) {
         BasicText(chapter.title, style = Abook.type.sectionTitle)
@@ -304,9 +307,10 @@ fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onL
                     dismiss()
                     onListenFromStart()
                 }) { ink -> PlayPauseGlyph(false, ink, 20.dp) }
-                MenuRow(if (chapter.done) S.s_chua_nghe_2fbea4c8 else S.s_da_nghe_xong_d276b702, tag = "chapter_done", onClick = {
+                MenuRow(if (chapter.done) S.s_chua_nghe_2fbea4c8 else S.s_da_nghe_xong_d276b702, tag = "chapter_done", pending = marking, onClick = {
+                    marking = true
                     scope.launch {
-                        source.setChapterDone(book.id, chapter.id, !chapter.done)
+                        try { source.setChapterDone(book.id, chapter.id, !chapter.done) } finally { marking = false }
                         dismiss()
                     }
                 }) { ink -> if (chapter.done) DashedCircleIcon(ink) else CheckIcon(ink) }

@@ -270,10 +270,12 @@ private fun LazyListScope.moduleItems(kind: ModuleKind, ui: ModuleUi, voice: Voi
 private fun SuggestionBlock(kind: ModuleKind, suggestion: ModuleSuggestion, voice: VoiceState) {
     val scope = rememberCoroutineScope()
     var problem by remember { mutableStateOf("") }
+    var applying by remember { mutableStateOf(false) }
     val (text, label) = remember(suggestion) { VoiceText.suggestion(suggestion) }
     Column(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("suggestion_${kind.key}")) {
         Caption(text)
-        TextAction(label, { scope.launch { problem = voice.applySuggestion(kind).orEmpty() } }, "suggestion_${kind.key}_action", align = Alignment.CenterStart)
+        TextAction(label, { applying = true; scope.launch { try { problem = voice.applySuggestion(kind).orEmpty() } finally { applying = false } } },
+            "suggestion_${kind.key}_action", align = Alignment.CenterStart, pending = applying)
         InlineProblem(problem, null, "suggestion_${kind.key}_problem")
     }
 }

@@ -203,13 +203,18 @@ fun <T : Choice> ChoiceSetting(
 
 /** Nút chữ (DESIGN.md §6 "Nút (c)": màu chữ nhấn), cao 48, mép chữ chạm mép phải của cột. */
 @Composable
-fun TextAction(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, align: Alignment = Alignment.CenterEnd, danger: Boolean = false, enabled: Boolean = true) {
+fun TextAction(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, align: Alignment = Alignment.CenterEnd, danger: Boolean = false, enabled: Boolean = true, pending: Boolean = false) {
+    // Xoá / dọn: chữ màu nguy hiểm, không hổ phách như các việc thường cạnh nó (soát 10-11 L13).
+    val ink = if (!enabled) Abook.colors.text3 else if (danger) Abook.colors.danger else Abook.colors.accentText
     Box(
-        modifier.heightIn(min = Dim.s48).widthIn(min = Dim.touch).then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() }).testTag(tag),
+        modifier.heightIn(min = Dim.s48).widthIn(min = Dim.touch).then(if (enabled) Modifier.pressable(onClick = { if (!pending) onClick() }) else Modifier.semantics { disabled() }).testTag(tag),
         contentAlignment = align,
     ) {
-        // Xoá / dọn: chữ màu nguy hiểm, không hổ phách như các việc thường cạnh nó (soát 10-11 L13).
-        BasicText(label, style = Abook.type.label.copy(color = if (!enabled) Abook.colors.text3 else if (danger) Abook.colors.danger else Abook.colors.accentText))
+        // `pending`: đang chờ trả lời - vòng chờ chung mở chỗ trước chữ (như nút có chữ), chạm lặp bị bỏ.
+        androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+            ButtonLead(pending, ink)
+            BasicText(label, style = Abook.type.label.copy(color = ink))
+        }
     }
 }
 
@@ -535,6 +540,8 @@ fun MenuRow(
     onClick: () -> Unit = {},
     /** Giá trị hiện tại bên phải (vd "Nhạc nền" ... "Theo cảnh"); dài thì xuống dòng, không cắt. */
     value: String? = null,
+    /** Việc đang chờ trả lời: biểu tượng đầu dòng chuyển sang vòng chờ chung tại chỗ, chạm lặp bị bỏ. */
+    pending: Boolean = false,
     icon: @Composable (Color) -> Unit,
 ) {
     require(label.isNotBlank())
@@ -546,13 +553,13 @@ fun MenuRow(
     }
     Row(
         Modifier.fillMaxWidth().heightIn(min = Dim.s48)
-            .then(if (unavailable) Modifier.semantics { disabled() } else Modifier.pressable(onClick = onClick))
+            .then(if (unavailable) Modifier.semantics { disabled() } else Modifier.pressable(onClick = { if (!pending) onClick() }))
             .padding(vertical = Dim.s12)
             .testTag(tag),
         verticalAlignment = Alignment.Top,
     ) {
         Box(Modifier.size(Dim.s24, FirstLine).testTag("${tag}_icon"), contentAlignment = Alignment.CenterStart) {
-            Box(Modifier.testTag("row_leading")) { icon(ink) }
+            Box(Modifier.testTag("row_leading")) { StateIcon(pendingVisible(pending)) { waiting -> if (waiting) BusyRing(color = ink) else icon(ink) } }
         }
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f).then(if (value != null) Modifier.alignByBaseline() else Modifier)) {

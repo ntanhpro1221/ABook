@@ -464,6 +464,8 @@ FocusScope {
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: S.s_thu_lai_c58d068c
+                // Hỏi lại thư viện là việc của Backend (C++), không phải yêu cầu Api mà nút tự giữ: chờ theo chính Backend.
+                busy: Backend.libraryRefreshing
                 onActivated: root.failed ? Backend.restart() : Backend.refreshLibrary()
             }
         }

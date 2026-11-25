@@ -6,6 +6,7 @@ QtObject {
     enum State { Starting, Ready, Failed }
     property int state: 1
     property bool libraryLoaded: true
+    property bool libraryRefreshing: false
     property string version: "0.4.32"
     property string logPath: ""
     property string message: "Bạn thử mở lại ABook."

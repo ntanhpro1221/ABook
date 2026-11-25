@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -1269,3 +1270,86 @@ def test_binary_fixture_needs_an_exact_reviewed_entry(tmp_path, monkeypatch):
     monkeypatch.setattr(gate, "changed_files", lambda: [audio])
     with pytest.raises(ValueError, match="audio"):
         gate.worker("diff-safety")
+
+
+def captured_screen(directory: Path, name: str, nodes: list[dict], *, tree: bool = True, mtime: float | None = None) -> Path:
+    from PIL import Image
+
+    directory.mkdir(parents=True, exist_ok=True)
+    png = directory / f"{name}.png"
+    image = Image.new("RGB", (200, 96), (24, 24, 24))
+    for node in nodes:  # the audit only judges text whose ink really reached the screenshot
+        if node.get("color"):
+            image.paste(tuple(int(node["color"][i:i + 2], 16) for i in (1, 3, 5)), (10, 10, 14, 14))
+    image.save(png)
+    if tree:
+        nodes = [dict(id=i, parent=-1 if i == 0 else 0, bounds=[0, 0, 100, 48], **node) for i, node in enumerate(nodes)]
+        (directory / f"{name}.tree.json").write_text(json.dumps({
+            "image": png.name, "image_sha256": hashlib.sha256(png.read_bytes()).hexdigest(),
+            "width": 200, "height": 96, "nodes": nodes}), encoding="utf-8")
+    if mtime is not None:
+        for path in directory.glob(name + ".*"):
+            os.utime(path, (mtime, mtime))
+    return png
+
+
+def affordance_roots(tmp_path: Path) -> tuple[Path, Path]:
+    return tuple(tmp_path / relative for relative in gate.AFFORDANCE_TREES)
+
+
+def test_affordance_gate_passes_screens_whose_actions_look_tappable(tmp_path):
+    for directory in affordance_roots(tmp_path):
+        captured_screen(directory, "ok", [{"clickable": True}, {"text": "Thêm giọng"}, {"icon": True}])
+    report = gate.affordance_report(tmp_path)
+    assert report["status"] == "PASS", report
+    assert report["counts"]["screens"] == 2 and report["counts"]["findings"] == 0
+
+
+def test_affordance_gate_fails_a_plain_action_and_static_accent_text(tmp_path):
+    android, qt = affordance_roots(tmp_path)
+    captured_screen(android, "plain", [{"clickable": True}, {"text": "Thêm giọng", "color": "#ece8e1"}])
+    captured_screen(qt, "accent", [{}, {"text": "Thông tin", "color": "#8a5309"}])
+    report = gate.affordance_report(tmp_path)
+    assert report["status"] == "FAIL"
+    assert sorted(finding["rule"] for finding in report["findings"]) == ["AFFORDANCE_ACCENT", "AFFORDANCE_CLICK"]
+
+
+def test_affordance_gate_ignores_text_spacing_which_design_lint_owns(tmp_path):
+    for directory in affordance_roots(tmp_path):
+        captured_screen(directory, "ok", [{"clickable": True}, {"icon": True}])
+    report = gate.affordance_report(tmp_path)
+    assert all(finding["rule"].startswith("AFFORDANCE_") for finding in report["findings"])
+
+
+def test_affordance_gate_fails_a_screenshot_without_its_tree_or_a_platform_without_screens(tmp_path):
+    android, qt = affordance_roots(tmp_path)
+    captured_screen(android, "ok", [{"clickable": True}, {"icon": True}])
+    captured_screen(android, "lost", [], tree=False)
+    report = gate.affordance_report(tmp_path)
+    assert report["status"] == "FAIL"
+    assert any("Missing captured tree" in error for error in report["errors"])
+    assert any("No captured trees" in error and qt.name in error for error in report["errors"])
+
+
+def test_affordance_gate_never_passes_empty(tmp_path):
+    assert gate.affordance_report(tmp_path)["status"] == "FAIL"
+
+
+def test_affordance_gate_skips_leftovers_of_removed_tests(tmp_path):
+    android, qt = affordance_roots(tmp_path)
+    old = time.time() - gate.AFFORDANCE_MAX_AGE_S - 3600
+    for directory in (android, qt):
+        captured_screen(directory, "ok", [{"clickable": True}, {"icon": True}])
+    captured_screen(android, "removed_test", [{"clickable": True}, {"text": "Cũ", "color": "#ece8e1"}], mtime=old)
+    captured_screen(qt, "removed_untreed", [], tree=False, mtime=old)
+    report = gate.affordance_report(tmp_path)
+    assert report["status"] == "PASS", report
+    assert report["counts"]["screens"] == 2
+
+
+def test_release_gate_runs_both_ux_detectors():
+    names = {check.name: check for check in gate.checks()}
+    assert {"affordance", "affordance-web", "pending-states"} <= set(names)
+    assert set(names["affordance"].requires) >= {"android-snapshots", "qt-tests"}
+    assert "pending_audit.py" in " ".join(names["pending-states"].command)
+    assert "--probe" in names["affordance-web"].command

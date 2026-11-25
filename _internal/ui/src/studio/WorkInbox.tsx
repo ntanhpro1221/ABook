@@ -1,3 +1,4 @@
+import { settled } from "@/shared/usePendingAction";
 import { priorityText, type WorkPriority } from "./workPriority";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
@@ -378,7 +379,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           if (typed) save.mutate(typed);
         }}
       >
-        <DecisionButton data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate(item.current)}>{S.s_dung_roi_giu_b3493ad3}{item.current}”
+        <DecisionButton data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => settled(save.mutateAsync(item.current))}>{S.s_dung_roi_giu_b3493ad3}{item.current}”
         </DecisionButton>
         <label htmlFor={inputId} className="text-xs text-fg-2">{S.s_hoac_doc_la_376990a8}</label>
         <input
@@ -595,21 +596,21 @@ function SpeakerFix({
               className={cn("border-b-2 rounded-none transition-colors", index === 0 && "edge-start-action", (item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed" && item.suggested !== false) ? "border-accent" : "border-transparent")}
               aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
               disabled={busy || none}
-              onClick={() => save.mutate({ speaker: choice.value })}
+              onClick={() => settled(save.mutateAsync({ speaker: choice.value }))}
             >
               {choice.label}
             </DecisionButton>
             {choice.sampleId || choice.samplePreset ? <VoiceSample bookId={bookId} sampleId={choice.sampleId} samplePreset={choice.samplePreset} name={choice.name ?? choice.label} /> : null}
           </span>
         ))}
-        <Reveal when={item.currentValue && item.kind !== "collective"}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.currentValue! })}>
+        <Reveal when={item.currentValue && item.kind !== "collective"}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => settled(save.mutateAsync({ speaker: item.currentValue! }))}>
             {item.keepLabel ?? (item.kind === "unnamed" ? S.s_dung_la_vai_phu_7f821afe : S.s_giu_0_b8c06ffa(item.current))}
           </DecisionButton></Reveal>
         {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
-        <Reveal when={item.newPerson}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
+        <Reveal when={item.newPerson}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => settled(save.mutateAsync({ speaker: item.newPerson!, newGender: "unknown" }))}>
             {item.newPersonLabel ?? S.s_tao_nhan_vat_18e9a09a}
           </DecisionButton></Reveal>
-        <Reveal when={item.keepGroups && item.keepGroups.length > 0}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => keepAll.mutate(keepRequests(item, lines))}>
+        <Reveal when={item.keepGroups && item.keepGroups.length > 0}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => settled(keepAll.mutateAsync(keepRequests(item, lines)))}>
             {item.keepLabel ?? S.s_giu_nguyen_1b550a12}
           </DecisionButton></Reveal>
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
@@ -632,7 +633,7 @@ function SpeakerFix({
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Reveal when={moreChoices.length > 0}><div className="flex w-full flex-wrap items-center gap-2" role="group" aria-label={S.s_nhung_nguoi_khac_trong_sach_43124252}>
               {moreChoices.map((choice) => (
-                <Button key={choice.value} size="sm" variant="ghost" loading={busy} disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
+                <Button key={choice.value} size="sm" variant="ghost" loading={busy} disabled={busy || none} onClick={() => settled(save.mutateAsync({ speaker: choice.value }))}>
                   {choice.label}
                 </Button>
               ))}
@@ -661,7 +662,7 @@ function SpeakerFix({
               variant="ghost"
               disabled={!name.trim() || busy || none}
               aria-label={S.s_luu_nguoi_noi_moi_gioi_0_f39ab58a(label.toLowerCase())}
-              onClick={() => save.mutate({ speaker: name.trim(), newGender: gender })}
+              onClick={() => settled(save.mutateAsync({ speaker: name.trim(), newGender: gender }))}
             >
               {label}
             </Button>
@@ -715,10 +716,10 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           {item.redoOnly ? S.s_da_ghi_ap_khi_lam_lai_phan_tich_tu_dau_4ed021d7 : S.s_da_ghi_0_036988b1(item.requested)}
         </p></Reveal>
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
-        <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === buttons.accepted ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
+        <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === buttons.accepted ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => settled(save.mutateAsync({ action: "accept" }))}>
           {buttons.accept}
         </DecisionButton>
-        <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === S.s_giu_nguyen_1b550a12 ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
+        <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === S.s_giu_nguyen_1b550a12 ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => settled(save.mutateAsync({ action: "keep" }))}>
           {buttons.keep}
         </DecisionButton>
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} className="text-fg-2 hover:text-fg" onClick={() => setChoosing((value) => !value)}>{S.s_nguoi_ke_khac_7291e079}</Button>
@@ -726,7 +727,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       <Collapse open={choosing}>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {section.choices.map((choice) => (
-            <Button key={choice.value} size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ action: "choose", narrator: choice.value })}>
+            <Button key={choice.value} size="sm" variant="ghost" disabled={save.isPending} onClick={() => settled(save.mutateAsync({ action: "choose", narrator: choice.value }))}>
               {choice.label}
             </Button>
           ))}
@@ -739,7 +740,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             maxLength={80}
             className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-3 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
-          <Button size="sm" variant="primary" disabled={!typed || save.isPending} onClick={() => save.mutate({ action: "choose", narrator: typed })}>{S.s_dat_nguoi_ke_d4ae9aa6}</Button>
+          <Button size="sm" variant="primary" disabled={!typed || save.isPending} onClick={() => settled(save.mutateAsync({ action: "choose", narrator: typed }))}>{S.s_dat_nguoi_ke_d4ae9aa6}</Button>
         </div>
       </Collapse>
     </div>
@@ -821,14 +822,12 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
               variant="ghost"
               className={cn("border-b-2 rounded-none transition-colors", (item.requested ? [choice.done, choice.label].includes(item.requested) : choice.recommended) ? "border-accent" : "border-transparent")}
               disabled={save.isPending}
-              onClick={() =>
-                save.mutate({
+              onClick={() => settled(save.mutateAsync({
                   requests: [{ character: choice.character, gender: choice.gender, preset: choice.preset, avoid: choice.avoid }],
                   label: choice.done ?? choice.label,
                   keep: false,
                   note: choice.note,
-                })
-              }
+                }))}
             >
               {choice.label}
             </DecisionButton>
@@ -839,13 +838,11 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             size="sm"
             variant="ghost"
             disabled={save.isPending}
-            onClick={() =>
-              save.mutate({
+            onClick={() => settled(save.mutateAsync({
                 requests: item.keepCharacters!.map((character) => ({ character })),
                 label: item.keepLabel ?? S.s_giu_nguyen_1b550a12,
                 keep: true,
-              })
-            }
+              }))}
           >
             {item.keepLabel ?? S.s_giu_nguyen_1b550a12}
           </DecisionButton></Reveal>

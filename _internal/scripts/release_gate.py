@@ -389,12 +389,19 @@ def checks(confirm_hash: str | None = None) -> list[Check]:
         # Chromium thật bấm / chạm / bấm phải / lăn ra ngoài mọi lớp nổi (soát 18-11 tapfix5): chỉ lớp trên cùng đóng, phần tử dưới không nhận gì.
         Check("outside-taps", [node, "scripts/check_outside_taps.mjs", "--dist", "dist/gallery", "--out", "<run>/outside-taps.json"],
               ui, 900, "outside-taps", ("gallery-build",)),
+        # Mọi thứ bấm được phải trông bấm được (sổ ledger3, 15-11 10:4x): máy dò affordance trên DOM đã vẽ của mọi mục gallery, hai theme.
+        Check("affordance-web", [node, "scripts/gallery_shots.mjs", "--dist", "dist/gallery", "--theme", "both", "--out", "<run>/affordance-web",
+                                 "--probe", "scripts/probes/affordance.js"], ui, 1800, requires=("gallery-build",)),
         Check("contrast", [node, "scripts/check_contrast.mjs", "--compact"], ui),
         Check("qt-tests", worker_command("qt-tests"), timeout=3000, parser="json"),
         Check("qt-installer", py("desktop_qt/tools/test_installer.py", str(ROOT / "desktop_qt/dist")),
               timeout=1200, requires=("qt-tests",)),
         # Sau android-unit / qt-tests: hai bước ấy vừa ghi lại ảnh và cây UI mà máy đo thiết kế đọc.
         Check("design-lint", worker_command("design-lint"), timeout=600, parser="json"),
+        # Cùng máy dò affordance trên cây UI chụp THẬT của lượt này (Compose: android-snapshots, Qt: qt-tests).
+        Check("affordance", worker_command("affordance"), timeout=600, parser="json", requires=("android-snapshots", "qt-tests")),
+        # Mọi hành động bất đồng bộ có trạng thái chờ trên chính nút (sổ ledger3, 15-11 10:2x): web, Compose, Qt.
+        Check("pending-states", py("scripts/pending_audit.py")),
     ]
     definitions += [Check(name, worker_command(name), parser="json", timeout=1200 if name == "public-fixtures" else 120) for name in
                     ("quality-hash", "changelog", "versions", "licenses", "diff-safety", "forbidden-terms", "public-fixtures", "public-paths", "ignored-tracked", "batch-crlf",
@@ -683,6 +690,8 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
         return qt_tests()
     if name == "design-lint":
         return design_lint_report()
+    if name == "affordance":
+        return affordance_report()
     if name == "quality-hash":
         sys.path.insert(0, str(ROOT))
         from abook.quality_policy import QUALITY_IMPLEMENTATION_FILES, quality_implementation_hash
@@ -859,6 +868,32 @@ def design_lint_report() -> dict:
             "stale_exceptions": report["stale_exceptions"], "errors": report["errors"],
             "detail": "design-lint: " + ("; ".join(problems) if problems else
                                          f"{red} ảnh đỏ, {cells} ô ảnh x luật (chế độ {'chặn' if DESIGN_LINT_BLOCKS else 'báo cáo'})")}
+
+
+AFFORDANCE_TREES = ("mobile/android/app/build/design_lint", "desktop_qt/build/d2shots")
+AFFORDANCE_MAX_AGE_S = 24 * 3600
+
+
+def affordance_report(root: Path = ROOT, since: float | None = None) -> dict:
+    """Máy dò affordance (scripts/affordance_audit.py) trên ảnh + cây UI mà android-snapshots và qt-tests vừa chụp.
+
+    Chỉ hai luật affordance (nút trông không bấm được, mực nhấn trên chữ không bấm được); khoảng cách chữ là việc của design-lint.
+    Ảnh cũ hơn 24 giờ (test đã bỏ) không đo. Thiếu cây, cây lệch ảnh hay không có ảnh nào là FAIL, không bao giờ PASS rỗng.
+    """
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import affordance_audit
+
+    directories = [root / relative for relative in AFFORDANCE_TREES]
+    report = affordance_audit.audit_dirs(directories, ["AFFORDANCE_CLICK", "AFFORDANCE_ACCENT"],
+                                         time.time() - AFFORDANCE_MAX_AGE_S if since is None else since)
+    problems = list(report["errors"])
+    if report["findings"]:
+        problems.append(f"{len(report['findings'])} chỗ bấm được mà không trông bấm được")
+    return {"counts": {"screens": report["screens"], "controls": report["controls"], "findings": len(report["findings"]),
+                       "errors": len(report["errors"])},
+            "status": "FAIL" if problems or not report["screens"] else "PASS", "findings": report["findings"][:200],
+            "errors": report["errors"][:50],
+            "detail": "affordance: " + ("; ".join(problems[:5]) if problems else f"{report['screens']} màn, {report['controls']} nút, 0 lọt")}
 
 
 def load_module(path: Path, name: str):
@@ -1127,7 +1162,7 @@ def select_checks(definitions: list[Check], only: list[str] | None) -> list[Chec
     return [check for check in definitions if check.name in requested]
 
 
-UI_CHECKS = {"typecheck", "vitest", "ui-build", "gallery-build", "gallery-inspect", "preview-bar", "outside-taps", "contrast", "sheet-geometry"}
+UI_CHECKS = {"typecheck", "vitest", "ui-build", "gallery-build", "gallery-inspect", "preview-bar", "outside-taps", "affordance-web", "contrast", "sheet-geometry"}
 
 
 def directory_link(link: Path, target: Path) -> None:

@@ -1,3 +1,5 @@
+import { PendingIndicator } from "@/shared/PendingIndicator";
+import { settled } from "@/shared/usePendingAction";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
@@ -189,8 +191,9 @@ export function OtherComputers() {
                       type="button"
                       className="ml-2 rounded-control text-accent-text underline-offset-2 hover:underline disabled:opacity-60"
                       disabled={stopWaiting.isPending}
+                      aria-busy={(stopWaiting.isPending && stopWaiting.variables === computer.id) || undefined}
                       onClick={() => stopWaiting.mutate(computer.id)}
-                    >{S.s_thoi_cho_6bf8a752}</button>
+                    >{S.s_thoi_cho_6bf8a752}<PendingIndicator pending={stopWaiting.isPending && stopWaiting.variables === computer.id} className="ml-1 size-3 align-[-2px]" /></button>
                   </div>
                 ) : (
                   // Lời báo lỗi dài (chứng chỉ máy kia đổi...) xuống dòng cho đọc hết, không cắt giữa chừng.
@@ -229,8 +232,8 @@ export function OtherComputers() {
                   onChoose={(address) => setBluetooth.mutate({ id: computer.id, address })}
                 />
               )}
-              <IconButton label={S.s_hoi_lai_thu_vien_bfe2a0e8} icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => refresh.mutate()} className="max-sm:hidden" />
-              <Button size="sm" variant="ghost" icon={RefreshCw} disabled={refresh.isPending} onClick={() => refresh.mutate()} className="sm:hidden" aria-label={S.s_hoi_lai_thu_vien_bfe2a0e8}>{S.s_hoi_lai_1dc3bd7a}</Button>
+              <IconButton label={S.s_hoi_lai_thu_vien_bfe2a0e8} icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => settled(refresh.mutateAsync())} className="max-sm:hidden" />
+              <Button size="sm" variant="ghost" icon={RefreshCw} disabled={refresh.isPending} onClick={() => settled(refresh.mutateAsync())} className="sm:hidden" aria-label={S.s_hoi_lai_thu_vien_bfe2a0e8}>{S.s_hoi_lai_1dc3bd7a}</Button>
               <IconButton label={S.s_bo_ghep_0_56c3fd6f(computer.name)} icon={Unplug} size="sm" onClick={() => unpair.start(computer)} className="max-sm:hidden" />
               <Button size="sm" variant="ghost" icon={Unplug} onClick={() => unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={S.s_bo_ghep_0_56c3fd6f(computer.name)}>{S.s_bo_ghep_64f921f9}</Button>
               </div>
@@ -306,7 +309,7 @@ export function OtherComputers() {
       {confirm && <div role="status" className="space-y-2">
         <p>{S.s_pair_fingerprint_label}{confirm.short}</p>
         <p>{S.s_pair_fingerprint_help}</p>
-        <Button type="button" disabled={pair.isPending} onClick={() => pair.mutate(confirm.fingerprint)}>{S.s_pair_fingerprint_confirm}</Button>
+        <Button type="button" disabled={pair.isPending} onClick={() => settled(pair.mutateAsync(confirm.fingerprint))}>{S.s_pair_fingerprint_confirm}</Button>
       </div>}
       {/* Toast biến mất sau vài giây; lý do không ghép được ở lại dưới ô địa chỉ cho tới lần thử kế (soát UX a17). */}
       {pair.isError && !confirm && (

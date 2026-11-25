@@ -1,3 +1,4 @@
+import { settled } from "@/shared/usePendingAction";
 import { S } from "../shared/strings.generated";
 import { MoreInfo, SettingsBlock } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -366,8 +367,9 @@ export function PhoneSync() {
           <Button variant="ghost" onClick={() => setRemoving(null)}>{S.s_huy_96732485}</Button>
           <Button
             variant="danger"
-            onClick={() => {
-              if (removing) revoke.mutate({ id: removing.id, name: removing.name });
+            // Hộp ở lại tới khi máy trả lời: nút Bỏ ghép hiện vòng chờ, rồi mới đóng (lỗi thì onError báo, hộp vẫn đóng như trước).
+            onClick={async () => {
+              if (removing) await settled(revoke.mutateAsync({ id: removing.id, name: removing.name }));
               setRemoving(null);
             }}
           >{S.s_bo_ghep_64f921f9}</Button>

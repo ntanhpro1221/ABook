@@ -608,7 +608,7 @@ private fun BookButtons(
     val started = book.progress.heardSeconds > 0 || book.state.last != null
     val first = detail?.chapters?.firstOrNull { it.playable }
     val scope = rememberCoroutineScope()
-    var hearting by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var hearting by remember { mutableStateOf(false) }
     val restart = {
         if (first != null) {
             actions.playChapter(book.id, first.id, 0.0)
@@ -671,9 +671,9 @@ private fun BookButtons(
             ) { color -> RestartIcon(color) }
             val favorite = book.state.favorite
             SecondaryButton(S.s_heart_favorite, if (favorite) S.s_heart_unfavorite else S.s_heart_favorite, enabled = true, tag = "book_favorite", edge = 0, onClick = {
-                // Chạm lặp khi đang ghi bị bỏ; tim đổi khi Thư viện mang kết quả thật về (ghi xong mới làm mới).
-                if (hearting?.isActive != true) hearting = scope.launch { source.setFavorite(book.id, !favorite) }
-            }) { color -> HeartIcon(favorite, if (favorite) Abook.colors.accentText else color) }
+                // Chạm lặp khi đang ghi bị bỏ; tim đổi khi Thư viện mang kết quả thật về (ghi xong mới làm mới). Đang ghi: vòng chờ tại chỗ trái tim.
+                if (!hearting) { hearting = true; scope.launch { try { source.setFavorite(book.id, !favorite) } finally { hearting = false } } }
+            }, pending = hearting) { color -> HeartIcon(favorite, if (favorite) Abook.colors.accentText else color) }
             SecondaryButton(S.s_them_dd92626f, S.s_them_tuy_chon_a0b4bb6e, enabled = true, tag = "book_more", edge = 1, onClick = {
                 sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }, onRecord = { openRecords(it) }, notes = notes) }
             }) { color -> MoreIcon(color) }
@@ -732,18 +732,23 @@ private fun SecondaryButton(
     tag: String,
     edge: Int,
     onClick: () -> Unit,
+    pending: Boolean = false,
     icon: @Composable (androidx.compose.ui.graphics.Color) -> Unit,
 ) {
     val colors = Abook.colors
     val ink = if (enabled) colors.text else colors.fg3
     Column(
         Modifier.offset(x = EdgeInset * edge)
-            .then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() })
+            .then(if (enabled) Modifier.pressable(onClick = { if (!pending) onClick() }) else Modifier.semantics { disabled() })
             .semantics { contentDescription = description }
             .testTag(tag),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(Modifier.size(Dim.touch), contentAlignment = Alignment.Center) { icon(ink) }
+        Box(Modifier.size(Dim.touch), contentAlignment = Alignment.Center) {
+            vn.abook.player.ui.components.StateIcon(vn.abook.player.ui.components.pendingVisible(pending)) { waiting ->
+                if (waiting) vn.abook.player.ui.components.BusyRing(color = ink) else icon(ink)
+            }
+        }
         BasicText(label, style = Abook.type.caption.copy(color = if (enabled) colors.text2 else colors.fg3))
     }
 }

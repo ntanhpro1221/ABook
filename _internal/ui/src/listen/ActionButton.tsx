@@ -1,6 +1,9 @@
 import type { ButtonHTMLAttributes, ComponentType, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { PendingIndicator } from "@/shared/PendingIndicator";
+import { busyClick } from "@/shared/ui";
+import { usePendingAction } from "@/shared/usePendingAction";
 
 // Nút phụ có nhãn (docs/DESIGN.md mục 6b): biểu tượng trơn ở trên, nhãn nhỏ ở dưới - MỘT kiểu cho hàng phụ của trang sách (Đọc · Tìm · Từ đầu ·
 // Thêm) và của trình phát (Tốc độ · Hẹn giờ · Chương). Không viền, không nền: chỉ nền nhạt khi rê / chạm, thu 0,97 khi nhấn.
@@ -24,6 +27,7 @@ export function ActionButton({
   glyphKey,
   active,
   className,
+  onClick,
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   ref?: Ref<HTMLButtonElement>;
@@ -36,9 +40,14 @@ export function ActionButton({
   glyphKey?: unknown;
   active?: boolean;
 }) {
+  // Như Button: hành động trả promise (vd "Từ đầu" chờ trình phát nạp) giữ nút ở trạng thái chờ tới khi xong.
+  const action = usePendingAction(onClick);
   return (
-    <button type="button" className={cn(ACTION_BUTTON, actionTone(active), className)} {...rest}>
-      <MotionRegion as="span" aria-hidden className={ACTION_GLYPH} motionKey={glyphKey}>{glyph ?? (Icon ? <Icon className="size-5" strokeWidth={2} /> : null)}</MotionRegion>
+    <button type="button" className={cn(ACTION_BUTTON, actionTone(active), className)} aria-busy={action.pending || undefined}
+      aria-disabled={action.pending || undefined} onClick={busyClick(action.pending, action.invoke)} {...rest}>
+      <MotionRegion as="span" aria-hidden className={ACTION_GLYPH} motionKey={glyphKey}>
+        <PendingIndicator pending={action.pending}>{glyph ?? (Icon ? <Icon className="size-5" strokeWidth={2} /> : null)}</PendingIndicator>
+      </MotionRegion>
       <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof label === "string" ? label : undefined}>{label}</MotionRegion>
     </button>
   );

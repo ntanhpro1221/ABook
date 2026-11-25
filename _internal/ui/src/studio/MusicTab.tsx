@@ -1,3 +1,4 @@
+import { settled } from "@/shared/usePendingAction";
 import { useLibraryPreview } from "../music/preview";
 import { ListeningProgress } from "../music/ListeningProgress";
 import { Presence } from "../shared/MotionPresence";
@@ -527,7 +528,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               {(link) => (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-1">
                   <span className="min-w-0 flex-1 break-words">{trackLabel(link, data.bannedTracks?.[link] ?? plan?.tracks[link])}</span>
-                  <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ unban: [link] })}>{S.s_dung_lai_01a1973f}</Button>
+                  <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => settled(change.mutateAsync({ unban: [link] }))}>{S.s_dung_lai_01a1973f}</Button>
                 </div>
               )}
             </AnimatedRows>

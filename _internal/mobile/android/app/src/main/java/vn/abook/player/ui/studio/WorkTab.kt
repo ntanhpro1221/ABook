@@ -445,7 +445,8 @@ private fun ReadingAnswers(item: WorkItem, state: StudioProjectState) {
         )
         InlineProblem(problem, null, "studio_reading_problem")
         Reveal(suggestion.isNotEmpty()) {
-            TextAction(WorkText.readingUse(suggestion), { value = suggestion; save(suggestion) }, "studio_reading_suggestion", align = Alignment.CenterStart)
+            TextAction(WorkText.readingUse(suggestion), { value = suggestion; save(suggestion) }, "studio_reading_suggestion", align = Alignment.CenterStart,
+                pending = busy && value == suggestion)
         }
         Reveal(heard.isNotEmpty()) { RowHint(heard, Modifier.testTag("studio_reading_heard")) }
         AnswerButton(WorkText.READING_TRY, ::tryIt, "studio_reading_try", enabled = !busy && typed.isNotEmpty())

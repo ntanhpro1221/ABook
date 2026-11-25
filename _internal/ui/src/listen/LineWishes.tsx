@@ -1,3 +1,4 @@
+import { PendingIndicator } from "@/shared/PendingIndicator";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { withViewTransition } from "@/shared/motion";
@@ -109,15 +110,16 @@ function waitingItems(wish: LineWish | undefined): { key: string; text: string; 
 
 type View = "menu" | "speaker" | "delivery" | "word";
 
-function MenuRow({ icon: Icon, title, note, disabled, onClick, trailing }: { icon: typeof UserRound; title: string; note: ReactNode; disabled?: boolean; onClick: () => void; trailing?: ReactNode }) {
+function MenuRow({ icon: Icon, title, note, disabled, pending = false, onClick, trailing }: { icon: typeof UserRound; title: string; note: ReactNode; disabled?: boolean; pending?: boolean; onClick: () => void; trailing?: ReactNode }) {
   return (
     <button
       type="button"
       disabled={disabled}
+      aria-busy={pending || undefined}
       onClick={onClick}
       className="flex w-full items-start gap-3 rounded-cover px-3 py-3 text-left hover:bg-hover disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent"
     >
-      <Icon className="mt-line-icon size-4 shrink-0 text-fg-2" />
+      <span className="mt-line-icon grid size-4 shrink-0 place-items-center text-fg-2"><PendingIndicator pending={pending} className="size-4"><Icon className="size-4" /></PendingIndicator></span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{title}</span>
         <span className="block text-xs text-fg-2">{note}</span>
@@ -389,6 +391,9 @@ export function LineWishDialog({
     onError: (error: Error) => toast.error(S.s_chua_bo_duoc_thay_doi_nay_eccfaf9b, { description: error.message }),
   });
   const withdrawName = (name: NameWish) => withdraw.mutate({ section: "pronunciations", key: name.key, requestedAt: name.requestedAt });
+  // Chỉ nút "Bỏ" của đúng mục đang rút hiện vòng chờ; các nút khác chỉ khoá.
+  const withdrawing = (item: { section: string; requestedAt: number; name?: NameWish }) => withdraw.isPending
+    && withdraw.variables?.section === (item.name ? "pronunciations" : item.section) && withdraw.variables?.requestedAt === (item.name?.requestedAt ?? item.requestedAt);
 
   // Đang chờ của câu: việc của riêng câu + cách đọc đang chờ của các từ trong câu (sửa / bỏ ngay tại đây - soát a70: trước chỉ bỏ được ở trang sách).
   const sentenceWords = line ? wordsOf(line.text) : [];
@@ -437,11 +442,12 @@ export function LineWishDialog({
                           <button
                             type="button"
                             disabled={withdraw.isPending}
+                            aria-busy={withdrawing(item) || undefined}
                             onClick={() => (item.name ? withdrawName(item.name) : withdraw.mutate(item))}
                             aria-label={S.s_bo_0_47f8ec66(item.text)}
                             className="inline-flex shrink-0 items-center gap-1 rounded-control px-2 py-1 text-xs font-medium text-accent-text hover:bg-hover"
                           >
-                            <X className="size-3" />{S.s_bo_7107fb3c}</button>
+                            <PendingIndicator pending={withdrawing(item)} className="size-3"><X className="size-3" /></PendingIndicator>{S.s_bo_7107fb3c}</button>
                         )}
                       </div>
                     )}
@@ -485,6 +491,7 @@ export function LineWishDialog({
                   title={S.s_thu_lai_cau_nay_034c2834}
                   note={!identified ? S.s_chua_sua_duoc_tung_cau_o_file_lam_bang_abo_82209a43 : !hasAudio ? S.s_chuong_nay_chua_co_audio_chua_co_gi_de_thu_47e4d310 : wish?.retake ? S.s_da_ghi_dang_cho_may_lam_sach_7335a8a2 : S.s_doc_lai_mot_lan_khac_giong_nhu_cu_a0908dad}
                   disabled={!identified || !hasAudio || Boolean(wish?.retake) || retake.isPending}
+                  pending={retake.isPending}
                   onClick={() => retake.mutate()}
                   trailing={null}
                 />

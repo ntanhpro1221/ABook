@@ -7,10 +7,10 @@ import { WorkCards, type WorkItem } from "./WorkInbox";
 import type { BookSummary } from "./api";
 import { TooltipProvider } from "@/shared/ui";
 
-const mocks = vi.hoisted(() => ({ mutate: vi.fn(), toggle: vi.fn(), kind: "failed", reason: "Cần kiểm tra" }));
+const mocks = vi.hoisted(() => ({ mutate: vi.fn(() => Promise.resolve()), toggle: vi.fn(), kind: "failed", reason: "Cần kiểm tra" }));
 vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({}), useQuery: () => ({}),
-  useMutation: () => ({ mutate: mocks.mutate }),
+  useMutation: () => ({ mutate: mocks.mutate, mutateAsync: mocks.mutate }),
   useInfiniteQuery: () => ({ data: { pages: [{ pending: 1, counts: {}, redoChapters: [], items: [{
     stableId: "line", segmentId: 1, chapterId: 1, chapterTitle: "Chương 1", audioSha256: "sha", verdict: null,
     pendingSpoken: null, text: "Câu cần nghe", textSha256: "text-sha", kind: mocks.kind, playable: true, reason: mocks.reason,

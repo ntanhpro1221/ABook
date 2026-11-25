@@ -281,8 +281,12 @@ void Backend::refreshLibrary() {
         return;
     const quint64 generation = m_generation;
     QNetworkReply *reply = get(QStringLiteral("/api/listen/library"));
+    if (m_refreshing++ == 0)
+        emit libraryRefreshingChanged();
     connect(reply, &QNetworkReply::finished, this, [this, reply, generation] {
         reply->deleteLater();
+        if (--m_refreshing == 0)
+            emit libraryRefreshingChanged();
         if (generation != m_generation)
             return;
         if (reply->error() != QNetworkReply::NoError) {

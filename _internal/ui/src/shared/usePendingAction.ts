@@ -28,3 +28,10 @@ export function usePendingAction<E>(action: ((event: E) => unknown) | undefined)
   };
   return { pending, invoke };
 }
+
+/** A react-query mutation as a shared Button action: `onClick={() => settled(save.mutateAsync(x))}`. The returned promise keeps the
+ *  clicked button pending until the request settles (only that button, not every button of the same mutation); the mutation's own
+ *  `onError` already reports a failure, so the rejection is absorbed here instead of raising a second toast. */
+export function settled(promise: Promise<unknown>): Promise<void> {
+  return promise.then(() => undefined, () => undefined);
+}
