@@ -7,6 +7,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.177] - 2026-11-26
+
+### Nhạc nền
+
+- Danh mục tra cứu nhạc nền anime, visual novel và game (không lời) cho sách nghe riêng có thêm nhiều bài, gồm "Forever Rachel" và nhạc NieR, mỗi bài vẫn ghi số bảng xếp hạng bên ngoài có nhắc tới nó.
+
+### Giao diện
+
+- Nút và thao tác phải chờ máy làm xong (lưu, gửi, tải, thử lại, thả tim, đánh dấu đã nghe xong, tăng tốc giọng...) giờ hiện vòng chờ ngay trên chính nút đó, giống nhau trên web, máy tính và điện thoại, thay vì đứng im như chưa nhận lần bấm.
+- Chỗ bấm được trông bấm được: hàng nhạc trên máy tính có mũi tên mở như web và điện thoại; tab chuyển chế độ ở màn Đang nghe trên điện thoại có vùng chạm cao bằng cả thanh.
+
 ## [0.4.176] - 2026-11-24
 
 ### Thư viện
