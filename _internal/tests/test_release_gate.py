@@ -9,7 +9,6 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-import time
 
 import pytest
 
@@ -1337,12 +1336,12 @@ def test_affordance_gate_never_passes_empty(tmp_path):
 
 def test_affordance_gate_skips_leftovers_of_removed_tests(tmp_path):
     android, qt = affordance_roots(tmp_path)
-    old = time.time() - gate.AFFORDANCE_MAX_AGE_S - 3600
+    old = 1000.0  # epoch seconds, long before any file this test writes now
     for directory in (android, qt):
         captured_screen(directory, "ok", [{"clickable": True}, {"icon": True}])
     captured_screen(android, "removed_test", [{"clickable": True}, {"text": "Cũ", "color": "#ece8e1"}], mtime=old)
     captured_screen(qt, "removed_untreed", [], tree=False, mtime=old)
-    report = gate.affordance_report(tmp_path)
+    report = gate.affordance_report(tmp_path, since=old + 1)
     assert report["status"] == "PASS", report
     assert report["counts"]["screens"] == 2
 
