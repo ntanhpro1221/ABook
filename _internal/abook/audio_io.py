@@ -1900,6 +1900,24 @@ def _evaluate_chapter_quality(
     )
 
 
+def chapter_assembly_manifest(
+    wavs: Iterable[Path | tuple[Path, int]],
+    settings: dict[str, Any],
+    *, title: str, book_title: str, track: int,
+) -> dict[str, Any]:
+    """Hash actual ordered inputs, including breaks and encoder/mastering settings."""
+    entries = []
+    for item in wavs:
+        path, pause = item if isinstance(item, tuple) else (item, 0)
+        entries.append({"sha256": sha256_file(Path(path)), "break_ms": max(0, int(pause))})
+    return {
+        "version": 1,
+        "wavs": entries,
+        "settings": json.loads(json.dumps(settings, ensure_ascii=False, sort_keys=True)),
+        "title": title, "book_title": book_title, "track": int(track),
+    }
+
+
 def assemble_chapter_atomic_with_metrics(
     wavs: Iterable[Path | tuple[Path, int]],
     output: Path,
