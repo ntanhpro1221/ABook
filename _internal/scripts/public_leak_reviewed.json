@@ -882,8 +882,8 @@
     "reason": "desktop_qt/tools/hostserve.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/desktop_qt/tools/listen_audit.py": {
-    "sha256": "f749f861d0abfafca34a18853ba80660a800a0a91c557b025c1c8789e902b7f2",
-    "reason": "desktop_qt/tools/listen_audit.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
+    "sha256": "dce64c146b874d34a1c1737b3f645f03275eb8fd9240d8f56db9ccb944576890",
+    "reason": "desktop_qt/tools/listen_audit.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned 26-11 (dev/music-pintrack): rule 5 trusts mix_pos only from the voice whose mix_len matches the matched track; added comments, docstrings and selftest cases are authored technical Vietnamese, synthetic data only."
   },
   "_internal/desktop_qt/tools/make_audio_fixture.py": {
     "sha256": "db2d01b35bdcbad42f987b373c24dc3f7f7f72d08009361501c9c8d5421fd7d1",
