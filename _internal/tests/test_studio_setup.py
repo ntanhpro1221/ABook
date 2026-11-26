@@ -835,3 +835,25 @@ def test_a_failed_module_download_reads_as_vietnamese_with_the_raw_error_folded_
     message, detail = studio_setup.download_failure("giọng VieNeu", RuntimeError("boom"))
     assert "RuntimeError" not in message and detail == "RuntimeError: boom"
     assert studio_setup.download_failure("Studio", OSError(28, "No space"), retry="Cài tiếp")[0].endswith("bấm Cài tiếp.")
+
+
+def test_every_install_from_the_hashed_manifest_may_take_a_pin_from_the_extra_index(tmp_path: Path, ollama: str,
+                                                                                    monkeypatch: pytest.MonkeyPatch) -> None:
+    # 26-11 phase2b: a fresh 0.4.177 Studio stopped at "packages" - the setuptools bootstrap read the manifest's
+    # --extra-index-url but kept uv's first-index strategy, so the pin living on the extra index was refused.
+    from abook.webui import studio_dependencies
+
+    manifest = ("--extra-index-url https://download.pytorch.org/whl/cu128\n"
+                "setuptools==80.9.0 --hash=sha256:" + "1" * 64 + "\n"
+                "torch==2.11.0+cu128 --hash=sha256:" + "0" * 64 + "\n")
+    monkeypatch.setattr(studio_dependencies, "locked_requirements", lambda _req, _lock: (manifest, []))
+    setup = _setup(tmp_path, ollama, [])
+    setup._probe_packages = lambda: ["setuptools"]  # type: ignore[method-assign]
+    ran: list[list[str]] = []
+    setup._run = lambda command, what: ran.append(command) or ""  # type: ignore[method-assign]
+    setup._step_packages()
+    installs = [command for command in ran if command[1:3] == ["pip", "install"] and "-r" in command]
+    assert len(installs) == 2, "bootstrap setuptools + the main install"
+    for command in installs:
+        strategy = command.index("--index-strategy")
+        assert command[strategy + 1] == "unsafe-best-match", command

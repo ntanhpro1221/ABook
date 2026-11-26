@@ -45,6 +45,8 @@ STUDIO_FOLDER = "Studio"
 # Trong thư mục dự án: bản mã nào đã bắt đầu cuốn này (StudioSetup.code_for).
 CODE_PIN_FILE = "studio_code.json"
 CREATE_NO_WINDOW = 0x08000000
+# Every `uv pip install -r <hashed manifest>`: the manifest carries --extra-index-url and a pin may exist only there.
+UV_INDEX_STRATEGY = ("--index-strategy", "unsafe-best-match")
 # Revisions present in the measured local Studio cache; ONNX also matches vieneu_module._CODEC.
 MOSS_REVISIONS = {
     "OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano": "6aa02b01e445cc585582cf0ba480bc3ea6c8dd68",
@@ -1365,10 +1367,12 @@ class StudioSetup:
             if any(line.startswith("setuptools==") for line in backend):
                 bootstrap = self.root / "requirements-build.txt"
                 atomic_write_text(bootstrap, "\n".join(backend) + "\n")
+                # The pinned setuptools may live on the extra index only: uv's default strategy stops at the first
+                # index that has the name and refuses the pin (fresh install of 0.4.177 failed here).
                 self._run([self._uv(), "pip", "install", "--python", str(self.python), "--no-deps", "--only-binary", ":all:",
-                           "--require-hashes", "-r", str(bootstrap)], "Chuẩn bị thư viện")
+                           "--require-hashes", *UV_INDEX_STRATEGY, "-r", str(bootstrap)], "Chuẩn bị thư viện")
         self._run([self._uv(), "pip", "install", "--python", str(self.python), "--no-deps",
-                   "--require-hashes", "--no-build-isolation", "--index-strategy", "unsafe-best-match", "-r", str(manifest)], "Cài thư viện")
+                   "--require-hashes", "--no-build-isolation", *UV_INDEX_STRATEGY, "-r", str(manifest)], "Cài thư viện")
         # Git has no distribution hash: the app's lock pins its complete source commit.
         for requirement in git:
             self._run([self._uv(), "pip", "install", "--python", str(self.python), "--no-deps", "--no-build-isolation", requirement],
