@@ -36,7 +36,7 @@
      "sources_reviewed": {"type": "integer", "minimum": 0},
      "list_votes": {"type": "integer", "minimum": 0, "description": "How many independent external lists (rankings, polls, forum threads, playlists) name this track; 0 = none of the lists gathered so far. The list URLs stay in the private catalog."},
      "instrumental_of": {"type": "string", "description": "Set on the official instrumental / off-vocal release of a sung song: the title of the sung original, which itself is recorded with vocals=true and kept out of narration."},
-     "audio_source": {"type": "object", "properties": {"url": {"type": "string", "pattern": "^https://youtu[.]be/[A-Za-z0-9_-]+$"},
+     "audio_source": {"type": "object", "properties": {"url": {"type": "string", "pattern": "^https://(?:youtu[.]be/[A-Za-z0-9_-]+|archive[.]org/details/[A-Za-z0-9_-]+)$"},
                       "channel": {"type": "string"}, "video_title": {"type": "string"},
                       "version": {"enum": ["official", "reupload", "cover", "processed", "unverified"],
                                   "description": "official = release (Topic) or composer/publisher channel; reupload = someone else's upload of the soundtrack track; cover = arrangement/performance by someone else; processed = 3D/spatial re-processing; unverified = not settled."}},
