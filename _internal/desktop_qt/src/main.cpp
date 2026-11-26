@@ -230,15 +230,17 @@ int main(int argc, char *argv[]) {
     Music music(&player, &hostNet, [&mixer, benchMode]() -> AudioOut * {
         auto *voice = new MixVoice(mixer.get(), MixVoice::Bed);
         if (benchMode) {
-            QObject::connect(voice, &AudioOut::durationChanged, voice, [&mixer](double seconds) {
+            const quintptr tag = quintptr(voice);
+            QObject::connect(voice, &AudioOut::durationChanged, voice, [&mixer, tag](double seconds) {
                 Bench::mark(QStringLiteral("mix_ready:%1:%2:decodes=%3").arg(mixer->rate()).arg(seconds).arg(mixer->decodeCount()));
+                // listen_audit luật 5: độ dài bài của phần tử này, để vị trí mix_pos chỉ được tin cho đúng bài có cùng độ dài.
+                Bench::mark(QStringLiteral("mix_len:%1:%2").arg(tag, 0, 16).arg(seconds, 0, 'f', 3));
             });
             QObject::connect(voice, &AudioOut::playingChanged, voice, [](bool playing) {
                 Bench::mark(playing ? QStringLiteral("mix_playing") : QStringLiteral("mix_paused"));
             });
             QObject::connect(voice, &AudioOut::failed, voice, [](const QString &) { Bench::mark(QStringLiteral("mix_failed")); });
             // Soát nghe §19: vị trí trong bài của từng phần tử nhạc, để so với vị trí giọng (bài trôi chậm đúng bằng quãng hở giữa clip).
-            const quintptr tag = quintptr(voice);
             QObject::connect(voice, &AudioOut::seeked, voice, [voice, tag] {
                 Bench::mark(QStringLiteral("mix_seeked:%1:%2").arg(tag, 0, 16).arg(voice->position(), 0, 'f', 3));
             });
