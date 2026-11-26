@@ -3,6 +3,7 @@ package vn.abook.player.vieneu
 import vn.abook.player.readaloud.ClipBudget
 import vn.abook.player.readaloud.Shouts
 import vn.abook.player.BuildConfig
+import vn.abook.player.Py
 import org.json.JSONObject
 
 /** Native counterpart of readaloud/vieneu_input.py; limits match Studio's vieneu_limits.py.
@@ -13,8 +14,14 @@ object VieneuInput {
     val MAX_UNBROKEN = policy.getInt("max_unbroken_chars")
     val HALVING_DEPTH = policy.getInt("halving_depth")
     private val repetitions = policy.getInt("max_letter_repetitions")
-    private val longWord = Regex("(?U)\\S{${MAX_UNBROKEN + 1},}")
-    private val repeats = Regex("(?U)" + policy.getString("long_letter_run_pattern"), RegexOption.IGNORE_CASE)
+    // Python's Unicode `\s` / `\S` / `[^\W\d_]` spelled out through Py.rx: Android's ICU regex crashes on (?U).
+    private val longWord = Py.rx("\\S{${MAX_UNBROKEN + 1},}").toRegex()
+    private val repeats = policy.getString("long_letter_run_pattern").let { pattern ->
+        val letter = "[^\\W\\d_]"
+        require(letter in pattern)
+        Py.rx(pattern.replace(letter, "[\\p{L}\\p{Nl}\\p{No}]"), ignoreCase = true).toRegex()
+    }
+    private val gaps = Py.rx("\\s+").toRegex()
     private fun markers(key: String): List<String> = policy.getJSONArray(key).let { array ->
         (0 until array.length()).map { array.getString(it) }
     }
@@ -55,7 +62,7 @@ object VieneuInput {
         val count = clean.codePointCount(0, clean.length)
         if (count < 2) return null
         val middle = clean.offsetByCodePoints(0, count / 2)
-        val gap = Regex("(?U)\\s+").findAll(clean).minByOrNull {
+        val gap = gaps.findAll(clean).minByOrNull {
             kotlin.math.abs((clean.codePointCount(0, it.range.first) + clean.codePointCount(0, it.range.last + 1)) / 2.0 - count / 2)
         }
         return if (gap == null) listOf(clean.substring(0, middle), clean.substring(middle))
