@@ -83,5 +83,10 @@
     "file": "ImportJobs.kt",
     "line": "return if (problem == null) Pick(listOf(file.canonicalFile), emptyList()) else Pick(emptyList(), listOf(\"$path: $problem\"))",
     "reason": "False match: `problem` is the String from ImportInbox.refusal, an English reply for the adb broadcast caller, not a Throwable."
+  },
+  {
+    "file": "vieneu/VieneuInput.kt",
+    "line": "val message = error.message.orEmpty().lowercase(java.util.Locale.ROOT)",
+    "reason": "A check on the text: mustHalve matches the engine error against the shared length/memory markers of vieneu_input_policy.json to decide whether to halve the piece; the message is never shown."
   }
 ]
