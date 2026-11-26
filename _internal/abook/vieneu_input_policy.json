@@ -1,0 +1,12 @@
+{
+  "version": "readcap1",
+  "max_unbroken_chars": 64,
+  "short_unit_slack_chars": 40,
+  "halving_depth": 6,
+  "oom_halving_min_chars": 256,
+  "max_letter_repetitions": 4,
+  "long_letter_run_pattern": "([^\\W\\d_])\\1{4,}",
+  "length_error_markers": ["does not fit a cache"],
+  "memory_error_markers": ["out of memory", "not enough memory", "defaultcpuallocator", "alloc_cpu.cpp", "cuda_error_out_of_memory"],
+  "fatal_error_markers": ["cuda driver", "cublas", "cudnn", "no module named", "thiếu vieneu", "thiếu máy đọc", "locked vieneu preset", "locked zerotts preset", "locked supertonic preset", "unknown tts engine"]
+}

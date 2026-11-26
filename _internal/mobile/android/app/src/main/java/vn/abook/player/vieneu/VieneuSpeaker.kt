@@ -129,8 +129,9 @@ class VieneuSpeaker(
         val rulings = (readings as? vn.abook.player.readaloud.BookReadings)?.rulings // a book made in Studio brings its second-tier answers
         for (unit in units) {
             ClipBudget.stopIfCancelled() // a cancelled read stops between chunks (the engines also check between their steps)
-            val phonemes = phonemize(unit.pieces, unit.text(tokens), rulings)
-            val audio = if (phonemes.isEmpty()) FloatArray(0) else tierEngine.infer(phonemes, preset, seedOf(tier, name, unit.pieces.joinToString(" ")))
+            val seed = seedOf(tier, name, unit.pieces.joinToString(" "))
+            val (audio, phonemes) = VieneuInput.readUnit(unit.pieces, unit.text(tokens), VieneuInput.unitLimit(MAX_CHARS.getValue(tier)), tierEngine.rate,
+                { pieces, source -> phonemize(pieces, source, rulings) }, { ph -> tierEngine.infer(ph, preset, seed) })
             waves.add(audio)
             pauses.add(VieneuAudio.gapAfter(phonemes))
             live?.unit(audio, tierEngine.rate, phonemes)

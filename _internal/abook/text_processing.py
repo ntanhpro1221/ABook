@@ -9,6 +9,7 @@ from . import book_paths
 from .io_utils import decode_text_bytes, natural_key, sha256_bytes, sha256_file, sha256_text, slugify
 from .readaloud.symbols import ADDRESS, unit_slash
 from .vietnamese_letters import VIETNAMESE_UPPERCASE_CLASS
+from .vieneu_limits import INPUT_POLICY
 
 
 QUOTE_PATTERN = re.compile(r"([“\"][^”\"]{1,1600}[”\"])", re.DOTALL)
@@ -571,13 +572,13 @@ def vietnamese_number_words(value: int) -> str:
             words.append(spoken if index == 0 else f"{spoken} {VIETNAMESE_SCALES[index]}")
         return " ".join(words)
     raise ValueError(f"number beyond what a book numbers things with: {value}")
-MAX_VOCALIZATION_REPETITIONS = 4
+MAX_VOCALIZATION_REPETITIONS = INPUT_POLICY["max_letter_repetitions"]
 # Một chữ cái lặp liền quá MAX_VOCALIZATION_REPETITIONS lần mà các luật trên không nhận ("hhhhhhh",
 # "zzzzzzzz", nguyên âm kéo dài giữa từ): bản gửi TTS giữ đúng số lần giới hạn. Không có từ tiếng Việt
 # nào lặp một chữ cái quá bốn lần, còn một chuỗi dài không khoảng trắng thì không bộ chia mẩu nào cắt
 # được - VieNeu nhận nguyên khối rồi tràn bộ đệm. Chữ số không đụng: "1000000" là một con số.
 LONG_LETTER_RUN_PATTERN = re.compile(
-    r"([^\W\d_])\1{" + str(MAX_VOCALIZATION_REPETITIONS) + r",}",
+    INPUT_POLICY["long_letter_run_pattern"],
     re.IGNORECASE,
 )
 

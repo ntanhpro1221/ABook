@@ -74,6 +74,7 @@ include = ["abook*"]
 
 [tool.setuptools.package-data]
 abook = [
+  "vieneu_input_policy.json",
   "_vendor/zwicker/LICENSE",
   "_vendor/zwicker/NOTICE.md",
   "assets/*.ico",

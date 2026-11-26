@@ -74,7 +74,7 @@ class ClipCache(
         fun reading(voiceId: String, text: String, origin: String?, readings: Map<String, String>? = null): String =
             listOf(
                 when {
-                    voiceId.startsWith("vieneu:") -> VieneuUnits.readingTag(text, origin, directEnglish = true)
+                    voiceId.startsWith("vieneu:") -> VieneuUnits.readingTag(text, origin, directEnglish = true) + "+" + vn.abook.player.vieneu.VieneuInput.VERSION
                     SpokenText.normalises(voiceId) -> SpokenText.tag(text, origin)
                     origin != null && local(voiceId) -> VieneuUnits.readingTag(text, origin)
                     else -> ""

@@ -1403,15 +1403,20 @@ class VieneuProvider:
         speaker = np.asarray(preset["speaker_emb"], dtype=np.float32)
         waves, pauses = [], []
         for unit in parts:
-            phonemes = ve.phonemize(unit.pieces, source=unit.text(toks))
+            from .vieneu_input import read_unit, unit_limit
+            from .model import unit_made
+
+            began = time.perf_counter()
             seed = seed_of(tier, name, " ".join(unit.pieces))
-            if not phonemes:
-                audio = np.zeros(0, dtype=np.float32)
-            elif tier == "turbo":
-                codes = ve.strip_encoder_pad_frame(np.asarray(preset["codes"], dtype=np.int64)) if preset.get("codes") is not None else None
-                audio = engine.infer(phonemes, speaker, codes, rng=np.random.RandomState(seed))
-            else:
-                audio = engine.infer(phonemes, speaker, np.asarray(preset["style"], dtype=np.float32), seed=seed)
+
+            def infer(phonemes: str) -> Any:
+                if tier == "turbo":
+                    codes = ve.strip_encoder_pad_frame(np.asarray(preset["codes"], dtype=np.int64)) if preset.get("codes") is not None else None
+                    return engine.infer(phonemes, speaker, codes, rng=np.random.RandomState(seed))
+                return engine.infer(phonemes, speaker, np.asarray(preset["style"], dtype=np.float32), seed=seed)
+
+            # A retry is part of this display unit, never another stream unit.
+            audio, phonemes = read_unit(unit.pieces, unit.text(toks), unit_limit(MAX_CHARS[tier]), engine.SAMPLE_RATE, ve.phonemize, infer)
             from . import japanese_audio, japanese_delivery
 
             groups = japanese_delivery.groups(unit.text(toks).split(), origin, readings)
@@ -1421,6 +1426,8 @@ class VieneuProvider:
                                                japanese_audio.word_spans(said, groups),
                                                self._aligner() if installed.aligner else None)
             waves.append(audio)
+            if phonemes:
+                unit_made(audio, engine.SAMPLE_RATE, phonemes, time.perf_counter() - began)
             pauses.append(ve.GAP_SECONDS["sentence" if phonemes.rstrip()[-1:] in ".!?" else "minor"])
         joined, spans = ve.join(waves, engine.SAMPLE_RATE, pauses[:-1])
         if not joined.size:
@@ -1432,7 +1439,9 @@ class VieneuProvider:
 
         installed = self.locate()
         alignment = "ctc" if installed is not None and installed.aligner else "plain"
-        return reading_tag(text, origin, self.speaks_english, direct_english=True) + f"+{VERSION}-{alignment}"
+        from .vieneu_input import VERSION as INPUT_VERSION
+
+        return reading_tag(text, origin, self.speaks_english, direct_english=True) + f"+{INPUT_VERSION}+{VERSION}-{alignment}"
 
     def synthesize(self, text: str, native_voice: str, origin: str | None = None, readings: Mapping[str, str] | None = None) -> Synthesis:
         tier, name, installed, preset = self._voice(native_voice)

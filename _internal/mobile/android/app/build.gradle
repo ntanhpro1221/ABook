@@ -21,6 +21,7 @@ def japaneseLexicon = file("../../../abook/readaloud/japanese_lexicon.txt.gz").b
 
 def englishPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/english_policy.json"))
 def soundPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/sound_policy.json"))
+def vieneuInputPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/vieneu_input_policy.json"))
 def nameSounds = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/name_sounds.json"))
 def voiceRank = new groovy.json.JsonSlurper().parse(file("../../../abook/assets/voice_rank.json"))
 def chapterTitles = new groovy.json.JsonSlurper().parse(file("../../../abook/webui/assets/chapter_titles.json"))
@@ -47,6 +48,7 @@ android {
         buildConfigField "String", "CHAPTER_TITLE_RULES", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(chapterTitles))
         buildConfigField "String", "LISTENER_PACKAGE_RULES", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(listenerPackage))
         buildConfigField "String", "SOUND_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(soundPolicy))
+        buildConfigField "String", "VIENEU_INPUT_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(vieneuInputPolicy))
         buildConfigField "String", "NAME_SOUNDS", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(nameSounds))
         buildConfigField "String", "ENGLISH_ACRONYMS", '"' + englishPolicy.acronyms.join(' ') + '"'
         buildConfigField "String", "PRESERVE_ACRONYMS", '"' + englishPolicy.preserve_acronyms.join(' ') + '"'

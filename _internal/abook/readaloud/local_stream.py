@@ -25,7 +25,7 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any
 
 from . import flac_mp4, supertonic, vieneu
-from .model import listening, unit_made
+from .model import listening
 
 if TYPE_CHECKING:
     from . import vieneu_engine as ve
@@ -97,29 +97,6 @@ def remembering_aligner() -> Any:
         if _remembered is None or _remembered[0] is not found:
             _remembered = (found, _Remembering(found))
         return _remembered[1]
-
-
-class _Reporting:
-    """Engine VieNeu bọc: mỗi `infer` (một khúc) báo sóng vừa ra cho người nghe khúc ([model.unit_made]); mọi thứ khác chuyển thẳng. Sóng `infer` trả là đúng thứ
-    `vieneu._speak` ghép vào clip (khúc không có âm vị thì không gọi engine: clip ghép thêm khúc rỗng - [LocalStream.close] nhận ra)."""
-
-    def __init__(self, engine: Any) -> None:
-        self._engine = engine
-
-    def infer(self, phonemes: str, *args: Any, **kwargs: Any) -> Any:
-        began = time.perf_counter()
-        wave = self._engine.infer(phonemes, *args, **kwargs)
-        unit_made(wave, self._engine.SAMPLE_RATE, phonemes, time.perf_counter() - began)
-        return wave
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self._engine, name)
-
-
-def reporting(make: Callable[[str, Any], Any] | None) -> Callable[[str, Any], Any]:
-    """`engines=` của VieneuProvider: bộ dựng `make` (None = engine ONNX) mà engine nào cũng báo từng khúc ([_Reporting])."""
-    build = make or vieneu._real_engine  # cùng gói: đúng bộ dựng mặc định của VieneuProvider
-    return lambda tier, installed: _Reporting(build(tier, installed))
 
 
 def plan(provider: Any, native: str, text: str, origin: str | None, readings: Any) -> tuple[list[str], list[vieneu.Unit]]:

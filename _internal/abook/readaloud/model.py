@@ -72,8 +72,8 @@ def stop_if_cancelled() -> None:
 
 
 # Phát luồng giọng trên máy (local_stream.py): `ReadAloud.clip` đặt người nghe từng khúc ở đây quanh lời gọi giọng, rồi mỗi khúc vừa đọc xong - đúng sóng âm
-# sẽ được ghép vào clip - được báo cho nó (`unit_made`). VieNeu báo từ engine bọc (local_stream.reporting: vieneu._speak là file khoá), Supertonic từ chính
-# `_speak`. Không có người nghe (mọi lượt khác: làm trước, xuất, tự đo) thì không làm gì. Mỗi luồng một giá trị như `_cancelled`.
+# sẽ được ghép vào clip - được báo cho nó (`unit_made`). VieNeu và Supertonic báo từ `_speak`, sau khi đã ghép mọi lượt chia nhỏ của cùng khúc.
+# Không có người nghe (mọi lượt khác: làm trước, xuất, tự đo) thì không làm gì. Mỗi luồng một giá trị như `_cancelled`.
 _units: ContextVar[Callable[[object, int, str, float], None] | None] = ContextVar("readaloud_units", default=None)
 
 

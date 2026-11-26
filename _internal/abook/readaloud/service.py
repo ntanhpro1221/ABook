@@ -232,7 +232,7 @@ class ReadAloud:
         if zerotts_locate is not None:
             self.providers["zerotts"] = ZeroTTSProvider(zerotts_locate)
         # giọng trên máy báo từng khúc vừa đọc (phát luồng, local_stream.py); bộ căn chữ nhớ phần đã căn lúc phát luồng cho clip cuối
-        self.vieneu = (vieneu.VieneuProvider(vieneu_locate, engines=local_stream.reporting(vieneu_engines), aligner=local_stream.remembering_aligner)
+        self.vieneu = (vieneu.VieneuProvider(vieneu_locate, engines=vieneu_engines, aligner=local_stream.remembering_aligner)
                        if vieneu_locate is not None else None)
         if self.vieneu is not None:
             self.providers[self.vieneu.id] = self.vieneu

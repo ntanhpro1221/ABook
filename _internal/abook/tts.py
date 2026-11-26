@@ -13,6 +13,18 @@ from typing import Any, Callable
 
 import numpy as np
 
+from .vieneu_limits import (
+    FATAL_TTS_MARKERS,
+    TRANSIENT_TTS_MEMORY_MARKERS,
+    VIENEU_HALVING_DEPTH,
+    VIENEU_MAX_UNBROKEN_CHARS,
+    VIENEU_OOM_HALVING_MIN_CHARS,
+    break_unsplittable_runs,
+    halve_at_word,
+    is_transient_tts_memory_error,
+    must_halve_vieneu_text,
+)
+
 from .audio_io import (
     VIENEU_V3_FRAME_SECONDS,
     VOICE_BALANCE_FIELD,
@@ -71,38 +83,6 @@ from .tts_contract import (
     HA_VOCALIZATION_TOP_P_FIELD,
 )
 
-
-# Running out of memory is not the same kind of event as a missing module, and treating it
-# as one killed runs. The owner reported it directly: opening Unity, Rider or Photoshop
-# mid-run made the book fail "for no reason". What actually happened is that another program
-# took the memory, VieNeu raised an out-of-memory error, and this list classified that as
-# fatal - so the run stopped instead of waiting for the memory to come back.
-#
-# The pipeline already knows how to wait: _wait_for_foreign_ram idles up to half an hour for
-# memory somebody else is holding, on the reasoning that stopping throws away every hour the
-# run has already spent while waiting costs nothing. An OOM raised inside the engine simply
-# never reached it.
-FATAL_TTS_MARKERS = (
-    "cuda driver",
-    "cublas",
-    "cudnn",
-    "no module named",
-    "thiếu vieneu",
-    "thiếu máy đọc",
-    "locked vieneu preset",
-    "locked zerotts preset",
-    "locked supertonic preset",
-    "unknown tts engine",
-)
-# Somebody else's memory pressure, which ends when they end. Release what this process
-# holds, wait, and try the attempt again.
-TRANSIENT_TTS_MEMORY_MARKERS = (
-    "out of memory",
-    "not enough memory",
-    "defaultcpuallocator",
-    "alloc_cpu.cpp",
-    "cuda_error_out_of_memory",
-)
 
 # Delivery metadata no longer touches sampling, and this is why.
 #
@@ -184,14 +164,6 @@ def is_fatal_tts_error(error: BaseException) -> bool:
     """
     message = str(error).casefold()
     return any(marker in message for marker in FATAL_TTS_MARKERS)
-
-
-def is_transient_tts_memory_error(error: BaseException) -> bool:
-    """A failure that ends when whoever took the memory gives it back."""
-    message = str(error).casefold()
-    if any(marker in message for marker in FATAL_TTS_MARKERS):
-        return False
-    return any(marker in message for marker in TRANSIENT_TTS_MEMORY_MARKERS)
 
 
 def _set_generation_seed(seed: int) -> None:
@@ -668,43 +640,6 @@ def keep_vieneu_final_mark() -> None:
 # giọng tham chiếu, dựng bên trong engine (`build_prompt_2d`); tính lại ở đây là phonemize hai lần và bám vào ruột riêng của gói.
 # Thay vào đó: cắt trước theo ký tự chỉ chỗ VieNeu chắc chắn không cắt được (chuỗi không khoảng trắng dài), rồi chia đôi khi
 # chính VieNeu nói mẩu quá dài.
-VIENEU_MAX_UNBROKEN_CHARS = 64  # chuỗi không khoảng trắng dài hơn: chèn khoảng trắng mỗi từng này ký tự (từ Việt dài nhất 7 chữ)
-VIENEU_HALVING_DEPTH = 6  # tối đa 2^6 = 64 mẩu cho một đoạn
-VIENEU_OOM_HALVING_MIN_CHARS = 256  # OOM trên mẩu ngắn hơn một mẩu VieNeu là áp lực bộ nhớ của máy, để đường chờ-bộ-nhớ lo
-_VIENEU_LENGTH_MARKERS = ("does not fit a cache",)
-_UNBROKEN_RUN = re.compile(r"\S{%d,}" % (VIENEU_MAX_UNBROKEN_CHARS + 1))
-
-
-def break_unsplittable_runs(text: str) -> str:
-    """Chèn khoảng trắng vào chuỗi không khoảng trắng dài hơn `VIENEU_MAX_UNBROKEN_CHARS` để bộ chia mẩu của VieNeu cắt được.
-    Chỉ bản gửi VieNeu; chữ khác giữ nguyên từng byte."""
-    def cut(match: re.Match[str]) -> str:
-        run = match.group(0)
-        return " ".join(run[start:start + VIENEU_MAX_UNBROKEN_CHARS] for start in range(0, len(run), VIENEU_MAX_UNBROKEN_CHARS))
-
-    return _UNBROKEN_RUN.sub(cut, text)
-
-
-def must_halve_vieneu_text(error: BaseException, text: str) -> bool:
-    """Lỗi do mẩu quá dài: bộ đệm KV không vừa prompt (luôn), hay hết bộ nhớ trên mẩu dài hơn một mẩu VieNeu."""
-    message = str(error).casefold()
-    if any(marker in message for marker in _VIENEU_LENGTH_MARKERS):
-        return True
-    out_of_memory = isinstance(error, MemoryError) or type(error).__name__ == "OutOfMemoryError" or is_transient_tts_memory_error(error)
-    return out_of_memory and len(text) > VIENEU_OOM_HALVING_MIN_CHARS
-
-
-def halve_at_word(text: str) -> tuple[str, str] | None:
-    """Hai nửa của `text`, cắt ở khoảng trắng gần giữa nhất (không có khoảng trắng: cắt giữa chuỗi). None khi không còn chia được."""
-    stripped = text.strip()
-    if len(stripped) < 2:
-        return None
-    middle = len(stripped) // 2
-    gaps = [match.span() for match in re.finditer(r"\s+", stripped)]
-    if gaps:
-        start, end = min(gaps, key=lambda span: abs((span[0] + span[1]) / 2 - middle))
-        return stripped[:start], stripped[end:]
-    return stripped[:middle], stripped[middle:]
 
 
 class VieNeuEngine(EngineAdapter):
