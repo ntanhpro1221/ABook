@@ -8137,7 +8137,7 @@ class ProjectDB:
 
         Exhaustion is bound to policy, text/readings, voice, seed and settings. An unchanged
         retry keeps the failed verdict, incumbent audio and candidate/decode evidence.
-        Returns only segments actually reset; unspent failures retain the legacy retry path.
+        Returns only segments actually reset; unspent failures keep the ordinary retry path.
         """
         with self.transaction() as conn:
             if stable_id:

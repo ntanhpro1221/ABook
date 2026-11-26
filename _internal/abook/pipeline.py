@@ -3378,7 +3378,7 @@ class BookPipeline:
                     self._register_chapter_assembly(chapter, cached, completed_rows, assembly_manifest=manifest)
                     self.log(f"Bỏ qua chapter đã hoàn tất: {chapter['title']}")
                     return
-            # Legacy outputs without a bound manifest still take the old decode check.
+            # An output without a bound manifest still takes the decode check below.
             valid, reason = verify_mp3(output)
             if not valid:
                 self.log(f"MP3 cần ghép lại: {reason}")
