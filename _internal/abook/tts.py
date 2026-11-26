@@ -658,6 +658,55 @@ def keep_vieneu_final_mark() -> None:
     phonemize_text._abook_keeps_final_mark = True
 
 
+# ---- mẩu VieNeu không vừa bộ đệm ---------------------------------------------------------------------------------------------------
+# VieNeu tự chia chữ thành mẩu ~256 ký tự, nhưng chỉ cắt ở khoảng trắng: một chuỗi dài không khoảng trắng đi nguyên khối vào
+# prompt. Sự cố 26-11: 15.023 chữ "ồ" liền -> "prompt of 1413 tokens does not fit a cache of 1024" (v3_turbo_serve/fused.py),
+# trước đó CUDA OOM rồi tiến trình treo 1,5 giờ. `normalize_vocalizations_for_tts` giờ gộp chuỗi ấy; hai lớp dưới đây chặn mọi
+# chuỗi khác cùng hình (URL, chuỗi ký hiệu dài) và mọi mẩu mà VieNeu vẫn từ chối.
+#
+# Không ước lượng token trước bằng tokenizer của VieNeu: prompt = phoneme (sau `phonemize_text_with_emotions`) + khung mã của
+# giọng tham chiếu, dựng bên trong engine (`build_prompt_2d`); tính lại ở đây là phonemize hai lần và bám vào ruột riêng của gói.
+# Thay vào đó: cắt trước theo ký tự chỉ chỗ VieNeu chắc chắn không cắt được (chuỗi không khoảng trắng dài), rồi chia đôi khi
+# chính VieNeu nói mẩu quá dài.
+VIENEU_MAX_UNBROKEN_CHARS = 64  # chuỗi không khoảng trắng dài hơn: chèn khoảng trắng mỗi từng này ký tự (từ Việt dài nhất 7 chữ)
+VIENEU_HALVING_DEPTH = 6  # tối đa 2^6 = 64 mẩu cho một đoạn
+VIENEU_OOM_HALVING_MIN_CHARS = 256  # OOM trên mẩu ngắn hơn một mẩu VieNeu là áp lực bộ nhớ của máy, để đường chờ-bộ-nhớ lo
+_VIENEU_LENGTH_MARKERS = ("does not fit a cache",)
+_UNBROKEN_RUN = re.compile(r"\S{%d,}" % (VIENEU_MAX_UNBROKEN_CHARS + 1))
+
+
+def break_unsplittable_runs(text: str) -> str:
+    """Chèn khoảng trắng vào chuỗi không khoảng trắng dài hơn `VIENEU_MAX_UNBROKEN_CHARS` để bộ chia mẩu của VieNeu cắt được.
+    Chỉ bản gửi VieNeu; chữ khác giữ nguyên từng byte."""
+    def cut(match: re.Match[str]) -> str:
+        run = match.group(0)
+        return " ".join(run[start:start + VIENEU_MAX_UNBROKEN_CHARS] for start in range(0, len(run), VIENEU_MAX_UNBROKEN_CHARS))
+
+    return _UNBROKEN_RUN.sub(cut, text)
+
+
+def must_halve_vieneu_text(error: BaseException, text: str) -> bool:
+    """Lỗi do mẩu quá dài: bộ đệm KV không vừa prompt (luôn), hay hết bộ nhớ trên mẩu dài hơn một mẩu VieNeu."""
+    message = str(error).casefold()
+    if any(marker in message for marker in _VIENEU_LENGTH_MARKERS):
+        return True
+    out_of_memory = isinstance(error, MemoryError) or type(error).__name__ == "OutOfMemoryError" or is_transient_tts_memory_error(error)
+    return out_of_memory and len(text) > VIENEU_OOM_HALVING_MIN_CHARS
+
+
+def halve_at_word(text: str) -> tuple[str, str] | None:
+    """Hai nửa của `text`, cắt ở khoảng trắng gần giữa nhất (không có khoảng trắng: cắt giữa chuỗi). None khi không còn chia được."""
+    stripped = text.strip()
+    if len(stripped) < 2:
+        return None
+    middle = len(stripped) // 2
+    gaps = [match.span() for match in re.finditer(r"\s+", stripped)]
+    if gaps:
+        start, end = min(gaps, key=lambda span: abs((span[0] + span[1]) / 2 - middle))
+        return stripped[:start], stripped[end:]
+    return stripped[:middle], stripped[middle:]
+
+
 class VieNeuEngine(EngineAdapter):
     name = "vieneu"
     label = "VieNeu"
@@ -719,19 +768,34 @@ class VieNeuEngine(EngineAdapter):
             from .readaloud.phoneme_policy import sentence_case
 
             inference_text = str(row["text"])
-            # The capital rule reads the line as WRITTEN (the text layer lower-cases shouting); the book's second-tier rulings ride along.
-            with sentence_case(inference_text, _row_value(row, "_source_text", None), _row_value(row, "_shared_rulings", None)):
+
+            def infer(text: str) -> np.ndarray:
+                _set_generation_seed(seed)
                 return np.asarray(
-                    self.tts.infer(
-                        inference_text,
-                        voice=voice,
-                        style=style,
-                        **effective_sampling,
-                    ),
+                    self.tts.infer(text, voice=voice, style=style, **effective_sampling),
                     dtype=np.float32,
                 ).reshape(-1)
+
+            # The capital rule reads the line as WRITTEN (the text layer lower-cases shouting); the book's second-tier rulings ride along.
+            with sentence_case(inference_text, _row_value(row, "_source_text", None), _row_value(row, "_shared_rulings", None)):
+                return self._infer_or_halve(break_unsplittable_runs(inference_text), infer)
         except Exception as exc:  # noqa: BLE001
             raise AudioQualityError(str(exc)) from exc
+
+    def _infer_or_halve(self, text: str, infer: Callable[[str], np.ndarray], depth: int = 0) -> np.ndarray:
+        """Đọc `text`; mẩu làm VieNeu báo quá độ dài (`must_halve_vieneu_text`) thì chia đôi ở khoảng trắng gần giữa
+        (`halve_at_word`), đọc từng nửa với cùng hạt giống rồi nối (`join_chunks`). Đáy: `VIENEU_HALVING_DEPTH` lần chia, hay mẩu
+        không chia được nữa - lỗi gốc đi tiếp lên như trước."""
+        try:
+            return infer(text)
+        except Exception as exc:  # noqa: BLE001
+            halves = halve_at_word(text) if depth < VIENEU_HALVING_DEPTH and must_halve_vieneu_text(exc, text) else None
+            if halves is None:
+                raise
+            self.log(f"VieNeu không nhận mẩu {len(text)} ký tự ({str(exc)[:120]}): chia đôi rồi đọc lại.")
+            self.release_inference_cache()
+            waves = [self._infer_or_halve(half, infer, depth + 1) for half in halves]
+            return join_chunks(waves, self.sample_rate, [_end_mark(halves[0].split()[-1])])
 
 
 # Đo 04-10 (ZeroTTS, câu 4 giây, máy dev đang bận ~50 % CPU): 4 luồng RTF 1,2-1,9; 8 luồng 1,4-2,0; 16 luồng 3,6-3,8 -

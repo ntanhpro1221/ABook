@@ -239,8 +239,16 @@ STANDALONE_GASP_PATTERN = re.compile(
 # `(?<!\w)` thất bại và cả chuỗi đi nguyên vào TTS - lô 9 chương 223: năm ứng viên 0,96 s rồi
 # bản cuối chạm trần khung, cùng hình với "Argh" ở đầu file. Hàm thay kiểm chữ cái gốc của
 # nguyên âm dẫn đầu (bỏ dấu thanh, giữ mũ/móc/trăng) có trùng nguyên âm kéo dài không.
+#
+# Nguyên âm kéo dài CÓ DẤU THANH cũng là một tiếng kéo dài: "ồồồồ", "ứứứ". Bản cũ chỉ nhận nguyên âm
+# không dấu thanh, nên một đoạn 15.023 chữ "ồ" liền (Corpus ai-dich, 26-11) đi nguyên vào VieNeu:
+# không có khoảng trắng để bộ chia mẩu cắt, prompt 1.413 token không vừa bộ đệm 1.024 (hay CUDA OOM
+# rồi treo). Giờ nó ra "Ồ... ồ" như "aaaa" ra "A... a".
+_VIETNAMESE_VOWEL_LETTERS = (
+    "aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ"
+)
 STRETCHED_OPEN_VOWEL_PATTERN = re.compile(
-    r"(?<!\w)(?P<lead>[À-ỹ])?(?P<vowel>[aeiouyưăâêôơ])(?P=vowel){2,}h*(?!\w)",
+    r"(?<!\w)(?P<lead>[À-ỹ])?(?P<vowel>[" + _VIETNAMESE_VOWEL_LETTERS + r"])(?P=vowel){2,}h*(?!\w)",
     re.IGNORECASE,
 )
 _TONE_MARKS = frozenset({"\u0300", "\u0301", "\u0303", "\u0309", "\u0323"})
@@ -564,6 +572,14 @@ def vietnamese_number_words(value: int) -> str:
         return " ".join(words)
     raise ValueError(f"number beyond what a book numbers things with: {value}")
 MAX_VOCALIZATION_REPETITIONS = 4
+# Một chữ cái lặp liền quá MAX_VOCALIZATION_REPETITIONS lần mà các luật trên không nhận ("hhhhhhh",
+# "zzzzzzzz", nguyên âm kéo dài giữa từ): bản gửi TTS giữ đúng số lần giới hạn. Không có từ tiếng Việt
+# nào lặp một chữ cái quá bốn lần, còn một chuỗi dài không khoảng trắng thì không bộ chia mẩu nào cắt
+# được - VieNeu nhận nguyên khối rồi tràn bộ đệm. Chữ số không đụng: "1000000" là một con số.
+LONG_LETTER_RUN_PATTERN = re.compile(
+    r"([^\W\d_])\1{" + str(MAX_VOCALIZATION_REPETITIONS) + r",}",
+    re.IGNORECASE,
+)
 
 
 def normalize_text(text: str) -> str:
@@ -982,10 +998,12 @@ def normalize_vocalizations_for_tts(text: str) -> str:
     def separate_stretched_vowel(match: re.Match[str]) -> str:
         vowel = match.group("vowel").casefold()
         lead = match.group("lead") or ""
+        if lead.casefold() == vowel:
+            lead = ""  # "ồồồồ": chữ đầu chỉ là một lần lặp nữa của chính nguyên âm ấy
         if lead:
             # "ÁAAAAA" là một tiếng hét: giữ nguyên âm có dấu làm đầu tiếng. "Ôaaa" thì không
             # phải một âm kéo dài - để yên, đừng đoán.
-            if _without_tone_marks(lead) != vowel:
+            if _without_tone_marks(lead) != _without_tone_marks(vowel):
                 return match.group(0)
             return f"{lead}... {vowel}"
         return f"{vowel.upper()}... {vowel}"
@@ -1000,6 +1018,9 @@ def normalize_vocalizations_for_tts(text: str) -> str:
     result = STRETCHED_HUM_PATTERN.sub("Hừm", result)
     result = COMPACT_VOCALIZATION_PATTERN.sub(separate_compact_vocalization, result)
     result = STRETCHED_OPEN_VOWEL_PATTERN.sub(separate_stretched_vowel, result)
+    result = LONG_LETTER_RUN_PATTERN.sub(
+        lambda match: match.group(0)[:MAX_VOCALIZATION_REPETITIONS], result
+    )
     return re.sub(r"\.{4,}", "...", result)
 
 
