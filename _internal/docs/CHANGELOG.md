@@ -7,6 +7,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.178] - 2026-11-27
+
+### Studio
+
+- Cài Studio mới không còn dừng ở bước cài thư viện.
+- Làm sách nhanh hơn khi có đoạn không sửa được: Studio không thử lại một đoạn đã hết cách đọc khác, và không ghép lại chương mà âm thanh không đổi.
+
+### Giọng đọc
+
+- Giọng VieNeu không còn treo hay đứng im ở đoạn rất dài mà không có dấu cách, hoặc lặp một chữ hàng nghìn lần (như "ồồồồ..."): đoạn ấy được đọc gọn lại, chữ trong sách giữ nguyên. Áp cho cả làm sách lẫn nghe ngay trên máy tính và điện thoại.
+
+### Nhạc nền
+
+- Danh mục nhạc nền không lời cho sách nghe riêng có thêm bài, gồm bản phối Evangelion, nhạc piano NieR, Macross Frontier, Gintama, Dragon Quest và nhạc phim Ghibli "When Marnie Was There".
+
 ## [0.4.177] - 2026-11-26
 
 ### Nhạc nền
