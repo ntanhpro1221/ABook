@@ -109,7 +109,7 @@
     "reason": "abook/continuation.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/database.py": {
-    "sha256": "70bf06e1c55188da27014fc3098a460b0658331cd8e63f14bcffe006245de4f4",
+    "sha256": "3a4526acf559eae49aed7c7d0094c921a756979ad27d0320f945fca1abcf06e6",
     "reason": "abook/database.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/desktop.py": {
@@ -157,7 +157,7 @@
     "reason": "abook/netconnect.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/pipeline.py": {
-    "sha256": "035483947c20297f18b8cbc51a53064351e48493786ff437e7ef77c0a216a273",
+    "sha256": "12b4441d0201c9477c50f2e053a7cbfe299d9accf77f719367c803cf07fa8c04",
     "reason": "_internal/abook/pipeline.py: 0.4.170 replaces the remaining repeat-alias comment example with original kitchen wording; no execution changes. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/power_source.py": {
