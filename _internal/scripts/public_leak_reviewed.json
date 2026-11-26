@@ -32,8 +32,8 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. fix173d: added privacy wording for the opt-in portrait service and feature bullets (volumes, Hako links, portraits); app-authored prose, no story text."
   },
   "_internal/AGENTS.md": {
-    "sha256": "22cd046fe9b0b75abb67eedbf0d2a12b851501a25fd0d81435b3b5f0b4c5e088",
-    "reason": "_internal/AGENTS.md: technical contributor rules; added private index lifecycle invariants. The inherited approved Corpus shingle set is unchanged. _internal/AGENTS.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
+    "sha256": "60df6de3a0b4e9eeb66c5a67c86443b022b95bdb7b5e53f83ac43ae557d25a63",
+    "reason": "_internal/AGENTS.md: technical contributor rules; added private index lifecycle invariants. The inherited approved Corpus shingle set is unchanged. _internal/AGENTS.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "22cd046fe9b0b75abb67eedbf0d2a12b851501a25fd0d81435b3b5f0b4c5e088",
@@ -73,8 +73,8 @@
     "reason": "abook/assets/word_break_tokenizer.json.gz: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/audio_io.py": {
-    "sha256": "f497121eb699e1145bca73c5afba1758ec5aa66f522fb8bce7d34bec9a6d1031",
-    "reason": "abook/audio_io.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
+    "sha256": "dfc314ecdefdc73a87da2c6dcb8b37bb2b7bac8be31ca11594f2fa68ab9908e3",
+    "reason": "abook/audio_io.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/background_runner.py": {
     "sha256": "8681eaf5e6e45d272ede19789022f6b8669a73cab2622fbba9fdb799fe5ecfe7",
@@ -109,8 +109,8 @@
     "reason": "abook/continuation.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/database.py": {
-    "sha256": "2a578af13b72b3d432ec64896a7a1c838791d97c8b096615e8d72a814973403e",
-    "reason": "abook/database.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
+    "sha256": "70bf06e1c55188da27014fc3098a460b0658331cd8e63f14bcffe006245de4f4",
+    "reason": "abook/database.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/desktop.py": {
     "sha256": "9ff2ed0b209a47ef1ada5f086f4a3ec6082bf855e29d15da907361afb1e46934",
@@ -157,8 +157,8 @@
     "reason": "abook/netconnect.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/pipeline.py": {
-    "sha256": "a12f64bfb84ea3e550c91ce8155bf275de22c0359664fb2993ed1af48e034bd5",
-    "reason": "_internal/abook/pipeline.py: 0.4.170 replaces the remaining repeat-alias comment example with original kitchen wording; no execution changes. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
+    "sha256": "035483947c20297f18b8cbc51a53064351e48493786ff437e7ef77c0a216a273",
+    "reason": "_internal/abook/pipeline.py: 0.4.170 replaces the remaining repeat-alias comment example with original kitchen wording; no execution changes. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/power_source.py": {
     "sha256": "7ed6a8547664643593390f2821fb2a0103f6ddb7a15eba5ef088f645b0862645",
@@ -223,8 +223,8 @@
     "reason": "abook/readaloud/keys.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/local_stream.py": {
-    "sha256": "060c6a4f374f7651818772d28e3d5b7faa8ae88b0037429382cefabd31d6f08e",
-    "reason": "abook/readaloud/local_stream.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "eedde7b559575bf8ab1dc80f680bdbce5ec678c0cee7bbaae02a965dc1546f16",
+    "reason": "abook/readaloud/local_stream.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/readaloud/loudness.py": {
     "sha256": "8dd144f7fbb1b985fd5819eff7dad70639b2aa14cb391c628889c0bc7da935c2",
@@ -235,8 +235,8 @@
     "reason": "abook/readaloud/mapping.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/readaloud/model.py": {
-    "sha256": "71c8648767b667a657686dc445d75218ea4030b609736a41ede99212b68e4f2f",
-    "reason": "abook/readaloud/model.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "307213d70f0ea12d349739d4b7dda0cad30a595a2a7795b048e35189c0e14b8b",
+    "reason": "abook/readaloud/model.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/readaloud/mp3.py": {
     "sha256": "0421932b3619ee0df6a59d02e3794aa91eb42bcd8f9dfd5a468edad85ecd61da",
@@ -267,8 +267,8 @@
     "reason": "abook/readaloud/readings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/service.py": {
-    "sha256": "6f99d9c6087e7e5c358cc854193395eadf43f580bdf5d20907a5ec0c1eac17e4",
-    "reason": "abook/readaloud/service.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "74a7edc8cdf1d623c20ac911789f6c77cc140d08db51d9aac088944b00607b4a",
+    "reason": "abook/readaloud/service.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/readaloud/shared_rulings.py": {
     "sha256": "e78621fe1bdadd9a510ceac35fdb954518543d115c56fb5b38b9cfd2dabf4936",
@@ -302,8 +302,8 @@
     "reason": "_internal/abook/readaloud/symbols.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/abook/readaloud/vieneu.py": {
-    "sha256": "2a2f3607d397dbbeb95cd7367bef2cfa46b972be113183c00ad753c0b1a20660",
-    "reason": "_internal/abook/readaloud/vieneu.py: tnfix173 exact bytes reviewed as shared structured time, unit, identifier and interval rules. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
+    "sha256": "1616d44f5354768f80075b3d16da124dcbc2f604b94bc2d2dad5e8790f19a097",
+    "reason": "_internal/abook/readaloud/vieneu.py: tnfix173 exact bytes reviewed as shared structured time, unit, identifier and interval rules. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/readaloud/vieneu_engine.py": {
     "sha256": "bf8c264c6e3d9c86cdec8f006af983ccc80ac22bbf5a09aa194aedc06edec9ee",
@@ -354,11 +354,11 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "6f6951795360e6bf270addf9acc5951831f0920e290d33bc81ea3166eea071a5",
-    "reason": "_internal/abook/text_processing.py: tnfix173 exact bytes reviewed as optional shared arrow interpretation for speech only. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
+    "sha256": "b1e5bff934163d030a9a3bc9bdb7b8a8ca4d3431f8b728258b261e8ec2f8144d",
+    "reason": "_internal/abook/text_processing.py: tnfix173 exact bytes reviewed as optional shared arrow interpretation for speech only. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "6f6951795360e6bf270addf9acc5951831f0920e290d33bc81ea3166eea071a5",
+      "file_sha256": "b1e5bff934163d030a9a3bc9bdb7b8a8ca4d3431f8b728258b261e8ec2f8144d",
       "reason": "_internal/abook/text_processing.py: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved.",
       "shingles": [
         "5b11cdc6770a15c1"
@@ -366,8 +366,8 @@
     }
   },
   "_internal/abook/tts.py": {
-    "sha256": "db61881f0f4e4a27ab9139da929754ef168ec6cbc68d127bdc575e4e9d97bb28",
-    "reason": "_internal/abook/tts.py: tnfix173 exact bytes reviewed as Studio calls the common arrow rules before symbol conversion. Existing comments and historical documentation retain their public origin. Corpus matching remains active."
+    "sha256": "6feeac9646ce2d4630dec8d16c18dbc13da38674b5b78c3b0e3e410c7963d944",
+    "reason": "_internal/abook/tts.py: tnfix173 exact bytes reviewed as Studio calls the common arrow rules before symbol conversion. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/vietnamese_syllable.py": {
     "sha256": "4f0da911f5c6494550dcb8284ac9d0b061877a52759cec844ce1a5e6cd7a528a",
@@ -670,8 +670,8 @@
     "reason": "abook/webui/store.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/webui/studio_setup.py": {
-    "sha256": "7f77734dc7f2dd6cdfd15945b558c77f09d325c5bf5f9070095574610c209444",
-    "reason": "_internal/abook/webui/studio_setup.py: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
+    "sha256": "3903be146db0b1dbdb59a0f1fce48ee694cb74d64973c7d7bdb264a477b7578f",
+    "reason": "_internal/abook/webui/studio_setup.py: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/abook/webui/supertonic_module.py": {
     "sha256": "35fc19892f54fc3827f7e7be7afa21d626f5bff229de8862500da413dcb66b18",
@@ -978,11 +978,11 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "5e5209b07dec4520efba223de24a1dd6cf0c32451fddc3d7ab493cae36d8ea16",
-    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. _internal/docs/CHANGELOG.md: tnfix173 exact bytes reviewed as authored short Vietnamese release note; historical entries unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings. fix173d: 0.4.173 section regrouped by kind with upgrade notes; app-authored release prose; Corpus shingle a427005770c2fa6d unchanged and still the only match. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.175: byte pin refreshed after the edits of the 0.4.175 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. heart: byte pin refreshed after the favorite (heart) toggle; added lines are app code, UI wording (Yêu thích / Bỏ yêu thích / empty-shelf hint) and docs, no story or phoneme strings; every Corpus shingle still present was already approved. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.177: byte pin refreshed after the edits of the 0.4.177 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
+    "sha256": "c1963be83061c67ae9f507540cf8976ab80c8bc62fa5e2b8cb607b491c9a6536",
+    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. _internal/docs/CHANGELOG.md: tnfix173 exact bytes reviewed as authored short Vietnamese release note; historical entries unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings. fix173d: 0.4.173 section regrouped by kind with upgrade notes; app-authored release prose; Corpus shingle a427005770c2fa6d unchanged and still the only match. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.175: byte pin refreshed after the edits of the 0.4.175 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. heart: byte pin refreshed after the favorite (heart) toggle; added lines are app code, UI wording (Yêu thích / Bỏ yêu thích / empty-shelf hint) and docs, no story or phoneme strings; every Corpus shingle still present was already approved. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.177: byte pin refreshed after the edits of the 0.4.177 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "5e5209b07dec4520efba223de24a1dd6cf0c32451fddc3d7ab493cae36d8ea16",
+      "file_sha256": "c1963be83061c67ae9f507540cf8976ab80c8bc62fa5e2b8cb607b491c9a6536",
       "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed. _internal/docs/CHANGELOG.md: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved. 0.4.173 review fixes: exact-byte pin carried forward; the approved shingle set is unchanged, so any new Corpus overlap still blocks. fix173d: 0.4.173 section regrouped by kind with upgrade notes; app-authored release prose; Corpus shingle a427005770c2fa6d unchanged and still the only match.",
       "shingles": [
         "a427005770c2fa6d"
@@ -1213,8 +1213,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "43e6e284b84b434fa8e17e93a4f216efa7d5aba0babcde17f61782f5fcd51255",
-    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose. Original TN audit technical prose or deterministic diagnostics of the 440 independently authored cases. IPA is generated by the production G2P functions from those cases and accepted readings. Only listed technical/IPA rules are reviewed; Corpus matching remains enabled. TEST_REPORT: original technical validation notes, package versions, two-stage TN totals and JUnit counts alongside inherited test evidence. Exact file-byte review covers long technical prose only; Corpus matching remains enabled. _internal/docs/TEST_REPORT.md: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active. _internal/docs/TEST_REPORT.md: exact technical test report bytes re-reviewed after recording measured TN, JVM and full-suite counts plus the ten missing UI dependency failures. Only the initial English validation notes changed; every historical paragraph is byte-identical to c8d80a93d. This existing long-vietnamese review covers technical documentation only; Corpus matching remains active and no Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. _internal/docs/TEST_REPORT.md: tnfix173 exact bytes reviewed as new TN verification results; historical report unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
+    "sha256": "8d1ef1e28ed9a773fbc0987dde37d8b049783caad25b5c00c1c306fa7171768d",
+    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose. Original TN audit technical prose or deterministic diagnostics of the 440 independently authored cases. IPA is generated by the production G2P functions from those cases and accepted readings. Only listed technical/IPA rules are reviewed; Corpus matching remains enabled. TEST_REPORT: original technical validation notes, package versions, two-stage TN totals and JUnit counts alongside inherited test evidence. Exact file-byte review covers long technical prose only; Corpus matching remains enabled. _internal/docs/TEST_REPORT.md: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active. _internal/docs/TEST_REPORT.md: exact technical test report bytes re-reviewed after recording measured TN, JVM and full-suite counts plus the ten missing UI dependency failures. Only the initial English validation notes changed; every historical paragraph is byte-identical to c8d80a93d. This existing long-vietnamese review covers technical documentation only; Corpus matching remains active and no Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. _internal/docs/TEST_REPORT.md: tnfix173 exact bytes reviewed as new TN verification results; historical report unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "rules": [
       "long-vietnamese"
     ]
@@ -1481,8 +1481,8 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Abbreviations.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt": {
-    "sha256": "97f78a7220ddb2b547439607180dd4a39c0a1a5ef3e4f31b34e5e141be73933d",
-    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: tnfix173 exact bytes reviewed as Android clip namespace 22 matches Python. Existing comments and historical documentation retain their public origin. Corpus matching remains active."
+    "sha256": "92cbb43d2fb46d937f7984c8cd7c1bb16bc9d0be6a2a3c1f59adb0c030bcbfba",
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: tnfix173 exact bytes reviewed as Android clip namespace 22 matches Python. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipRetry.kt": {
     "sha256": "6bd46f15491af5f983c412479a0d3d6d745848f8746553b2d8fa26a9db8337d2",
@@ -4783,8 +4783,8 @@
     "reason": "tests/test_studio_requirements_freeze.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_studio_setup.py": {
-    "sha256": "7d84b9a77766db052213d6483aa0728d6da13f29ab98d77b506d6ab6d907082a",
-    "reason": "tests/test_studio_setup.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "6af87f30a262048b3be2d83a45801f0875c0fe23ba71d629707bcc2d3fb8682c",
+    "reason": "tests/test_studio_setup.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/tests/test_supertonic_android.py": {
     "sha256": "efd5270e5c500c55f895a06d11fdc083141d066d873f40805a59954fbbe7cf69",
@@ -5760,8 +5760,8 @@
     "reason": "_internal/abook/readaloud/stutter.py: flagged on the 0.4.176 line; flagged strings read in full by rel176 (24-11): module docstring of the hyphen-stutter rule (letters, dash, word; compounds, laughter, initial plus honorific); examples are single words and two short sentences written for it. Authored by the project, no story text."
   },
   "_internal/music/ost_catalog.json": {
-    "sha256": "e0e416412a12a68ca3cfcb3c9d0dbd09fb5a093b0a8052d409bdf39b433d3d78",
-    "reason": "_internal/music/ost_catalog.json: flagged on the 0.4.176 line; flagged strings read in full by rel176 (24-11): catalog descriptions written by the project for each OST piece (mood, instruments, scene use); no lyrics, no review links, no local paths. Authored by the project, no story text. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.177: byte pin refreshed after the edits of the 0.4.177 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Re-pinned 26-11 (dev/ostcol, ostaudit4): 24 new tracks; the 20 new long Vietnamese strings are project-written descriptions (mood, instruments, scene use) read in full, the rest is public release metadata (titles, catalog numbers, durations, MusicBrainz/Apple ids, video ids); no lyrics, no local paths, no HF links; Corpus file_sha256 left for the release Corpus pass.",
+    "sha256": "458f91681709233acc28fb3c3b07e1a86da3df3278a6f3755fb8b732885d3da9",
+    "reason": "_internal/music/ost_catalog.json: flagged on the 0.4.176 line; flagged strings read in full by rel176 (24-11): catalog descriptions written by the project for each OST piece (mood, instruments, scene use); no lyrics, no review links, no local paths. Authored by the project, no story text. Release 0.4.176: byte pin refreshed after the edits of the 0.4.176 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Release 0.4.177: byte pin refreshed after the edits of the 0.4.177 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Re-pinned 26-11 (dev/ostcol, ostaudit4): 24 new tracks; the 20 new long Vietnamese strings are project-written descriptions (mood, instruments, scene use) read in full, the rest is public release metadata (titles, catalog numbers, durations, MusicBrainz/Apple ids, video ids); no lyrics, no local paths, no HF links; Corpus file_sha256 left for the release Corpus pass. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand.",
     "corpus_review": {
       "classification": "i",
       "shingles": [
@@ -5788,7 +5788,7 @@
         "ed583c1fe73ff604",
         "f34b7d2c9f679ce0"
       ],
-      "file_sha256": "c68f9791762a5dd8b3320b2e30e65966bfafc603d8c469a6a71e7d5bda88dbf4",
+      "file_sha256": "458f91681709233acc28fb3c3b07e1a86da3df3278a6f3755fb8b732885d3da9",
       "reason": "rel176 (24-11): stock mood phrases of the project-written track descriptions (rainbow after the rain, talk by the campfire, walking home after a long day, a simple repeating melody); each of the 17 shingles occurs in one different story, a contextual coincidence; category i. rel176 (24-11): stock mood phrases of the project-written track descriptions (rainbow after the rain, talk by the campfire, walking home after a long day, a simple repeating melody); each of the 17 shingles occurs in one different story, a contextual coincidence; 25-11 Corpus growth added two more of the same kind (the description of 滅びへの序章 that renders its title, prelude to destruction, and a scene-use note about what predecessors left behind); category i. rel177 (26-11): the 364 descriptions dev/ostcol added (Forever Rachel, NieR and other pieces) read in full: project-written notes on instruments, mood, scene use and why a vocal or fan upload was excluded; no lyrics, no links, no paths. Three new shingles: a Zelda game title, and two stock mood phrases (standing on a cliff looking down at the valley; starting a new day full of excitement), each a contextual coincidence with unrelated stories; category i."
     }
   },
@@ -5815,5 +5815,21 @@
   "_internal/tests/test_trash_sweep_at_start.py": {
     "sha256": "8d45999000c2fcd4fd9d6bfb9a2fa745c54a09898c4c5ba5e3afbb6e4271ded6",
     "reason": "_internal/tests/test_trash_sweep_at_start.py: flagged on the 0.4.176 line; flagged strings read in full by rel176 (24-11): docstring of the start-up trash sweep race test (AttributeError in host.log). Authored by the project, no story text."
+  },
+  "_internal/tests/fixtures/vieneu/android/readcap.json": {
+    "sha256": "7ae53a7d1ea69614b51022033d7a3cd3a96789a7136f8b3c2c3894c5683a5956",
+    "reason": "_internal/tests/fixtures/vieneu/android/readcap.json: flagged on the 0.4.178 line; flagged strings read in full by rel178 (27-11): synthetic VieNeu input-limit fixture: only repeated runs of one held vowel, single letters, a consonant cluster, counting words and a greeting, with their chunked expectations. Authored by the project, no story text."
+  },
+  "_internal/tests/test_vieneu_never_gets_a_piece_past_its_cache.py": {
+    "sha256": "509898fac9b1508af72da1c54ccb628dc4c807c43270217176763661424c6941",
+    "reason": "_internal/tests/test_vieneu_never_gets_a_piece_past_its_cache.py: flagged on the 0.4.178 line; flagged strings read in full by rel178 (27-11): test docstrings and synthetic sentences written for the VieNeu cache-limit regression (no story text). Authored by the project, no story text.",
+    "corpus_review": {
+      "classification": "i",
+      "shingles": [
+        "c3951cf31a4e1d27"
+      ],
+      "file_sha256": "509898fac9b1508af72da1c54ccb628dc4c807c43270217176763661424c6941",
+      "reason": "rel178 (27-11): test docstrings and synthetic sentences written for the VieNeu cache-limit regression (no story text); category i."
+    }
   }
 }
