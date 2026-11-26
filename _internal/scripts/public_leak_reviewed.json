@@ -2876,8 +2876,8 @@
     "reason": "shell/python/requirements.txt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/book_edits_fixtures.py": {
-    "sha256": "15ba11a3f2d2531c77e42b97c1e44c8a803b597daa518e6ccdf1cdae64f737f4",
-    "reason": "tests/book_edits_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "00d5763a3c7a4744992cb3ab7c0eb2ae0064c18220a0cb940aef8b3f6d791d75",
+    "reason": "tests/book_edits_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.178: byte pin refreshed after the edits of the 0.4.178 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/tests/catalog_signing.py": {
     "sha256": "d2723f3f486cb741d3042dc8443de01131fd2ab5658becf4644b3ab699207a15",
