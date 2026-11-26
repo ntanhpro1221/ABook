@@ -175,6 +175,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   hết lượt vẫn `failed` kèm lý do và bản thu đã giữ. Đổi chữ/cách đọc/giọng là vô hiệu bản thu, không phải retry.
   Hạng `_usable_take_rank`: bậc tín hiệu trước, rồi (chỉ ở `high_quality`) bậc "cổng HQ cấm" (lệch tốc độ, đọc lặp), rồi các cờ mềm -
   trong cùng bậc tín hiệu, bản HQ cho qua luôn thắng bản HQ cấm, để câu có bản đạt không ra `failed`.
+  A finalized candidate exhaustion also binds a retry-input fingerprint in its QA transaction. Repeated retry with the same
+  policy, text/readings, voice, seed and settings must retain FAILED and its candidate/decode evidence across reopening.
+  Chapter assembly reuse requires an ordered WAV-content/break/settings/metadata/policy manifest, current QA evidence
+  and the exact output checksum. Cache hits still recompute review status; warnings are never promoted by cache reuse.
 - Cổng ngắt trong từ đo WAV sau tempo/gain bằng CTC, chỉ bật cho giọng có thước riêng trong `voice_balance`. Không đổi sampling hay chữ khi sinh lại.
   Budget một lần và seed được reserve bền trong `artifacts` trước inference, gắn policy/chữ đọc/giọng/lượt thu tay; sinh lại là hàm thuần của (đầu vào, seed đã reserve).
   Crash, thiếu bộ nhớ hay lỗi đĩa không tiêu lượt: chạy lại đúng seed, lỗi môi trường không hết thì `CriticalResourceStop` và giữ reservation; audio không đạt hoặc lỗi tất định của máy đọc/chia câu mới là phán quyết `failed` cuối của seed.

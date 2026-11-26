@@ -1,5 +1,33 @@
 # Test report
 
+## 26-11-2026 — deterministic retry and chapter assembly reuse (`dev/speed2`)
+
+Finalized repair exhaustion now stores an input fingerprint in the same QA transaction as
+the failed verdict. An unchanged retry preserves the incumbent WAV, FAILED status and the
+candidate/decode ledger. Changes to policy, text/readings, voice, retake seed or locked
+settings permit retry; an unrelated reading does not consume another schedule.
+
+Chapter artifacts store an ordered WAV-content/break/settings/metadata/policy manifest,
+raw assembly QA and timeline. Reuse requires current-policy QA evidence and the exact MP3
+checksum. Cache hits recompute review status, retain warnings and never turn failed
+segments into passes. Missing, malformed or interrupted cache evidence requires assembly.
+
+CPU regression tests in `tests/test_speed2_reuse.py` cover reopening, both crash boundaries,
+changed inputs and corrupted cache evidence. The two principal tests fail on v0.4.177:
+retry reopens an exhausted schedule, and identical warning-chapter inputs assemble twice.
+Validation: 23 new regression cases passed; the related CPU suite passed 244 tests in
+87.02 seconds. `compileall` passed; Ruff found no new diagnostics in the three changed
+modules compared with v0.4.177, and the new test module passes Ruff.
+The complete `tests/` run finished with 14,910 passed, 12 failed and 20 skipped in
+4,077.36 seconds (298 warnings). All 12 failures were UI AST checks missing TypeScript
+in the new worktree. After `npm ci --ignore-scripts --no-audit --no-fund` using the
+unchanged lockfile, those exact 12 node IDs passed in 23.50 seconds. No code/test bytes
+changed during the complete run; there was no second complete run after dependency setup.
+Code-derived quality implementation list: 76 entries. Hash before:
+`88f3e9132239c281dfaa2db6f1511fc2e75e9586b41788731d489b07d6ba8a4b`;
+after: `7ae0b98f94cc4336603d5123f700e7d23b4ed043df1010ac15dcce5e1733e26f`.
+No model/GPU inference or audiobook performance measurement was run for this change.
+
 ## 17-11-2026 — dependency security updates for 0.4.175 (`dev/deps175`)
 
 Five pins moved, one commit each, on top of faa841749: vendored pypdf 6.16.2 -> 6.21.4, desktop minimp3 afb604c0 -> a2ad968c,

@@ -52,7 +52,10 @@ from .audio_io import (
     SignalRejectedTake,
     _segment_value,
     ChapterQualityError,
+    ChapterAssemblyResult,
+    ChapterQualityMetrics,
     assemble_chapter_atomic_with_metrics,
+    chapter_assembly_manifest,
     chapter_review_flags_that_block,
     export_json_atomic,
     inspect_wav,
@@ -3366,14 +3369,19 @@ class BookPipeline:
         self._validate_chapter_source(chapter)
         output = self._book_file(chapter["output_mp3"])
         if chapter["status"] == ChapterStatus.COMPLETED.value:
-            valid, _ = verify_mp3(output)
-            quality_verified = self.db.chapter_artifact_is_current_qa_verified(
-                int(chapter["chapter_index"])
-            )
+            completed_rows = self.db.list_segments(chapter_id=chapter_id)
             segment_quality_verified = self._chapter_has_current_segment_audio_qa(chapter_id)
-            if valid and quality_verified and segment_quality_verified:
-                self.log(f"Bỏ qua chapter đã hoàn tất: {chapter['title']}")
-                return
+            if segment_quality_verified and completed_rows and all(self._has_real_audio(row) for row in completed_rows):
+                manifest = self._chapter_assembly_manifest(chapter, self._chapter_delivery_wavs(chapter, completed_rows))
+                cached = self._cached_chapter_assembly(chapter, manifest)
+                if cached is not None:
+                    self._register_chapter_assembly(chapter, cached, completed_rows, assembly_manifest=manifest)
+                    self.log(f"Bỏ qua chapter đã hoàn tất: {chapter['title']}")
+                    return
+            # Legacy outputs without a bound manifest still take the old decode check.
+            valid, reason = verify_mp3(output)
+            if not valid:
+                self.log(f"MP3 cần ghép lại: {reason}")
             self.log(
                 f"Chapter {chapter['title']} có MP3 legacy hoặc policy QA cũ; "
                 "không bỏ qua chỉ dựa trên khả năng giải mã."
@@ -3398,6 +3406,12 @@ class BookPipeline:
             self._progress(tts_label, index - 1, len(current_rows))
             status = str(row["status"])
             owed = self._owed_take_session(row) if row["voice_profile_id"] is not None else None
+            if (status == SegmentStatus.FAILED.value and owed is None
+                    and self.db.segment_retry_is_exhausted(int(row["id"]))
+                    and self._has_real_audio(row)):
+                # A spent deterministic schedule remains a failed take, including after
+                # reopen. Do not re-checkpoint it into another decode of the same audio.
+                continue
             if (status == SegmentStatus.FAILED.value
                     and self._segment_signal_provenance(dict(row)).get("quality_pending")
                     and self._has_real_audio(row)
@@ -3545,6 +3559,12 @@ class BookPipeline:
         self._validate_chapter_source(chapter)
 
         wavs = self._chapter_delivery_wavs(chapter, rows)
+        manifest = self._chapter_assembly_manifest(chapter, wavs)
+        assembly = self._cached_chapter_assembly(chapter, manifest)
+        if assembly is not None:
+            self.log(f"Dùng lại bản ghép đã kiểm checksum: {output.name}")
+            self._register_chapter_assembly(chapter, assembly, rows, assembly_manifest=manifest)
+            return
         self._resource_gate(
             f"FFmpeg chapter {chapter['chapter_index']}",
             require_cpu_io=True,
@@ -3561,10 +3581,54 @@ class BookPipeline:
             work_dir=self.paths.work / "silence",
             retain_for_review=True,
         )
-        self._register_chapter_assembly(chapter, assembly, rows)
+        # Never attach a cache key to an output if an input changed during assembly.
+        after = self._chapter_assembly_manifest(chapter, wavs)
+        self._register_chapter_assembly(
+            chapter, assembly, rows, assembly_manifest=manifest if after == manifest else None,
+        )
+
+    def _chapter_assembly_manifest(self, chapter: Any, wavs: list[tuple[Path, int]]) -> dict[str, Any]:
+        manifest = chapter_assembly_manifest(
+            wavs, self.settings, title=str(chapter["title"]),
+            book_title=str(self.db.book()["title"]), track=int(chapter["chapter_index"]),
+        )
+        manifest["policy_hash"] = self.quality_policy_hash
+        return manifest
+
+    def _cached_chapter_assembly(self, chapter: Any, manifest: dict[str, Any]) -> ChapterAssemblyResult | None:
+        artifact = self.db.artifact_by_key(f"chapter_mp3:{chapter['chapter_index']}")
+        if artifact is None or not bool(artifact["verified"]):
+            return None
+        output = self._book_file(chapter["output_mp3"])
+        if str(artifact["path"]) != str(output):
+            return None
+        check = self.db.latest_quality_check(
+            scope=QUALITY_SCOPE_CHAPTER, stage=CHAPTER_QUALITY_STAGE, chapter_id=int(chapter["id"]),
+        )
+        if check is None or str(check["artifact_sha256"]) != str(artifact["sha256"]):
+            return None
+        try:
+            metadata = json.loads(artifact["metadata_json"])
+            if not isinstance(metadata, dict) or metadata.get("assembly_manifest") != manifest:
+                return None
+            if not output.is_file() or sha256_file(output) != str(artifact["sha256"]):
+                return None
+            quality = dict(metadata["assembly_quality"])
+            evidence = json.loads(check["metrics_json"])
+            if not isinstance(evidence, dict) or any(evidence.get(key) != value for key, value in quality.items()):
+                return None
+            for field in ("hard_failures", "review_flags", "trimmed_segment_edges"):
+                quality[field] = tuple(quality[field])
+            timeline = tuple(tuple(float(value) for value in span) for span in metadata["assembly_timeline"])
+            if len(timeline) != len(manifest["wavs"]) or any(len(span) != 2 for span in timeline):
+                return None
+            return ChapterAssemblyResult(str(artifact["sha256"]), ChapterQualityMetrics(**quality), timeline)
+        except (OSError, KeyError, TypeError, ValueError):
+            # Missing, interrupted or malformed cache evidence is a normal cache miss.
+            return None
 
     def _register_chapter_assembly(self, chapter: Any, assembly: Any,
-                                   rows: list[Any]) -> None:
+                                   rows: list[Any], *, assembly_manifest: dict[str, Any] | None = None) -> None:
         chapter_id = int(chapter['id'])
         output = self._book_file(chapter['output_mp3'])
         assembly_label = f"Ghép và kiểm tra MP3 chapter {chapter['chapter_index']}"
@@ -3608,6 +3672,9 @@ class BookPipeline:
                 "title": str(chapter["title"]),
                 "quality": quality_metadata,
                 "quality_metrics": quality_metrics,
+                "assembly_manifest": assembly_manifest,
+                "assembly_quality": assembly.quality.to_dict(),
+                "assembly_timeline": assembly.timeline,
             },
         )
         if assembly.quality.review_flags or assembly.quality.hard_failures:

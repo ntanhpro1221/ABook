@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -8067,13 +8068,63 @@ class ProjectDB:
         # promoted (tests/test_a_reset_line_forgets_its_repairs.py). File WAV của ứng viên cũ vẫn nằm trên đĩa.
         conn.execute("DELETE FROM segment_candidates WHERE segment_id=?", (segment_id,))
 
+    def _segment_retry_input_sha256_conn(self, conn: sqlite3.Connection, segment: Any) -> str:
+        """Bind a spent repair budget to synthesis inputs, never to retry counters."""
+        policy = conn.execute("SELECT policy_hash FROM quality_policies WHERE active=1").fetchone()
+        book = conn.execute("SELECT settings_json FROM book LIMIT 1").fetchone()
+        profile = (self._expected_segment_voice_profile_conn(conn, segment)
+                   if segment["voice_profile_id"] is not None else None)
+        text = str(segment["listener_text"] or segment["text"]).casefold()
+        readings = [dict(row) for row in conn.execute(
+            "SELECT surface,normalized_surface,spoken_form,confidence,locked FROM pronunciations "
+            "ORDER BY normalized_surface"
+        ) if str(row["surface"]).casefold() in text
+            or str(row["normalized_surface"]).casefold() in text]
+        fields = (
+            "stable_id", "text", "text_sha256", "listener_text", "kind", "speaker",
+            "emotion", "intensity", "pace", "volume", "voice_profile_id",
+            "generation_seed", "generation_frame_cap", "generation_delivery_mode",
+            "generation_repair_round", "listener_retakes", "wav_sha256",
+        )
+        payload = {
+            "version": 1,
+            "segment": {key: segment[key] for key in fields},
+            "policy": policy[0] if policy else None,
+            "settings": json.loads(book[0]) if book else None,
+            "voice": ({key: profile[key] for key in
+                       ("id", "voice_key", "engine", "preset_name", "description", "seed")}
+                      if profile is not None else None),
+            "readings": readings,
+        }
+        return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+
+    def _segment_retry_is_exhausted_conn(self, conn: sqlite3.Connection, segment: Any) -> bool:
+        checks = conn.execute(
+            "SELECT metrics_json FROM quality_checks WHERE segment_id=? AND repair_action=? "
+            "AND artifact_sha256=? AND policy_hash=(SELECT policy_hash FROM quality_policies WHERE active=1) "
+            "ORDER BY id DESC",
+            (int(segment["id"]), SEGMENT_CANDIDATE_EXHAUSTION_ACTION, segment["wav_sha256"]),
+        ).fetchall()
+        if not checks:
+            return False
+        fingerprint = self._segment_retry_input_sha256_conn(conn, segment)
+        return any(self._json_object(check[0], "repair exhaustion metrics").get("retry_input_sha256")
+                   == fingerprint for check in checks)
+
+    def segment_retry_is_exhausted(self, segment_id: int) -> bool:
+        with self.connect() as conn:
+            segment = conn.execute("SELECT * FROM segments WHERE id=?", (segment_id,)).fetchone()
+            if segment is None:
+                raise KeyError(f"Unknown segment id: {segment_id}")
+            return self._segment_retry_is_exhausted_conn(conn, segment)
+
     def retry_failed_segments(
         self,
         reason: str,
         *,
         stable_id: str | None = None,
     ) -> list[str]:
-        """Send failed segments back to be re-cut, keeping the analysis they already have.
+        """Requeue failed segments whose deterministic repair inputs are not exhausted.
 
         A failed segment is failed for the life of the project: _verify_chapter_audio skips
         anything already marked failed, so resuming after fixing an ASR defect re-verifies
@@ -8084,18 +8135,20 @@ class ProjectDB:
         it correctly and whose transcript differed only in "tháng Mười hai" against "tháng
         12", and the fix for that landed while the run was still going.
 
-        Returns the segments it reset, so a caller can report a write that did not happen.
+        Exhaustion is bound to policy, text/readings, voice, seed and settings. An unchanged
+        retry keeps the failed verdict, incumbent audio and candidate/decode evidence.
+        Returns only segments actually reset; unspent failures retain the legacy retry path.
         """
         with self.transaction() as conn:
             if stable_id:
                 rows = conn.execute(
-                    "SELECT id, stable_id, chapter_id FROM segments "
+                    "SELECT * FROM segments "
                     "WHERE stable_id=? AND status=?",
                     (stable_id, SegmentStatus.FAILED.value),
                 ).fetchall()
             else:
                 rows = conn.execute(
-                    "SELECT id, stable_id, chapter_id FROM segments WHERE status=? "
+                    "SELECT * FROM segments WHERE status=? "
                     "ORDER BY stable_id",
                     (SegmentStatus.FAILED.value,),
                 ).fetchall()
@@ -8104,6 +8157,11 @@ class ProjectDB:
         for row in rows:
             # Thử lại cùng chữ và giọng: giữ bản thu, chỉ mở lại lịch thử và phán quyết ASR.
             with self.transaction() as conn:
+                current = conn.execute("SELECT * FROM segments WHERE id=?", (int(row["id"]),)).fetchone()
+                if current is None or current["status"] != SegmentStatus.FAILED.value:
+                    continue
+                if self._segment_retry_is_exhausted_conn(conn, current):
+                    continue
                 conn.execute(
                     """UPDATE segments SET status=CASE
                         WHEN voice_profile_id IS NOT NULL AND kind IS NOT NULL AND speaker IS NOT NULL
@@ -14125,6 +14183,7 @@ class ProjectDB:
                 "repair_trigger_reason": trigger_metrics.get("reason"),
                 "reason": normalized_warning_code,
                 "repair_exhausted": True,
+                "retry_input_sha256": self._segment_retry_input_sha256_conn(conn, segment),
                 "repair_trigger_quality_check_id": int(trigger_quality_check_id),
                 "candidate_rounds_configured": normalized_max,
                 "candidate_attempts": summaries,
