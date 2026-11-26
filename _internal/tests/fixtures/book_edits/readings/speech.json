@@ -47,7 +47,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "fd24e95f2521201f0e5394744860667dee2876a61a56847a9dbc6a739c58169e"
+   "key": "9969a14983c0d702cf4223cd2b63029cc767143d19d317a54783ff7987b9fb83"
   },
   {
    "voice": "vieneu:turbo/Thường",
@@ -66,7 +66,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r8c771f618eb8ec75",
-   "key": "c3956579449ced47bc834396e8501be13c32297790a8d35b729ba432b4466102"
+   "key": "ef55312f09ce1a379d18ca65d5160817348eacef90e7796931c5ae83774f328e"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -144,7 +144,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r669e9aea4c533d44",
-   "key": "1b9949d7aaab8e96ef1671f9e3c185d42a9ced0ee0dec5063a4b6441bed7451f"
+   "key": "609ccd0977d806466de6376dd318d420b9ebaa06b79acd4bf5cc27ff49d2596a"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -190,7 +190,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r2370bda33939e04a",
-   "key": "df7a821c8f21dfdc173a5f0770f94f94d44bff464a50fcfa4579a9ef1c7b8beb"
+   "key": "9d6026eaed7effef1714fc917c3fa239b4031a15777d0829fc0852f7cbfc03a6"
   },
   {
    "voice": "azure:vi-VN-HoaiMyNeural",
@@ -324,7 +324,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r81c6e74e07144399",
-   "key": "6652dcb515fbcd280bcb75598abe474c78da6ebbd6acd1603ab61f72a8202fe3"
+   "key": "f0e0e518911841ff073ab96aa8709051c264aea2dae7bb61de81ba4c6ddadeb0"
   },
   {
    "voice": "edge:vi-VN-NamMinhNeural",
@@ -390,7 +390,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r3e4375453368fca7",
-   "key": "9bcd6e3f69d4d2abc5e8fa99396952c2c2925abbff70ba0caa12497059482fe8"
+   "key": "db05ef0c38d993e6bd9cb662084813eb8cc8232055813c91f114644f5270312d"
   },
   {
    "voice": "edge:vi-VN-HoaiMyNeural",
@@ -498,7 +498,7 @@
    "spokenText": null,
    "spokenSlots": null,
    "tag": "r7f137f8486d33d82",
-   "key": "6d01b361a6211135c2fd9308c5247b1875210174b1e8f25f7f2eb3b8a1ba9020"
+   "key": "ce1e410821abb6ab51f3e005c4b1ce2963bed39373c9e464a20d15c71da003c3"
   }
  ]
 }
