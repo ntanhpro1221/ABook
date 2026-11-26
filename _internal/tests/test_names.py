@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from abook import english_vi
-from abook.readaloud import english_policy, names, vieneu
+from abook.readaloud import english_policy, names, vieneu, vieneu_input
 from abook.readaloud.cache import clip_key
 from abook.readaloud.service import ReadAloud
 from abook.webui import word_timing
@@ -220,7 +220,7 @@ def test_the_clip_key_only_changes_for_text_the_origin_changes(fake_voices, tmp_
     provider, engines = fake_voices
     assert clip_key("p", "v", "t") == clip_key("p", "v", "t", "")
     assert clip_key("p", "v", "t", "ja") != clip_key("p", "v", "t")
-    direct = f"direct-en{english_policy.VERSION}+jp-fallback8+jp-name-audio1-plain"
+    direct = f"direct-en{english_policy.VERSION}+jp-fallback8+{vieneu_input.VERSION}+jp-name-audio1-plain"
     assert provider.reading_tag("Haruto đến.", "ja") == f"ja+{direct}" and provider.reading_tag("Haruto đến.", None) == direct
     assert provider.reading_tag("Kate đến.", "ja") == direct and provider.reading_tag("Hoa đến.", "ko") == direct
     service = ReadAloud(tmp_path / "cache", [provider])
