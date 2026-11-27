@@ -4315,8 +4315,8 @@
     "reason": "tests/test_name_readings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_names.py": {
-    "sha256": "05147b8070d521de3299c92d9f2dd9f6c6eb653ba71cfcef6b96866b569543fc",
-    "reason": "_internal/tests/test_names.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active. Release 0.4.175: byte pin refreshed after the edits of the 0.4.175 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
+    "sha256": "0010cbe22c2e7f180f1cdcb2df15b92d5c571054d2595f0a62aec37fa753c9d2",
+    "reason": "_internal/tests/test_names.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active. Release 0.4.175: byte pin refreshed after the edits of the 0.4.175 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand. Re-pinned 27-11 (rel178): only the import and the expected VieNeu reading tag changed (adds the input version); no new prose."
   },
   "_internal/tests/test_names_keep_the_book_spelling.py": {
     "sha256": "883ed0700c4ed2cab076c09d0c887c7546fc15683b9a3d60116b9d8818e49816",
