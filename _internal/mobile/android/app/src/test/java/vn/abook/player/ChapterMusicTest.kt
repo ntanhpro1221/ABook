@@ -153,7 +153,9 @@ class ChapterMusicTest(private val from: String, private val to: String, private
     }
 
     @Test fun chapterTransitionKeepsTheMusicClockAlive() = with(rig) {
-        assertEquals(track(from), MusicBed.activeTrack)
+        // Seen twice inside the full gate only (never alone): say what the bed looked like, so the next red run explains itself.
+        assertEquals("chapter 1 after the rig settled: chapter=${Playback.currentChapter?.id} made=${made.size} " +
+            "sounding=${sounding().size} voice=${voice.position}ms playing=${voice.playing}", track(from), MusicBed.activeTrack)
         voice.position = 20_000
         advance(500)
         made.forEach { it.position = 55_000 } // a reused old player would still stand here
