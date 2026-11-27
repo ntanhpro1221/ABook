@@ -138,7 +138,11 @@ class BookMusicPlacementTest {
         rule.onNodeWithTag("book_tab_music").performClick()
         rule.waitUntil(10000) { rule.onAllNodesWithTag("book_music_retry").fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithTag("book_music_retry").performClick()
-        rule.waitUntil(10000) { state.ui.value.index != null }
+        // `index` is the catalog load, not the scene read: wait for the retried read itself and for its error card to go.
+        rule.waitUntil(10000) {
+            state.ui.value.index != null && sceneReads.get() >= 2 &&
+                rule.onAllNodesWithTag("book_music_error").fetchSemanticsNodes().isEmpty()
+        }
         assertTrue(sceneReads.get() >= 2)
         rule.onNodeWithTag("book_music_error").assertDoesNotExist()
     }
